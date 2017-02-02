@@ -27,7 +27,6 @@ export class Login {
   }
 
   logout() {
-
   }
 
   // use authService.logout to delete stored data

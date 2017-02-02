@@ -98,6 +98,7 @@
     "devbridge-autocomplete": "^1.2.27",
     "font-awesome": "^4.7.0",
     "jquery": "^3.1.1",
+    "jwt-js": "^0.5.0",
     "moment": "^2.17.0",
     "numeral": "^2.0.1",
     "raptor": "github:raptorbox/raptorjs",

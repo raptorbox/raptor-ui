@@ -1,6 +1,7 @@
 
 import {inject} from 'aurelia-framework';
 import {Config} from 'aurelia-api';
+import {Router} from 'aurelia-router';
 import * as Raptor from 'raptor';
 import * as Promise from 'bluebird';
 
@@ -28,23 +29,21 @@ let store = {
   }
 };
 
-@inject(Config)
+@inject(Config, Router)
 export class ClientService {
 
-  constructor(apiConfig) {
+  constructor(apiConfig, router) {
     this.apiConfig = apiConfig;
+    this.router = router;
     this.client = new Raptor({
       url: 'http://api.raptor.local'
     });
 
     let user = store.get('user');
-
-    console.warn('GOT U', user);
-    console.warn('GOT T', store.get('token'));
-
     if (user) {
       this.client.auth.setUser(user);
       this.client.auth.setToken(store.get('token'));
+      this.watchExpires();
     }
   }
 
@@ -67,18 +66,18 @@ export class ClientService {
   login(i) {
     return this.client.auth.login(i).then(r =>  {
       store.set('user', this.client.auth.currentUser());
-      store.set('token', this.client.auth.currentUser().getToken());
-      console.warn('SET',
-        this.client.auth.currentUser(),
-        this.client.auth.currentUser().getToken()
-    );
+      store.set('token', this.client.auth.currentToken());
+      this.watchExpires();
       return Promise.resolve(r);
     });
   }
 
   logout() {
-    store.clear();
-    return this.client.auth.logout();
+    return this.client.auth.logout().then(() => {
+      store.clear();
+      this.client.auth.currentUser(null);
+      this.router.navigate('/login');
+    });
   }
 
   create(o) {
@@ -93,4 +92,49 @@ export class ClientService {
     return this.client.delete(id);
   }
 
+  watchExpires() {
+    if (this.watching) {
+      return;
+    }
+
+    let token = store.get('token');
+
+    if (!token) {
+      this.logout();
+      return;
+    }
+
+    let tokenInfo = null;
+    try {
+      tokenInfo = JSON.parse(atob(token.split('.')[1]));
+    } catch (e) {
+      // invalid token
+      this.logout();
+      return;
+    }
+
+    let expires = new Date(tokenInfo.exp * 1000);
+    let lock = false;
+    this.watching = setInterval(()=> {
+      if (!store.get('token')) {
+        this.logout();
+        this.clearExpires();
+      }
+      if (new Date() > expires) {
+        if (lock) return;
+        lock = true;
+        this.auth().refreshToken().then(() => {
+          lock = false;
+          store.set('token', this.auth().currentToken());
+        });
+      }
+    }, 1000);
+  }
+
+  clearExpires() {
+    if (this.watching) {
+      clearInterval(this.watching);
+      this.watching = null;
+    }
+  }
 }
