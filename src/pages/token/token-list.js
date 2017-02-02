@@ -17,9 +17,9 @@ export class TokenList {
   pageSize = 10;
 
   bind() {
-  //   return this.client.list()
-  //     .then(tokens => {
-  //       this.tokens = tokens;
-  //     });
+    return this.client.auth().tokens.list()
+      .then(tokens => {
+        this.tokens = tokens.filter(t => t.token !== this.client.auth().currentToken());
+      });
   }
 }

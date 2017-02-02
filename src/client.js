@@ -113,14 +113,19 @@ export class ClientService {
       return;
     }
 
-    let expires = new Date(tokenInfo.exp * 1000);
+    // expires - 30sec
+    // ensure the token is still valid
+    let expires = (tokenInfo.exp) * 1000;
+    let expiring = (tokenInfo.exp - 30) * 1000;
+
     let lock = false;
     this.watching = setInterval(()=> {
-      if (!store.get('token')) {
+      let now = (new Date()).getTime();
+      if (!store.get('token') || now >= expires) {
         this.logout();
         this.clearExpires();
       }
-      if (new Date() > expires) {
+      if (now >= expiring) {
         if (lock) return;
         lock = true;
         this.auth().refreshToken().then(() => {

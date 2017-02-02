@@ -1,6 +1,6 @@
-import {inject} from "aurelia-dependency-injection";
-import {containerless} from "aurelia-framework";
-import {Router} from "aurelia-router";
+import {inject} from 'aurelia-dependency-injection';
+import {containerless} from 'aurelia-framework';
+import {Router} from 'aurelia-router';
 
 @inject(Router)
 @containerless
@@ -13,7 +13,7 @@ export class Breadcrumbs {
   }
 
   navigate(navigationInstruction) {
-    console.log("Navigate to:", navigationInstruction)
+    console.log('Navigate to:', navigationInstruction);
     navigationInstruction.router.navigateToRoute(navigationInstruction.config.name, navigationInstruction.params);
   }
 }
