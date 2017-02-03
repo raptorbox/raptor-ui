@@ -1,7 +1,9 @@
 <template>
 
   <!-- Navbar -->
-  <compose view="../common/navbar.html"></compose>
+  <require from="../common/navbar"></require>
+  <navbar></navbar>
+  <!-- <compose view="../common/navbar.html"></compose> -->
 
   <!-- Navigation -->
   <compose view="../common/sidebar-nav.html"></compose>
@@ -33,7 +35,8 @@
   </main>
 
   <!-- Aside Menu -->
-  <compose view="../common/aside-menu.html"></compose>
+  <require from="../common/aside-menu"></require>
+  <aside-menu></aside-menu>
 
   <!-- Footer -->
   <compose view="../common/footer.html"></compose>

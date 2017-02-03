@@ -73,7 +73,7 @@ export class ClientService {
   }
 
   logout() {
-    return this.client.auth.logout().then(() => {
+    return this.client.auth.logout().finally(() => {
       store.clear();
       this.client.auth.currentUser(null);
       this.router.navigate('/login');
@@ -129,8 +129,14 @@ export class ClientService {
         if (lock) return;
         lock = true;
         this.auth().refreshToken().then(() => {
-          lock = false;
           store.set('token', this.auth().currentToken());
+        })
+        .catch((e)=> {
+          this.logout();
+          this.clearExpires();
+        })
+        .finally(()=> {
+          lock = false;
         });
       }
     }, 1000);

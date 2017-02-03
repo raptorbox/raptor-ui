@@ -71,16 +71,24 @@ export class App {
         name: 'token',
         moduleId: './pages/token/token-list',
         nav: false,
-        title: 'Tokens',
-        auth: true
+        title: 'Tokens'
+      },
+      {
+        route: 'token/edit',
+        name: 'token_edit',
+        moduleId: './pages/token/token-edit',
+        nav: true,
+        title: 'Edit Token'
+        // settings: {
+        //   parentRoute: 'token'
+        // }
       },
       {
         route: 'settings',
         name: 'settings',
         moduleId: './modules/settings/settings',
         nav: false,
-        title: 'Settings',
-        auth: true
+        title: 'Settings'
       },
 
       //Nav menu

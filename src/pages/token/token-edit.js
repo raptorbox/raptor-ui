@@ -1,23 +1,44 @@
 
 import {inject} from 'aurelia-dependency-injection';
-import {TokenService} from './token-service';
+import {AppRouter} from 'aurelia-router';
+import {ClientService} from '../../client';
 
 
-@inject(TokenService)
+@inject(ClientService, AppRouter)
 export class TokenEdit {
-  token = {};
-  constructor(service) {
-    this.service = service;
+  expiresOff = false;
+  expiresPrevValue = 0;
+  token = {
+    name: 'Token',
+    expires: 1800,
+    token: null,
+    secret: '',
+    enabled: true,
+    userId: null,
+    deviceId: null,
+    created: new Date(),
+    type: 'DEFAULT'
+  };
+  constructor(client, router) {
+    this.client = client;
+    this.router = router;
   }
-
-  get title() {
-    return this.token.name || 'Token';
-  }
-
   activate(params, routeConfig) {
-    this.service.load(params.id).then(token => this.token = token);
+    if (params.id) {
+      this.client.auth().tokens.load(params.id).then(token => {
+        this.token = token;
+      });
+    }
   }
   save() {
-    this.service.save(this.token);
+    this.token.userId = this.token.userId || this.client.currentUser().uuid;
+    this.client.auth().tokens.save(this.token);
+  }
+  toggleExpires() {
+    this.expiresOff = !this.expiresOff;
+    if (this.expiresOff && this.token.expires > 0) {
+      this.expiresPrevValue = this.token.expires;
+    }
+    this.token.expires = this.expiresOff ? 0 : this.expiresPrevValue;
   }
 }

@@ -5,7 +5,8 @@ import {ClientService} from '../../client';
 @inject(AppRouter, ClientService)
 @singleton()
 export class TokenList {
-
+  tokens = [];
+  empty = true;
   constructor(router, client) {
     this.client = client;
     this.router = router;
@@ -20,6 +21,7 @@ export class TokenList {
     return this.client.auth().tokens.list()
       .then(tokens => {
         this.tokens = tokens.filter(t => t.token !== this.client.auth().currentToken());
+        this.empty = this.tokens.length === 0;
       });
   }
 }

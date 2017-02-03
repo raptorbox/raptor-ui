@@ -1,54 +1,67 @@
 <template>
   <div slot="main-content">
 
-    <table class="table table-striped"
-            aurelia-table="
-              data.bind: tokens;
-              display-data.bind: $displayData;
-              current-page.bind: currentPage;
-              page-size.bind: pageSize;
-              total-items.bind: totalItems;
-            ">
-      <thead>
-      <tr>
-        <th></th>
-        <th>Name</th>
-        <th>Created</th>
-        <th>Expires</th>
-        <th>Enabled</th>
-        <th>Type</th>
-      </tr>
-      </thead>
-      <tbody>
-      <tr repeat.for="token of tokens">
-        <td><a href="#" route-href="route: token-edit;params.bind: {id:token.id}"><i
-          class="icon-pencil"></i></a>
-        </td>
-        <td>${token.name}</td>
-        <td>${token.created}</td>
-        <td>${token.expires}</td>
-        <td>${token.enabled}</td>
-        <td>${token.type}</td>
-      </tr>
-      </tbody>
-    </table>
-
-    <div class="row">
-      <div class="col-md-9">
-        <aut-pagination current-page.bind="currentPage" page-size.bind="pageSize" total-items.bind="totalItems"
-                        pagination-size.bind="5" boundary-links.bind="true"></aut-pagination>
+    <div show.bind="empty" class="card">
+      <div class="card-block">
+        <p>There is no token yet.
+          <a  class="btn btn-secondary"
+              route-href="route: token_edit;"><i class="icon-add"></i> &nbsp;Add token</a>
+        </p>
       </div>
+    </div>
 
-      <div class="col-md-3">
-        <div class="form-inline">
-          <div class="form-group pull-right">
-            <label for="pageSize">Page Size: </label>
-            <select value.bind="pageSize" id="pageSize" class="form-control">
-              <option model.bind="5">5</option>
-              <option model.bind="10">10</option>
-              <option model.bind="20">20</option>
-              <option model.bind="50">50</option>
-            </select>
+    <div class="tableview" show.bind="!empty">
+      <table
+
+              class="table table-striped"
+              aurelia-table="
+                data.bind: tokens;
+                display-data.bind: $displayData;
+                current-page.bind: currentPage;
+                page-size.bind: pageSize;
+                total-items.bind: totalItems;
+              ">
+        <thead>
+        <tr>
+          <th></th>
+          <th>Name</th>
+          <th>Created</th>
+          <th>Expires</th>
+          <th>Enabled</th>
+          <th>Type</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr repeat.for="token of tokens">
+          <td><a href="#" route-href="route: token-edit;params.bind: {id:token.id}"><i
+            class="icon-pencil"></i></a>
+          </td>
+          <td>${token.name}</td>
+          <td>${token.created}</td>
+          <td>${token.expires}</td>
+          <td>${token.enabled}</td>
+          <td>${token.type}</td>
+        </tr>
+        </tbody>
+      </table>
+
+      <div class="row">
+        <div class="col-md-9">
+          <aut-pagination current-page.bind="currentPage" page-size.bind="pageSize" total-items.bind="totalItems"
+                          pagination-size.bind="5" boundary-links.bind="true"></aut-pagination>
+        </div>
+
+        <div class="col-md-3">
+          <div class="form-inline">
+            <div class="form-group pull-right">
+              <label for="pageSize">Page Size: </label>
+              <select value.bind="pageSize" id="pageSize" class="form-control">
+                <option model.bind="5">5</option>
+                <option model.bind="10">10</option>
+                <option model.bind="20">20</option>
+                <option model.bind="50">50</option>
+              </select>
+            </div>
           </div>
         </div>
       </div>
