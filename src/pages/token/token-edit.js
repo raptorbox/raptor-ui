@@ -27,12 +27,19 @@ export class TokenEdit {
     if (params.id) {
       this.client.auth().tokens.load(params.id).then(token => {
         this.token = token;
+        this.token.id = this.token.id || params.id;
       });
     }
   }
   save() {
     this.token.userId = this.token.userId || this.client.currentUser().uuid;
-    this.client.auth().tokens.save(this.token);
+    this.client.auth().tokens.save(this.token)
+      .then((r)=> {
+        this.router.navigate('token');
+      })
+      .catch((e)=> {
+        console.warn(e);
+      });
   }
   toggleExpires() {
     this.expiresOff = !this.expiresOff;

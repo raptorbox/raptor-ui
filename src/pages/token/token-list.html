@@ -28,18 +28,32 @@
           <th>Created</th>
           <th>Expires</th>
           <th>Enabled</th>
+          <th>Expired</th>
           <th>Type</th>
         </tr>
         </thead>
         <tbody>
         <tr repeat.for="token of tokens">
-          <td><a href="#" route-href="route: token_edit; params.bind: { id: token.id }"><i
-            class="icon-pencil"></i></a>
+          <td>
+            <a href="#"
+              title="Edit"
+              route-href="route: token_edit; params.bind: { id: token.id }"><i
+              class="fa fa-pencil"></i></a>
+            <a href="#"
+              title="Remove"
+              click.trigger="remove($this)"><i
+              class="fa fa-remove"></i></a>
           </td>
           <td>${token.name}</td>
           <td>${token.created}</td>
           <td>${token.expires}</td>
-          <td>${token.enabled}</td>
+          <td>
+            <label class="checkbox-inline" for="enabled-${token.id}">
+              <input type="checkbox" id="enabled-${token.id}" name="enabled-${token.id}" value.bind="token.enabled">Three
+            </label>
+
+          </td>
+          <td>${token.expired}</td>
           <td>${token.type}</td>
         </tr>
         </tbody>

@@ -5,6 +5,9 @@ import {Router} from 'aurelia-router';
 import * as Raptor from 'raptor';
 import * as Promise from 'bluebird';
 
+import * as debug from 'debug';
+
+const dbg = debug('raptor:ui:client');
 
 let store = {
   auth: {},
@@ -45,6 +48,11 @@ export class ClientService {
       this.client.auth.setToken(store.get('token'));
       this.watchExpires();
     }
+
+    dbg('Watch events');
+    this.client.on('request.error', (e) => {
+      dbg('Request error: %j', e);
+    });
   }
 
   api() {
@@ -75,8 +83,8 @@ export class ClientService {
   logout() {
     return this.client.auth.logout().finally(() => {
       store.clear();
-      this.client.auth.currentUser(null);
-      this.router.navigate('/login');
+      this.client.auth().clear();
+      this.router.navigate('/');
     });
   }
 
