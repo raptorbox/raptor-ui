@@ -77,7 +77,7 @@ export class App {
         route: 'token/edit',
         name: 'token_edit',
         moduleId: './pages/token/token-edit',
-        nav: true,
+        nav: false,
         title: 'Edit Token'
         // settings: {
         //   parentRoute: 'token'
@@ -96,7 +96,7 @@ export class App {
         route: ['', 'dashboard'],
         name: 'dashboard',
         moduleId: './modules/dashboard/dashboard',
-        nav: true,
+        nav: false,
         title: 'Dashboard',
         settings: {
           icon: 'icon-speedometer',

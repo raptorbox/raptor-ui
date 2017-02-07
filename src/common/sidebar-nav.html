@@ -2,7 +2,6 @@
   <div class="sidebar">
     <nav class="sidebar-nav">
 
-
       <ul class="nav">
         <template repeat.for="route of router.navigation">
           <li if.bind="route.settings.navTitle" class="divider"></li>
@@ -17,7 +16,7 @@
               if.bind="!route.settings.parentRoute"
               class="nav-link ${route.children.length > 0 ? 'nav-dropdown-toggle' : ''}"
               href.bind="route.href">
-              <i class="${route.settings.icon ? route.settings.icon :'icon-puzzle'}"></i> ${route.title} 
+              <i class="${route.settings.icon ? route.settings.icon :'icon-puzzle'}"></i> ${route.title}
               <span class="tag tag-info" if.bind="route.settings.isNew">NEW</span>
             </a>
 
