@@ -10,8 +10,17 @@ class VueRaptor {
       url = process.env.RAPTOR.url
     }
 
+    let token = null
+    if (localStorage.raptor) {
+      try {
+        const loginInfo = JSON.parse(localStorage.raptor)
+        token = loginInfo.token ? loginInfo.token : null
+      } catch (e) {}
+    }
+
     const raptor = new Raptor(Object.assign({
-      url: url
+      url: url,
+      token: token
     }, options))
 
     Vue.mixin({

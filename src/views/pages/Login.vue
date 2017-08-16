@@ -65,6 +65,11 @@ export default {
         .then((state) => {
           this.$log.info('Welcome %s', this.username)
 
+          localStorage.raptor = JSON.stringify({
+            token: this.$raptor.Auth().getToken(),
+            valid: (new Date()).getTime() + (1000 * 60 * 10) // 10min
+          })
+
           let path = '/'
           let parts = document.location.hash.split('?')
           if (parts.length === 2) {

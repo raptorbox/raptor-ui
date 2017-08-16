@@ -23,10 +23,10 @@ import FontAwesome from '@/views/icons/FontAwesome'
 import SimpleLineIcons from '@/views/icons/SimpleLineIcons'
 
 // Views - Pages
-import Page404 from '@/views/pages/Page404'
-import Page500 from '@/views/pages/Page500'
+// import Page404 from '@/views/pages/Page404'
+// import Page500 from '@/views/pages/Page500'
 import Login from '@/views/pages/Login'
-import Register from '@/views/pages/Register'
+// import Register from '@/views/pages/Register'
 
 Vue.use(Router)
 
@@ -133,41 +133,53 @@ const router = new Router({
         render (c) { return c('router-view') }
       },
       children: [
-        {
-          path: '404',
-          name: 'Page404',
-          component: Page404
-        },
-        {
-          path: '500',
-          name: 'Page500',
-          component: Page500
-        },
+        // {
+        //   path: '404',
+        //   name: 'Page404',
+        //   component: Page404
+        // },
+        // {
+        //   path: '500',
+        //   name: 'Page500',
+        //   component: Page500
+        // },
         {
           path: 'login',
           name: 'Login',
           component: Login
-        },
-        {
-          path: 'register',
-          name: 'Register',
-          component: Register
         }
+        // {
+        //   path: 'register',
+        //   name: 'Register',
+        //   component: Register
+        // }
       ]
     }
   ]
 })
 
 router.beforeEach((to, from, next) => {
-  if (to.path !== PATH_LOGIN && Vue.raptor.Auth().getToken() === null) {
-    return next({
-      path: PATH_LOGIN,
-      query: {
-        redirect: to.fullPath
-      }
-    })
+  if (to.path !== PATH_LOGIN) {
+    return next()
   }
-  next()
+
+  Vue.log.debug('Checking login')
+
+  Vue.raptor.Auth().login()
+    .then((u) => {
+      Vue.log.debug('Login ok')
+      next()
+    })
+    .catch((e) => {
+      Vue.log.debug('Login failed')
+      localStorage.raptor = '{}'
+      next({
+        path: PATH_LOGIN,
+        query: {
+          redirect: to.fullPath
+        }
+      })
+    })
 })
 
 export default router
