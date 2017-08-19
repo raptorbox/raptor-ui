@@ -5,13 +5,19 @@ class VueLogger {
   install (Vue, options) {
     options = options || {}
 
-    if (process && process.env && process.env.NODE_ENV) {
+    let logLevel = 'info'
+    if (process && process.env) {
       log.setDefaultLevel(process.env.NODE_ENV === 'development' ? 'trace' : 'info')
+      log.debug('Debug enabled')
+      logLevel = process.env.NODE_ENV === 'development' ? 'trace' : 'info'
     }
 
     if (options.level) {
-      log.setLevel(options.level)
+      logLevel = options.level
     }
+
+    log.debug('Set level to %s', logLevel)
+    log.setLevel(logLevel)
 
     Vue.mixin({
       $log: log

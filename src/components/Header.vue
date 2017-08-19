@@ -4,9 +4,15 @@
     <b-link class="navbar-brand" to="#"></b-link>
     <button class="navbar-toggler sidebar-toggler d-md-down-none" type="button" @click="sidebarMinimize">&#9776;</button>
     <b-nav is-nav-bar class="d-md-down-none">
-      <b-nav-item class="px-3">Dashboard</b-nav-item>
-      <b-nav-item class="px-3">Users</b-nav-item>
-      <b-nav-item class="px-3">Settings</b-nav-item>
+      <b-nav-item class="px-3">
+          <router-link to="/dashboard">Dashboard</router-link>
+      </b-nav-item>
+      <b-nav-item class="px-3">
+          <router-link to="/inventory">Inventory</router-link>
+      </b-nav-item>
+      <b-nav-item class="px-3">
+          Settings
+      </b-nav-item>
     </b-nav>
     <b-nav is-nav-bar class="ml-auto">
       <b-nav-item class="d-md-down-none">

@@ -62,12 +62,11 @@ export default {
         username: this.username,
         password: this.password
       })
-        .then((state) => {
-          this.$log.info('Welcome %s', this.username)
+        .then((user) => {
+          this.$log.info('Welcome %s', this.$raptor.Auth().getUser().username)
 
           localStorage.raptor = JSON.stringify({
-            token: this.$raptor.Auth().getToken(),
-            valid: (new Date()).getTime() + (1000 * 60 * 10) // 10min
+            token: this.$raptor.Auth().getToken()
           })
 
           let path = '/'
@@ -76,6 +75,7 @@ export default {
             path = decodeURIComponent(parts[1].replace(/^redirect=/, ''))
           }
 
+          this.$log.debug('Redirecting to %s', path)
           this.$router.push(path)
         })
         .catch((e) => {

@@ -6,15 +6,17 @@ import RaptorVue from './vue-raptor'
 import LoggerVue from './vue-logger'
 import App from './App'
 import router from './router'
+import store from './store'
 
+Vue.use(LoggerVue)
 Vue.use(BootstrapVue)
 Vue.use(RaptorVue)
-Vue.use(LoggerVue)
 
 /* eslint-disable no-new */
 new Vue({
   el: '#app',
   router,
+  data: store,
   template: '<App/>',
   components: {
     App

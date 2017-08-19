@@ -11,6 +11,23 @@ export default {
     },
     {
       title: true,
+      name: 'Admin'
+    },
+    {
+      name: 'Admin',
+      url: '/admin',
+      icon: 'icon-calculator',
+      children: [
+        {
+          name: 'Users',
+          url: '/admin/users',
+          icon: 'icon-puzzle'
+        }
+      ]
+    },
+
+    {
+      title: true,
       name: 'UI elements'
     },
     {
