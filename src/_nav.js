@@ -22,6 +22,11 @@ export default {
           name: 'Users',
           url: '/admin/users',
           icon: 'icon-puzzle'
+        },
+        {
+          name: 'Tokens',
+          url: '/admin/tokens',
+          icon: 'icon-puzzle'
         }
       ]
     },

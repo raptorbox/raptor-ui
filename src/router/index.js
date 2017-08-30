@@ -12,6 +12,9 @@ import Widgets from '@/views/Widgets'
 import UsersList from '@/views/user/user_list'
 import UsersForm from '@/views/user/user_form'
 
+import TokensList from '@/views/token/token_list'
+import TokensForm from '@/views/token/token_form'
+
 // Views - Components
 import Buttons from '@/views/components/Buttons'
 import SocialButtons from '@/views/components/SocialButtons'
@@ -99,6 +102,41 @@ const router = new Router({
                   path: ':userId',
                   component: UsersForm,
                   name: 'UsersUpdate',
+                  meta: {
+                    label: 'Update'
+                  },
+                  props: true
+                }
+              ]
+            },
+            {
+              path: 'tokens',
+              name: 'Tokens',
+              redirect: '/admin/tokens/list',
+              component: {
+                render (c) { return c('router-view') }
+              },
+              children: [
+                {
+                  path: 'list',
+                  name: 'TokensList',
+                  meta: {
+                    label: 'List'
+                  },
+                  component: TokensList
+                },
+                {
+                  path: 'create',
+                  name: 'TokensCreate',
+                  meta: {
+                    label: 'Create'
+                  },
+                  component: TokensForm
+                },
+                {
+                  path: ':tokenId',
+                  component: TokensForm,
+                  name: 'TokensUpdate',
                   meta: {
                     label: 'Update'
                   },
