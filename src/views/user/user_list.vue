@@ -1,7 +1,16 @@
 <template>
 <div class="animated fadeIn row row-fluid">
   <div class="col-lg-12">
-    <b-card header="<i class='fa fa-align-justify'></i> Users">
+    <!-- <b-card header="<i class='fa fa-align-justify'></i> Users"> -->
+    <b-card>
+      <div class="clearfix" style="background-color: #f0f3f5; border-bottom: 1px solid #c2cfd6; padding:5px;">
+        <div style="float: left;">
+          <p style="text-align: center; font-weight:bold; margin:0;">Users</p>
+        </div>
+        <div style="float: right;">
+          <b-button class="btn btn-primary" :to="{ name: 'UsersCreate'}">Create User</b-button>
+        </div>
+      </div>
       <table class="table table-striped">
         <thead>
           <tr>
@@ -9,10 +18,10 @@
             <th>Registered</th>
             <th>Roles</th>
             <th>Status</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
-
           <tr v-for="row,idx in list">
             <td>
               <b-button class="btn btn-link" :to="{ name: 'UsersUpdate', params: { userId: row.uuid }}">
@@ -27,6 +36,11 @@
                       'badge-success': row.enabled,
                       'badge-warning': !row.enabled
                   }]">{{row.enabled ? 'Enabled' : 'Disabled'}}</span>
+            </td>
+            <td>
+              <click-confirm>
+                <b-button class="btn btn-outline-danger btn-sm" :to="{ name: 'UserDelete'}">Delete</b-button>
+              </click-confirm>
             </td>
           </tr>
 
