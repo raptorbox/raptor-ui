@@ -103,6 +103,14 @@ const router = new Router({
                     label: 'Update'
                   },
                   props: true
+                },
+                {
+                  path: ':userId',
+                  component: UsersForm,
+                  name: 'UserDelete',
+                  meta: {
+                    label: 'Delete'
+                  }
                 }
               ]
             }

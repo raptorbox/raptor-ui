@@ -4,7 +4,7 @@ Raptor Admin Panel
 
 ## Credits
 
-Based on http://coreui.io/ Open Source Admin Panel
+Based on https://vuejs.org/ Open Source Admin Panel
 
 ## Build Setup
 

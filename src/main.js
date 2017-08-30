@@ -7,10 +7,12 @@ import LoggerVue from './vue-logger'
 import App from './App'
 import router from './router'
 import store from './store'
+import ClickConfirm from 'click-confirm'
 
 Vue.use(LoggerVue)
 Vue.use(BootstrapVue)
 Vue.use(RaptorVue)
+Vue.component('clickConfirm', ClickConfirm)
 
 /* eslint-disable no-new */
 new Vue({
