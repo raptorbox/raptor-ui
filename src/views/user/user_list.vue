@@ -39,7 +39,7 @@
             </td>
             <td>
               <click-confirm>
-                <b-button class="btn btn-outline-danger btn-sm" :to="{ name: 'UserDelete'}">Delete</b-button>
+                <b-button class="btn btn-outline-danger btn-sm" @click="remove(row.uuid)">Delete</b-button>
               </click-confirm>
             </td>
           </tr>
@@ -104,7 +104,18 @@ export default {
           this.list = []
           this.loading = false
         })
-    }
+    },
+    remove (userId) {
+        this.$log.debug("Deleting %s", userId)
+        this.$raptor.Admin().User().delete({ uuid: userId})
+          .then(() => {
+              this.$log.debug("Deleted %s", userId)
+              this.fetchData()
+          })
+          .catch((e) => {
+              this.$log.error("Error deleting %s", userId)
+          })
+    },
   }
 
 }

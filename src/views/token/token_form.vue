@@ -62,7 +62,6 @@ const defaultData = () => {
     for(let p in d) {
       u[p] = null
     }
-    console.warn(u);
     return u
 }
 
@@ -76,46 +75,46 @@ export default {
     }
   },
   mounted() {
-    if (this.$route.params.userId) {
-      this.$log.debug('Load %s ', this.$route.params.userId)
-      this.load(this.$route.params.userId)
+    if (this.$route.params.tokenId) {
+      this.$log.debug('Load %s ', this.$route.params.tokenId)
+      this.load(this.$route.params.tokenId)
     }
   },
   methods: {
-    load(userId) {
+    load(tokenId) {
       this.loading = true
-      this.$raptor.Admin().User().read(userId)
+      this.$raptor.Admin().Token().read(tokenId)
         .then((user) => {
-          this.$log.debug('User %s loaded', userId)
+          this.$log.debug('Token %s loaded', tokenId)
           this.loading = false
-          Object.assign(this.$data, user)
+          Object.assign(this.$data, token)
         })
         .catch((e) => {
-          this.$log.debug('Failed to load user list')
+          this.$log.debug('Failed to load token')
           this.$log.error(e)
           this.loading = false
         })
     },
     cancel() {
-        this.$router.push("/admin/users")
+        this.$router.push("/admin/tokens")
     },
     save() {
 
       const d = defaultData()
-      const u = {}
+      const t = {}
       for(let p in d) {
-          u[p] = this[p]
+          t[p] = this[p]
       }
 
       this.loading = true
-      this.$log.debug('Saving user', u)
-      this.$raptor.Admin().User().save(u)
+      this.$log.debug('Saving token', t)
+      this.$raptor.Admin().Token().save(u)
         .then((u) => {
-          this.$log.debug('User %s saved', u.uuid)
+          this.$log.debug('Token %s saved', u.uuid)
           this.loading = false
         })
         .catch((e) => {
-          this.$log.debug('Failed to save user')
+          this.$log.debug('Failed to save token')
           this.$log.error(e)
           this.loading = false
         })
