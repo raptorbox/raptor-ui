@@ -131,15 +131,6 @@
         pageOptions: [{text:10,value:10},{text:25,value:25},{text:50,value:50}]
       }
     },
-    events: {
-      'tableChangeEvent': function(table) {
-        this.current_table = table;
-        var vm = this;
-        this.$nextTick(function() {
-          vm.$broadcast('vuetable:refresh');
-        });
-      }
-    },
     mounted () {
       this.fetchData()
     },

@@ -27,6 +27,11 @@ export default {
           name: 'Tokens',
           url: '/admin/tokens',
           icon: 'icon-puzzle'
+        },
+        {
+          name: 'Devices',
+          url: '/admin/devices',
+          icon: 'icon-calculator'
         }
       ]
     },

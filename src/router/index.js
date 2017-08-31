@@ -15,6 +15,9 @@ import UsersForm from '@/views/user/user_form'
 import TokensList from '@/views/token/token_list'
 import TokensForm from '@/views/token/token_form'
 
+import DeviceList from '@/views/device/device_list'
+import DeviceForm from '@/views/device/device_form'
+
 // Views - Components
 import Buttons from '@/views/components/Buttons'
 import SocialButtons from '@/views/components/SocialButtons'
@@ -144,6 +147,41 @@ const router = new Router({
                   props: true
                 }
               ]
+            },
+            {
+              path: 'devices',
+              name: 'Devices',
+              redirect: '/admin/devices/list',
+              component: {
+                render (c) { return c('router-view') }
+              },
+              children: [
+                {
+                  path: 'list',
+                  name: 'DeviceList',
+                  meta: {
+                    label: 'List'
+                  },
+                  component: DeviceList
+                },
+                {
+                  path: 'create',
+                  name: 'DeviceCreate',
+                  meta: {
+                    label: 'Create'
+                  },
+                  component: DeviceForm,
+                  props: true
+                },
+                {
+                  path: ':deviceId',
+                  component: DeviceForm,
+                  name: 'DeviceUpdate',
+                  meta: {
+                    label: 'Update'
+                  },
+                  props: true
+                }]
             }
           ]
         },
