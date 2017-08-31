@@ -106,21 +106,40 @@ export default {
       for(let p in d) {
           u[p] = this[p]
       }
-
       this.loading = true
       this.$log.debug('Saving user', u)
-      this.$raptor.Admin().User().save(u)
-        .then((u) => {
-          this.$log.debug('User %s saved', u.uuid)
-          this.loading = false
-        })
-        .catch((e) => {
-          this.$log.debug('Failed to save user')
-          this.$log.error(e)
-          this.loading = false
-        })
+      if (this.$route.params.userId) {
+        this.$raptor.Admin().User().save(u)
+          .then((u) => {
+            this.$log.debug('User %s saved', u.uuid)
+            this.loading = false
+          })
+          .catch((e) => {
+            this.$log.debug('Failed to save user')
+            this.$log.error(e)
+            this.loading = false
+          })
+      } else {
+        let roles = Array()
+        for(let p in d) {
+            if(p == "roles") {
+              roles.push(this[p])
+            }
+        }
+        u['roles'] = roles
+        this.$log.debug('creating user', u)
+        this.$raptor.Admin().User().create(u)
+          .then((u) => {
+            this.$log.debug('User %s created', u.uuid)
+            this.loading = false
+          })
+          .catch((e) => {
+            this.$log.debug('Failed to create user')
+            this.$log.error(e)
+            this.loading = false
+          })
+        }
+      }
     }
   }
-
-}
 </script>
