@@ -24,18 +24,18 @@
 
         <b-table striped hover show-empty :items="list" :fields="fields" :current-page="currentPage" :per-page="perPage" >
           <template slot="name" scope="row">
-            <b-button class="btn btn-link" :to="{ name: 'UsersUpdate', params: { deviceId: row.item.uuid }}">
-              {{row.item.name}}
-            </b-button>
+            <b-button class="btn btn-link" :to="{ name: 'DeviceUpdate', params: { deviceId: row.item.id }}">{{row.item.name}}</b-button>
           </template>
           <template slot="description" scope="row">{{row.item.description}}</template>
-          <template slot="created" scope="row">{{formatDate(row.item.created)}}</template>
-          <template slot="updated" scope="row">{{formatDate(row.item.updated)}}</template>
-          <template slot="roles" scope="row">{{row.item.roles ? row.item.roles.join(', ') : ''}}</template>
+          <template slot="created" scope="row">{{formatDate(row.item.createdAt)}}</template>
+          <template slot="updated" scope="row">{{formatDate(row.item.updatedAt)}}</template>
           <template slot="actions" scope="row">
-            <click-confirm>
-              <b-button class="btn btn-outline-danger btn-sm" @click="remove(row.item.uuid)">Delete</b-button>
-            </click-confirm>
+            <div class="row">
+              <b-button class="btn btn-sm" :to="{ name: 'DeviceUpdate', params: { deviceId: row.item.id }}">Streams</b-button>
+              <click-confirm>
+                <b-button class="btn btn-outline-danger btn-sm" @click="remove(row.item.id)">Delete</b-button>
+              </click-confirm>
+            </div>
           </template>
         </b-table>
 
@@ -59,12 +59,11 @@
         error: null,
         currentPage: 1,
         fields: {
-          name:     { label: 'Name' },
+          name:           { label: 'Name' },
           description:    { label: 'Description' },
-          created:        { label: 'Created' },
-          updated:        { label: 'Updated'},
-          roles:          { label: 'Roles' },
-          actions:      { }
+          created:        { label: 'Created at' },
+          updated:        { label: 'Updated at'},
+          actions:        { }
         },
         perPage: 10,
         totalRows: 0,
@@ -101,13 +100,13 @@
       },
       remove (deviceId) {
         this.$log.debug("Deleting %s", deviceId)
-        this.$raptor.Admin().User().delete({ uuid: deviceId})
+        this.$raptor.Inventory().delete({ id: deviceId})
         .then(() => {
           this.$log.debug("Deleted %s", deviceId)
           this.fetchData()
         })
         .catch((e) => {
-          this.$log.error("Error deleting %s", deviceId)
+          this.$log.error("Error deleting %s", e)
         })
       },
     }

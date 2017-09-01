@@ -147,41 +147,6 @@ const router = new Router({
                   props: true
                 }
               ]
-            },
-            {
-              path: 'devices',
-              name: 'Devices',
-              redirect: '/admin/devices/list',
-              component: {
-                render (c) { return c('router-view') }
-              },
-              children: [
-                {
-                  path: 'list',
-                  name: 'DeviceList',
-                  meta: {
-                    label: 'List'
-                  },
-                  component: DeviceList
-                },
-                {
-                  path: 'create',
-                  name: 'DeviceCreate',
-                  meta: {
-                    label: 'Create'
-                  },
-                  component: DeviceForm,
-                  props: true
-                },
-                {
-                  path: ':deviceId',
-                  component: DeviceForm,
-                  name: 'DeviceUpdate',
-                  meta: {
-                    label: 'Update'
-                  },
-                  props: true
-                }]
             }
           ]
         },
@@ -228,6 +193,42 @@ const router = new Router({
               path: 'tables',
               name: 'Tables',
               component: Tables
+            }
+          ]
+        },
+        {
+          path: 'inventory',
+          name: 'Inventory',
+          redirect: '/inventory/list',
+          component: {
+            render (c) { return c('router-view') }
+          },
+          children: [
+            {
+              path: 'list',
+              name: 'DeviceList',
+              meta: {
+                label: 'List'
+              },
+              component: DeviceList
+            },
+            {
+              path: 'create',
+              name: 'DeviceCreate',
+              meta: {
+                label: 'Create'
+              },
+              component: DeviceForm,
+              props: true
+            },
+            {
+              path: ':deviceId',
+              component: DeviceForm,
+              name: 'DeviceUpdate',
+              meta: {
+                label: 'Update'
+              },
+              props: true
             }
           ]
         },

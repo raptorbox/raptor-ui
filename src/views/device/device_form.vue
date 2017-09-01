@@ -7,30 +7,30 @@
         <strong>Basic Form</strong> Elements
       </div> -->
 
-      <b-form-fieldset description="Please enter an username" label="Username" :horizontal="false">
-        <b-form-input type="text" placeholder="Enter username" v-model="username"></b-form-input>
+      <b-form-fieldset description="Please enter an device name" label="Name" :horizontal="false">
+        <b-form-input type="text" placeholder="Enter device name" v-model="name"></b-form-input>
       </b-form-fieldset>
 
-      <b-form-fieldset description="Please enter an email" label="Email" :horizontal="false">
-        <b-form-input type="email" placeholder="Enter email" v-model="email"></b-form-input>
+      <b-form-fieldset description="Please enter a description" label="Description" :horizontal="false">
+        <b-form-input type="text" placeholder="Enter description" v-model="description"></b-form-input>
       </b-form-fieldset>
 
-      <b-form-fieldset description="Please enter a password" label="Password" :horizontal="false">
+      <!-- <b-form-fieldset description="Please select a device" label="Password" :horizontal="false">
         <b-form-input type="password" placeholder="Enter password" v-model="password"></b-form-input>
-      </b-form-fieldset>
+      </b-form-fieldset> -->
 
     </div>
 
     <div class="col-md-6">
 
-      <b-form-fieldset label="Roles" :horizontal="false">
+      <!-- <b-form-fieldset label="Roles" :horizontal="false">
         <b-form-checkbox v-model="roles" :plain="true" value="admin">Admin</b-form-checkbox><br>
         <b-form-checkbox v-model="roles" :plain="true" value="super_admin">Super Admin</b-form-checkbox><br>
-      </b-form-fieldset>
+      </b-form-fieldset> -->
 
-      <b-form-fieldset label="Status" :horizontal="false">
+      <!-- <b-form-fieldset label="Status" :horizontal="false">
         <b-form-checkbox v-model="enabled">enabled</b-form-checkbox>
-      </b-form-fieldset>
+      </b-form-fieldset> -->
     </div>
     <!--/.col-->
   </div>
@@ -57,8 +57,11 @@
 <script>
   import Raptor from 'raptor-sdk'
   const defaultData = () => {
-    const d = new Raptor.models.User().defaultFields()
+    console.log(Raptor.models)
+    console.log(new Raptor.models.Device())
+    const d = new Raptor.models.Device().defaultFields()
     const u = {}
+    console.log(d)
     for(let p in d) {
       u[p] = null
     }
@@ -67,7 +70,7 @@
   }
 
   export default {
-    name: 'user_form',
+    name: 'device_form',
     data() {
       return {
         loading: false,
@@ -76,28 +79,28 @@
       }
     },
     mounted() {
-      if (this.$route.params.userId) {
-        this.$log.debug('Load %s ', this.$route.params.userId)
-        this.load(this.$route.params.userId)
+      if (this.$route.params.deviceId) {
+        this.$log.debug('Load %s ', this.$route.params.deviceId)
+        this.load(this.$route.params.deviceId)
       }
     },
     methods: {
-      load(userId) {
+      load(deviceId) {
         this.loading = true
-        this.$raptor.Admin().User().read(userId)
-        .then((user) => {
-          this.$log.debug('User %s loaded', userId)
+        this.$raptor.Inventory().read(deviceId)
+        .then((device) => {
+          this.$log.debug('device %s loaded', device)
           this.loading = false
-          Object.assign(this.$data, user)
+          Object.assign(this.$data, device)
         })
         .catch((e) => {
-          this.$log.debug('Failed to load user list')
+          this.$log.debug('Failed to load device')
           this.$log.error(e)
           this.loading = false
         })
       },
       cancel() {
-        this.$router.push("/admin/users")
+        this.$router.push("/admin/devices")
       },
       save() {
 
@@ -107,39 +110,32 @@
           u[p] = this[p]
         }
         this.loading = true
-        this.$log.debug('Saving user', u)
-        if (this.$route.params.userId) {
-          this.$raptor.Admin().User().save(u)
-          .then((u) => {
-            this.$log.debug('User %s saved', u.uuid)
+        this.$log.debug('Saving device', u)
+        if (this.$route.params.deviceId) {
+          this.$raptor.Inventory().save(u)
+          .then((device) => {
+            this.$log.debug('device %s saved', device.id)
             this.loading = false
           })
           .catch((e) => {
-            this.$log.debug('Failed to save user')
+            this.$log.debug('Failed to save device')
             this.$log.error(e)
             this.loading = false
           })
         } else {
-          let roles = Array()
-          for(let p in d) {
-            if(p == "roles") {
-              roles.push(this[p])
-            }
-          }
-          u['roles'] = roles
-          this.$log.debug('creating user', u)
-          this.$raptor.Admin().User().create(u)
-          .then((u) => {
-            this.$log.debug('User %s created', u.uuid)
+          this.$log.debug('creating device', u)
+          this.$raptor.Inventory().create(u)
+          .then((device) => {
+            this.$log.debug('device %s created', device.id)
             this.loading = false
           })
           .catch((e) => {
-            this.$log.debug('Failed to create user')
+            this.$log.debug('Failed to create device')
             this.$log.error(e)
             this.loading = false
           })
         }
-        this.$router.push("/admin/users")
+        this.$router.push("/admin/devices")
       }
     }
   }
