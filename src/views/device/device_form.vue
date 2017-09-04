@@ -57,15 +57,34 @@
 <script>
   import Raptor from 'raptor-sdk'
   const defaultData = () => {
-    console.log(Raptor.models)
-    console.log(new Raptor.models.Device())
-    const d = new Raptor.models.Device().defaultFields()
+    console.log("***************************************")
+    console.log("Device Model")
+    let d1 = new Raptor.models.Device()
+    console.log(d1)
+    let d = d1.defaultFields()
+
+    console.log("defaultFields: " + d)
+
+    // d.streams = new Raptor.models.Stream().defaultFields()
+    // d.actions = new Raptor.models.Action().defaultFields()
+    // d.settings = new Raptor.models.Settings().defaultFields()
     const u = {}
-    console.log(d)
+
     for(let p in d) {
       u[p] = null
     }
-    console.warn(u);
+    /*
+    if(d.streams != null) {
+      for(let p in d.streams) {
+        u.streams[p] = null
+      }
+    }
+    if(d.actions != null) {
+      for(let p in d.actions) {
+        u.actions[p] = null
+      }
+    }*/
+    console.warn("final object: " + JSON.stringify(u));
     return u
   }
 
@@ -91,6 +110,10 @@
         .then((device) => {
           this.$log.debug('device %s loaded', device)
           this.loading = false
+          this.$data.name = device.name
+          this.$data.description = device.description
+          this.$data.id = device.id
+          this.$data.userId = device.it
           Object.assign(this.$data, device)
         })
         .catch((e) => {
@@ -100,7 +123,7 @@
         })
       },
       cancel() {
-        this.$router.push("/admin/devices")
+        this.$router.push("/inventory/list")
       },
       save() {
 
@@ -111,8 +134,9 @@
         }
         this.loading = true
         this.$log.debug('Saving device', u)
+
         if (this.$route.params.deviceId) {
-          this.$raptor.Inventory().save(u)
+          this.$raptor.Inventory().update(u)
           .then((device) => {
             this.$log.debug('device %s saved', device.id)
             this.loading = false
@@ -135,7 +159,7 @@
             this.loading = false
           })
         }
-        this.$router.push("/admin/devices")
+        this.$router.push("/inventory/list")
       }
     }
   }

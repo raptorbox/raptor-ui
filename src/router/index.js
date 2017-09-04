@@ -18,6 +18,9 @@ import TokensForm from '@/views/token/token_form'
 import DeviceList from '@/views/device/device_list'
 import DeviceForm from '@/views/device/device_form'
 
+// Project
+import Stats from '@/views/stats/dashboard'
+
 // Views - Components
 import Buttons from '@/views/components/Buttons'
 import SocialButtons from '@/views/components/SocialButtons'
@@ -57,7 +60,11 @@ const router = new Router({
           name: 'Dashboard',
           component: Dashboard
         },
-
+        {
+          path: 'stats',
+          name: 'Dashboard',
+          component: Stats
+        },
         {
           path: 'charts',
           name: 'Charts',
