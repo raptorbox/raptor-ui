@@ -1,4 +1,4 @@
 module.exports = {
   NODE_ENV: '"production"',
-  RAPTOR: `{"url": "https://api.raptorbox.eu"}`
+  RAPTOR: `{"url": "http://raptorbox.ddns.net"}`
 }

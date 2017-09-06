@@ -27,8 +27,8 @@
             <b-button class="btn btn-link" :to="{ name: 'DeviceUpdate', params: { deviceId: row.item.id }}">{{row.item.name}}</b-button>
           </template>
           <template slot="description" scope="row">{{row.item.description}}</template>
-          <template slot="created" scope="row">{{formatDate(row.item.createdAt)}}</template>
-          <template slot="updated" scope="row">{{formatDate(row.item.updatedAt)}}</template>
+          <template slot="created" scope="row">{{formatDate(row.item.createdAt * 1000)}}</template>
+          <template slot="updated" scope="row">{{formatDate(row.item.updatedAt * 1000)}}</template>
           <template slot="actions" scope="row">
             <div class="row">
               <b-button class="btn btn-sm" :to="{ name: 'DeviceUpdate', params: { deviceId: row.item.id }}">Streams</b-button>
@@ -40,7 +40,7 @@
         </b-table>
 
         <div>
-          <b-pagination :total-rows="list.count" :per-page="perPage" v-model="currentPage" prev-text="Prev" next-text="Next" />
+          <b-pagination :total-rows="list.length" :per-page="perPage" v-model="currentPage" prev-text="Prev" next-text="Next" />
         </div>
       </b-card>
     </div>

@@ -98,7 +98,7 @@
         <li class="page-item"><a class="page-link" href="#">Next</a></li>
       </ul> -->
       <div>
-        <b-pagination :total-rows="list.count" :per-page="perPage" v-model="currentPage" prev-text="Prev" next-text="Next" />
+        <b-pagination :total-rows="list.length" :per-page="perPage" v-model="currentPage" prev-text="Prev" next-text="Next" />
       </div>
     </b-card>
   </div>
