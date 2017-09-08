@@ -39,13 +39,13 @@ export default Line.extend({
   methods: {
     renderLineChart () {
       let datasetsForCharts = Array();
-      console.log("======================================================");
-      console.log(JSON.stringify(this.chartData));
-      console.log(this.chartData);
-      console.log("======================================================")
+      // console.log("======================================================");
+      // console.log(JSON.stringify(this.chartData));
+      // console.log(this.chartData);
+      // console.log("======================================================")
       for (var i = 0; i < this.chartData.length; i++) {
         let ds = this.chartData[i];
-        console.log(ds);
+        // console.log(ds);
         let data = [];
         for (var l = 0; l < ds.length; l++) {
           let finalObject = ds[l];
@@ -53,7 +53,7 @@ export default Line.extend({
           // console.log(keys);
           for (var j = 0; j < keys.length; j++) {
             let k = keys[j];
-            console.log(k + " : " + finalObject[k]);
+            // console.log(k + " : " + finalObject[k]);
             let dataToPush = null;
             if(finalObject[k] == "stages") {
               dataToPush = 50;
@@ -62,7 +62,7 @@ export default Line.extend({
             } else {
               dataToPush = 0;
             }
-            console.log(k + " = SleepQuality ");
+            // console.log(k + " = SleepQuality ");
             if(k != "SleepQuality") {
               dataToPush = parseInt(finalObject[k]);
             }
@@ -126,9 +126,9 @@ export default Line.extend({
         }
         ];
       }
-      console.log("======================================================");
-      console.log(JSON.stringify(datasetsForCharts));
-      console.log("======================================================");
+      // console.log("======================================================");
+      // console.log(JSON.stringify(datasetsForCharts));
+      // console.log("======================================================");
       this.renderChart({
         labels: this.labels,
         datasets: datasetsForCharts

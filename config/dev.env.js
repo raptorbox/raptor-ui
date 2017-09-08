@@ -5,7 +5,7 @@ module.exports = merge(prodEnv, {
   NODE_ENV: '"development"',
   RAPTOR: `{
       "url": "http://raptor.local",
-      "username": "",
-      "password": "",
+      "username": "memosa",
+      "password": "memosa.EIT2017",
   }`
 })
