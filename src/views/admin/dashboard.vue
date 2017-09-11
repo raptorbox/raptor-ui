@@ -2,44 +2,50 @@
   <div class="animated fadeIn">
     <div class="row">
       <div class="col-sm-6 col-lg-3">
-        <b-card class="bg-primary" :no-block="true" style="min-height:160px; max-height:160px; height:160px">
+        <b-card class="bg-primary" :no-block="true" style="min-height:200px; max-height:200px; height:200px">
           <div class="card-body pb-0">
             <h4 class="mb-0">{{users.length}}</h4>
             <p>Total Users</p>
           </div>
-          <line-chart-total-devices class="chart-wrapper" style="height:70px;" :data="dataChartTotalUser" :labels="labelUsers" height="70"/>
+          <line-chart-total-users class="chart-wrapper" style="height:80px;" :data="dataChartTotalUser" :labels="labelUsers" height="80"/>
         </b-card>
       </div><!--/.col-->
       <div class="col-sm-6 col-lg-3">
-        <b-card class="bg-primary" :no-block="true" style="min-height:160px; max-height:160px; height:160px">
+        <b-card class="bg-primary" :no-block="true" style="min-height:200px; max-height:200px; height:200px">
           <div class="card-body pb-0">
             <h4 class="mb-0">{{devices.length}}</h4>
             <p>Total Devices</p>
           </div>
-          <line-chart-total-devices class="chart-wrapper" style="height:70px;" :data="dataChartTotalDevice" :labels="labelDevs" height="70"/>
+          <line-chart-total-devices class="chart-wrapper" style="height:80px;" :data="dataChartTotalDevice" :labels="labelDevs" height="80"/>
         </b-card>
       </div><!--/.col-->
       <div class="col-sm-6 col-lg-3">
-        <b-card class="bg-info" :no-block="true" style="min-height:160px; max-height:160px; height:160px">
+        <b-card class="bg-info" :no-block="true" style="min-height:200px; max-height:200px; height:200px">
           <div class="card-body pb-0">
-            <h4 class="mb-0">Select a User</h4>
+            <h4 class="mb-0 float-left">Select a User</h4>
+            <div class="float-right">
+              <select class="mb-3 form-control" @change="onChangeUser">
+                <option v-for="u in listOfUsersForSelectOptions" v-bind:value="u.value">{{u.text}}</option>
+              </select>
+            </div>
+          </div>
+          <div class="pb-0">
+            <span v-html="selectedUserDetails"></span>
+          </div>
+        </b-card>
+      </div><!--/.col-->
+      <div class="col-sm-6 col-lg-3">
+        <b-card class="bg-info" :no-block="true" style="min-height:200px; max-height:200px; height:200px">
+          <div class="card-body pb-0">
+            <h4 class="mb-0 float-left">Select a Device</h4>
             <div class="float-right">
               <select class="mb-3 form-control" @change="onChangeDevice">
                 <option v-for="dev in listOfDevicesForSelectOptions" v-bind:value="dev.value">{{dev.text}}</option>
               </select>
             </div>
           </div>
-        </b-card>
-      </div><!--/.col-->
-      <div class="col-sm-6 col-lg-3">
-        <b-card class="bg-info" :no-block="true" style="min-height:160px; max-height:160px; height:160px">
-          <div class="card-body pb-0">
-            <h4 class="mb-0">Select a Device</h4>
-            <div class="float-right">
-              <select class="mb-3 form-control" @change="onChangeDevice">
-                <option v-for="dev in listOfDevicesForSelectOptions" v-bind:value="dev.value">{{dev.text}}</option>
-              </select>
-            </div>
+          <div class="pb-0">
+            <span v-html="selectedDeviceDetails"></span>
           </div>
         </b-card>
       </div><!--/.col-->
@@ -91,52 +97,27 @@
           <b-button type="button" variant="primary" class="float-right"><i class="icon-cloud-download"></i></b-button>
           <b-button-toolbar class="float-right" aria-label="Toolbar with button groups">
             <b-button-group class="mr-3" aria-label="First group">
-              <template>
+              <!-- <template>
                 <div>
                   <b-form-select variant="outline-secondary"  @change.native="onChangeOption" v-model="selectedDevice" :options="optionsDevice" />
                 </div>
-              </template>
+              </template> -->
               <template>
                 <div>
                   <b-form-select variant="outline-secondary"  @change.native="onChangeOptionStream" v-model="selectedStream" :options="optionsStreams" />
                 </div>
               </template>
-              <b-button variant="outline-secondary">Day</b-button>
-              <b-button variant="outline-secondary" :active="true">Month</b-button>
-              <b-button variant="outline-secondary">Year</b-button>
+              <b-button variant="outline-secondary" value="minutes" @click="onChangeDisplayDataTime">Minutes</b-button>
+              <b-button variant="outline-secondary" value="hours" @click="onChangeDisplayDataTime">Hours</b-button>
+              <b-button variant="outline-secondary" value="day" @click="onChangeDisplayDataTime">Day</b-button>
+              <b-button variant="outline-secondary" value="month" @click="onChangeDisplayDataTime">Month</b-button>
             </b-button-group>
           </b-button-toolbar>
         </div><!--/.col-->
       </div><!--/.row-->
       <chart-streams class="chart-wrapper" style="height:300px;margin-top:40px;" :data="dataChartDevice" :labels="labelDevice" height="300"></chart-streams>
       <div slot="footer">
-        <ul>
-          <li>
-            <div class="text-muted">Visits</div>
-            <strong>29.703 devices (40%)</strong>
-            <b-progress class="progress-xs mt-2" :precision="1" variant="success" :value="40"></b-progress>
-          </li>
-          <li class="hidden-sm-down">
-            <div class="text-muted">Unique</div>
-            <strong>24.093 devices (20%)</strong>
-            <b-progress class="progress-xs mt-2" :precision="1" variant="info" :value="20"></b-progress>
-          </li>
-          <!-- <li>
-            <div class="text-muted">Pageviews</div>
-            <strong>78.706 Views (60%)</strong>
-            <b-progress class="progress-xs mt-2" :precision="1" variant="warning" :value="60"></b-progress>
-          </li> -->
-          <li class="hidden-sm-down">
-            <div class="text-muted">New devices</div>
-            <strong>22.123 devices (80%)</strong>
-            <b-progress class="progress-xs mt-2" :precision="1" variant="danger" :value="80"></b-progress>
-          </li>
-          <li class="hidden-sm-down">
-            <div class="text-muted">Bounce Rate</div>
-            <strong>40.15%</strong>
-            <b-progress class="progress-xs mt-2" :precision="1" :value="40"></b-progress>
-          </li>
-        </ul>
+        <span v-html="streamChartDetails"></span>
       </div>
     </b-card>
   </div>
@@ -144,6 +125,7 @@
 
 <script>
   import LineChartTotalDevices from './LineChartTotalDevices'
+  import LineChartTotalUsers from './LineChartTotalUsers'
   import CardLine2ChartExample from './CardLine2ChartExample'
   import CardLine3ChartExample from './CardLine3ChartExample'
   import CardBarChartExample from './CardBarChartExample'
@@ -157,6 +139,7 @@
     components: {
       Callout,
       LineChartTotalDevices,
+      LineChartTotalUsers,
       CardLine2ChartExample,
       CardLine3ChartExample,
       CardBarChartExample,
@@ -167,9 +150,11 @@
       return {
         devices: 0,
         users: 0,
+        selectedDevicesForUser: [],
         labelDevs: [],
         dictUser: {},
-        dataChartTotalUser: [10, 39, 10, 40, 39, 0, 0],
+        dictDev: {},
+        dataChartTotalUser: [],
         dataChartTotalDevice : [],
         deviceName: "Car",
         optionsDevice: [
@@ -182,6 +167,7 @@
         { value: null,              text: 'Please select a stream' }
         ],
         listOfDevicesForSelectOptions : [{ value: null, text: 'Please select a device' }],
+        listOfUsersForSelectOptions : [{ value: null, text: 'Please select a User' }],
         selectedDevice: 'memosa-car',
         dictDevice: {},
         labelDevice: [],
@@ -189,7 +175,14 @@
         deviceDataTime : null,
         selectedStream : null,
         arrayOfDevices : [],
-        labelUsers : []
+        labelUsers : [],
+        streamChartLabels: [],
+        selectedStreamData: null,
+        totalNoOfDevices : 0,
+        colorVarients: ['green','blue','lightblue','yellow','red','pink','black','purple','cyan','orange','brown'],
+        selectedUserDetails: null,
+        selectedDeviceDetails: null,
+        streamChartDetails: null
       }
     },
     mounted () {
@@ -203,7 +196,14 @@
       extractChartDataDev (d) {
         for (var i = 0, len = d.length; i < len; i++) {
           let s = d[i]
-          let sDate = this.formatDate(s.createdAt * 10000).split(' ')[0]
+          let sDate = this.formatDate(s.createdAt * 1000).split(' ')[0]
+          this.$data.dictDev[sDate] = this.$data.dictDev[sDate] ? this.$data.dictDev[sDate] + 1 : 1;
+        }
+      },
+      extractChartDataUser (d) {
+        for (var i = 0, len = d.length; i < len; i++) {
+          let s = d[i]
+          let sDate = this.formatDate(s.created).split(' ')[0]
           this.$data.dictUser[sDate] = this.$data.dictUser[sDate] ? this.$data.dictUser[sDate] + 1 : 1;
         }
       },
@@ -211,17 +211,18 @@
         this.$raptor.Inventory().list()
         .then((list) => {
           this.$log.debug('Loaded %s device list', list.length);
+          console.log(list)
           this.extractChartDataDev(list);
-          this.$data.labelDevs = Object.keys(this.$data.dictUser); // getting labels
+          this.$data.labelDevs = Object.keys(this.$data.dictDev); // getting labels
           this.$data.devices = list;
-          list.forEach( (e) => this.listOfDevicesForSelectOptions.push({value: e.id, text: e.name+' - '+e.id}));
+          // list.forEach( (e) => this.listOfDevicesForSelectOptions.push({value: e.id, text: e.name+' - '+e.id}));
           this.changeData();
         })
         .catch((e) => {
-          this.$log.debug('Failed to load user list');
+          this.$log.debug('Failed to load device list');
           this.$log.error(e);
         });
-        this.fetchDevices(this.selectedDevice);
+        // this.fetchDevices(this.selectedDevice);
       },
       fetchUsersData () {
         this.$log.debug('Fetching user list')
@@ -229,9 +230,10 @@
         .then((list) => {
           this.$log.debug('Loaded %s user list', list.length)
           console.log(list)
-          this.extractChartDataDev(list);
+          this.extractChartDataUser(list);
           this.labelUsers = Object.keys(this.$data.dictUser); // getting labels
           this.users = list
+          list.forEach( (e) => this.listOfUsersForSelectOptions.push({value: e.uuid, text: e.username}));
           this.changeDataUsers();
         })
         .catch((e) => {
@@ -254,14 +256,39 @@
           }
         }
       },
-      fetchDevices (val) {
-        this.$raptor.Inventory().search({
-          name: val
-        }).then((devices) => {
+      extractChartDataDeviceStream (d, val) {
+        this.dictDevice = [];
+        for (var i = 0; i < d.length; i++) {
+          let s = d[i];
+          if(i == 0) {
+            this.deviceDataTime = this.formatDate(s.timestamp * 1000);
+          }
+          let sDate = (new Date(s.timestamp * 1000)).getMinutes();
+          if(val == 'hours'){
+            sDate = (new Date(s.timestamp * 1000)).getHours();
+          } else if(val == 'day'){
+            sDate = (new Date(s.timestamp * 1000)).getDay();
+          } else if(val == 'month'){
+            sDate = (new Date(s.timestamp * 1000)).getMonth();
+          }
+          if(!this.dictDevice[sDate]) {
+            this.dictDevice[sDate] = [];
+          }
+          if(this.dictDevice[sDate]) {
+            this.dictDevice[sDate].push(s.channels);
+          }
+        }
+      },
+      fetchDevices (condition) {
+        //{name: val}
+        this.$raptor.Inventory().search(condition).then((devices) => {
           this.arrayOfDevices = devices;
+          devices.forEach( (e) => this.listOfDevicesForSelectOptions.push({value: e.id, text: e.name+' - '+e.id}));
+          console.log(devices);
+          console.log(this.listOfDevicesForSelectOptions);
           if(devices.length > 0 && devices[0]) {
             let keys = Object.keys(devices[0].json.streams);
-            console.log(keys);
+            // console.log(keys);
             this.optionsStreams = [];
             this.optionsStreams.push({ value: null,text: 'Please select a stream' });
             for (var i = 0; i < keys.length; i++) {
@@ -272,40 +299,93 @@
           }
         });
       },
+      getSingleDevice (device) {
+        if(device) {
+          let keys = Object.keys(device.json.streams);
+          // console.log(keys);
+          this.optionsStreams = [];
+          this.optionsStreams.push({ value: null,text: 'Please select a stream' });
+          for (var i = 0; i < keys.length; i++) {
+            this.optionsStreams.push({ value: keys[i],text: keys[i] });
+          }
+          this.selectedStream = keys[0];
+        }
+      },
       fetchStreamData (str) {
+        // console.log(str)
+        // var ts = Math.round((new Date()).getTime() / 1000);
+        // for (var i = 0; i < this.arrayOfDevices.length ; i++) {
+        //   let stream = this.arrayOfDevices[i].getStream(str);
+        //   if(stream){
+        //     this.$raptor.Stream().list(stream, 0, ts)
+        //     .then((streams) => {
+        //       this.extractChartDataDeviceStream(streams);
+        //       if(i == this.arrayOfDevices.length) {
+        //         this.changeStreamData();
+        //       }
+        //     })
+        //     .catch((e) => {
+        //       this.$log.debug('Failed to load streams');
+        //       this.$log.error(e);
+        //     });
+        //   }
+        // }
         var ts = Math.round((new Date()).getTime() / 1000);
-        for (var i = 0; i < this.arrayOfDevices.length ; i++) {
-          let stream = this.arrayOfDevices[i].getStream(str);
-          if(stream){
-            this.$raptor.Stream().list(stream, 0, ts)
-            .then((streams) => {
-              this.extractChartDataDeviceStream(streams);
-              if(i == this.arrayOfDevices.length) {
-                this.changeStreamData();
-              }
-            })
-            .catch((e) => {
-              this.$log.debug('Failed to load streams');
-              this.$log.error(e);
-            });
+        let stream = this.selectedDev.getStream(str);
+        if(stream){
+          this.$raptor.Stream().list(stream, 0, ts)
+          .then((streams) => {
+            console.log(JSON.stringify(streams));
+            this.dictDevice = [];
+            this.getChannelsDetails(Object.keys(streams[0].channels));
+            this.selectedStreamData = streams;
+            this.extractChartDataDeviceStream(streams,'minutes');
+            this.changeStreamData();
+          })
+          .catch((e) => {
+            this.$log.debug('Failed to load streams');
+            this.$log.error(e);
+          });
+        }
+      },
+      getChannelsDetails (channels) {
+        this.streamChartDetails = null;
+        this.streamChartDetails = '<ul>';
+        for (var i = 0; i < channels.length; i++) {
+          this.streamChartDetails += '<li>';
+          this.streamChartDetails += '<div class="text-muted">'+ channels[i] +'</div><strong>40.15%</strong>';
+          this.streamChartDetails += '<div class="mt-2" style="min-height: 5px; padding-left: 10%; padding-right:10%;background:' + this.colorVarients[i] + '" />';
+          this.streamChartDetails += '</li>'
+        }
+        this.streamChartDetails += '</ul>';
+      },
+      getUserDevices (userId) {
+        // this.fetchDevices({properties: {userId}});
+        this.listOfDevicesForSelectOptions = [{ value: null, text: 'Please select a device' }]
+        this.selectedDevicesForUser = [];
+        for (var i = 0; i < this.devices.length; i++) {
+          let dev = this.devices[i];
+          if(dev.userId == userId) {
+            this.listOfDevicesForSelectOptions.push({value: dev.id, text: dev.name +' - '+ dev.id})
+            this.selectedDevicesForUser.push(dev);
           }
         }
       },
-      changeData: function() {
-        let arr = Array();
-        for (var i = 0; i < this.labelUsers.length; i++) {
-          let s = this.labelUsers[i];
-          arr.push(this.labelUsers[s]);
-        }
-        this.dataChartTotalUser = arr;
-      },
-      changeDataUsers () {
+      changeData () {
         let arr = Array();
         for (var i = 0; i < this.labelDevs.length; i++) {
           let s = this.labelDevs[i];
-          arr.push(this.dictUser[s]);
+          arr.push(this.dictDev[s]);
         }
         this.dataChartTotalDevice = arr;
+      },
+      changeDataUsers () {
+        let arr = Array();
+        for (var i = 0; i < this.labelUsers.length; i++) {
+          let s = this.labelUsers[i];
+          arr.push(this.dictUser[s]);
+        }
+        this.dataChartTotalUser = arr;
       },
       changeStreamData: function() {
         let arr = Array();
@@ -316,11 +396,27 @@
         }
         this.dataChartDevice = arr;
       },
+      onChangeUser (evt) {
+        let val = evt.target.value;
+        for (var i = 0; i < this.users.length; i++) {
+          if(this.users[i].uuid == val){
+            let user = this.users[i];
+            this.getUserDevices(user.uuid);
+            this.selectedUserDetails = '<ul>';
+            this.selectedUserDetails += '<li><strong>UUID:</strong>       ' + user.uuid + '</li>';
+            this.selectedUserDetails += '<li><strong>Email:</strong>     ' + user.email + '</li>';
+            this.selectedUserDetails += '<li><strong>Role:</strong>       ' + JSON.stringify(user.roles) + '</li>';
+            this.selectedUserDetails += '<li><strong>Created:</strong>  ' + this.formatDate(user.created) + '</li>';
+            this.selectedUserDetails += '<li><strong>Devices:</strong>  ' + this.selectedDevicesForUser.length + '</li>';
+            this.selectedUserDetails += '</ul>';
+          }
+        }
+      },
       onChangeDevice (evt) {
         let val = evt.target.value;
-        for (var i = 0; i < this.devices.length; i++) {
-          if(this.devices[i].id == val){
-            let details = this.devices[i];
+        for (var i = 0; i < this.selectedDevicesForUser.length; i++) {
+          if(this.selectedDevicesForUser[i].id == val){
+            let details = this.selectedDevicesForUser[i];
             this.selectedDev = details;
             this.deviceName = details.name;
             this.getSingleDevice(details);
@@ -342,6 +438,13 @@
       onChangeOptionStream (evt) {
         let val = evt.target.value;
         this.fetchStreamData(val);
+      },
+      onChangeDisplayDataTime (evt) {
+        let val = evt.target.value;
+        if(this.selectedStreamData) {
+          this.extractChartDataDeviceStream(this.selectedStreamData, val);
+          this.changeStreamData();
+        }
       }
     }
   }

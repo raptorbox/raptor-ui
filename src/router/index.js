@@ -5,7 +5,7 @@ import Router from 'vue-router'
 import Full from '@/containers/Full'
 
 // Views
-// import Dashboard from '@/views/Dashboard'
+import Dashboard from '@/views/Dashboard'
 import Charts from '@/views/Charts'
 import Widgets from '@/views/Widgets'
 
@@ -19,7 +19,7 @@ import DeviceList from '@/views/device/device_list'
 import DeviceForm from '@/views/device/device_form'
 
 // Project
-import Dashboard from '@/views/stats/dashboard'
+// import Dashboard from '@/views/stats/dashboard'
 
 // Admin
 import AdminDashboard from '@/views/admin/dashboard'

@@ -133,7 +133,7 @@
       extractChartDataDev (d) {
         for (var i = 0, len = d.length; i < len; i++) {
           let s = d[i]
-          let sDate = this.formatDate(s.createdAt * 10000).split(' ')[0]
+          let sDate = this.formatDate(s.createdAt * 1000).split(' ')[0]
           this.$data.dictUser[sDate] = this.$data.dictUser[sDate] ? this.$data.dictUser[sDate] + 1 : 1;
         }
       },
@@ -233,7 +233,7 @@
         for (var i = 0; i < channels.length; i++) {
           this.streamChartDetails += '<li>';
           this.streamChartDetails += '<div class="text-muted">'+ channels[i] +'</div><strong>40.15%</strong>';
-          this.streamChartDetails += '<div class="mt-2" color="' + this.colorVarients[i] + '" style="padding-left: 10%; padding-right:10%;background-color:' + this.colorVarients[i] + '" />';
+          this.streamChartDetails += '<div class="mt-2" style="min-height: 5px; padding-left: 10%; padding-right:10%;background:' + this.colorVarients[i] + '" />';
           this.streamChartDetails += '</li>'
         }
         this.streamChartDetails += '</ul>';
