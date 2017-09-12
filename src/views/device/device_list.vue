@@ -31,7 +31,7 @@
           <template slot="updated" scope="row">{{formatDate(row.item.updatedAt * 1000)}}</template>
           <template slot="actions" scope="row">
             <div class="row">
-              <b-button class="btn btn-sm" :to="{ name: 'DeviceUpdate', params: { deviceId: row.item.id }}">Streams</b-button>
+              <b-button class="btn btn-sm" :to="{ name: 'Streams', params: { deviceId: row.item.id }}">Streams</b-button>
               <click-confirm>
                 <b-button class="btn btn-outline-danger btn-sm" @click="remove(row.item.id)">Delete</b-button>
               </click-confirm>

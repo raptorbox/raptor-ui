@@ -31,18 +31,28 @@
           },
           scales: {
             xAxes: [{
-              display: false
+              gridLines: {
+                color: 'transparent',
+                zeroLineColor: 'transparent'
+              },
+              ticks: {
+                fontSize: 2,
+                fontColor: 'transparent'
+              }
             }],
             yAxes: [{
-              display: false
+              display: false,
+              ticks: {
+                display: false
+              }
             }]
           },
           elements: {
             line: {
-              borderWidth: 2
+              borderWidth: 1
             },
             point: {
-              radius: 0,
+              radius: 4,
               hitRadius: 10,
               hoverRadius: 4
             }
@@ -88,8 +98,8 @@
     watch: {
       data: function() {
         this._chart.destroy();
-      this.renderLineChart();
+        this.renderLineChart();
+      }
     }
-  }
-})
+  })
 </script>

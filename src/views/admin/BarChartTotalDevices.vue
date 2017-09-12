@@ -1,7 +1,7 @@
 <script>
-  import { Line } from 'vue-chartjs'
+  import { Bar } from 'vue-chartjs'
 
-  export default Line.extend({
+  export default Bar.extend({
     props: ['height', 'data', 'labels'],
     mounted () {
       this.renderLineChart();
@@ -18,7 +18,7 @@
           labels: this.labels,
           datasets: [
           {
-            label: 'Users',
+            label: 'Devices',
             bbackgroundColor: 'rgba(255,255,255,.2)',
             borderColor: 'rgba(255,255,255,.55)',
             data: this.chartData
@@ -30,33 +30,13 @@
           },
           scales: {
             xAxes: [{
-              gridLines: {
-                color: 'transparent',
-                zeroLineColor: 'transparent'
-              },
-              ticks: {
-                fontSize: 2,
-                fontColor: 'transparent'
-              }
+              display: false,
+              categoryPercentage: 1,
+              barPercentage: 0.5
             }],
             yAxes: [{
-              display: false,
-              ticks: {
-                display: false,
-                min: Math.min.apply(Math, this.data) - 2,
-                max: Math.max.apply(Math, this.data) + 2
-              }
+              display: false
             }]
-          },
-          elements: {
-            line: {
-              borderWidth: 1
-            },
-            point: {
-              radius: 4,
-              hitRadius: 10,
-              hoverRadius: 4
-            }
           }
         })
       }

@@ -5,7 +5,7 @@ import Router from 'vue-router'
 import Full from '@/containers/Full'
 
 // Views
-import Dashboard from '@/views/Dashboard'
+import Dashboarddef from '@/views/Dashboard'
 import Charts from '@/views/Charts'
 import Widgets from '@/views/Widgets'
 
@@ -18,8 +18,11 @@ import TokensForm from '@/views/token/token_form'
 import DeviceList from '@/views/device/device_list'
 import DeviceForm from '@/views/device/device_form'
 
+// Streams
+import StreamList from '@/views/device/streams/stream_list'
+
 // Project
-// import Dashboard from '@/views/stats/dashboard'
+import Dashboard from '@/views/stats/dashboard'
 
 // Admin
 import AdminDashboard from '@/views/admin/dashboard'
@@ -62,6 +65,11 @@ const router = new Router({
           path: 'dashboard',
           name: 'Dashboard',
           component: Dashboard
+        },
+        {
+          path: 'dashboarddef',
+          name: 'Dashboard',
+          component: Dashboarddef
         },
         {
           path: 'admindashboard',
@@ -237,6 +245,15 @@ const router = new Router({
               name: 'DeviceUpdate',
               meta: {
                 label: 'Update'
+              },
+              props: true
+            },
+            {
+              path: ':deviceId/streams',
+              component: StreamList,
+              name: 'Streams',
+              meta: {
+                label: 'Streams'
               },
               props: true
             }

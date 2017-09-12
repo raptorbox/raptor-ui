@@ -16,9 +16,6 @@ function convertHex (hex, opacity) {
 const brandSuccess = '#4dbd74'
 const brandInfo = '#63c2de'
 const brandDanger = '#f86c6b'
-function random (min, max) {
-  return Math.floor(Math.random() * (max - min + 1) + min)
-}
 
 export default Line.extend({
   props: ['height','labels', 'data'],
@@ -39,33 +36,52 @@ export default Line.extend({
   methods: {
     renderLineChart () {
       let datasetsForCharts = Array();
+      // console.log("======================================================");
+      // console.log(JSON.stringify(this.chartData));
+      // console.log(this.chartData);
+      // console.log("======================================================")
       for (var i = 0; i < this.chartData.length; i++) {
         let ds = this.chartData[i];
         // console.log(ds);
         let data = [];
         for (var l = 0; l < ds.length; l++) {
           let finalObject = ds[l];
-          // console.log(finalObject);
+          let keys = Object.keys(finalObject);
+          // console.log(keys);
+          for (var j = 0; j < keys.length; j++) {
+            let k = keys[j];
+            // console.log(k + " : " + finalObject[k]);
+            let dataToPush = null;
+            if(finalObject[k] == "stages") {
+              dataToPush = 50;
+            } else if (finalObject[k] == -1) {
+              dataToPush = 0;
+            } else {
+              dataToPush = 0;
+            }
+            // console.log(k + " = SleepQuality ");
+            if(k != "SleepQuality") {
+              dataToPush = parseInt(finalObject[k]);
+            }
             let found = false;
-            let dataToPush = parseInt(finalObject);
             for (let a = 0; a < datasetsForCharts.length; a++) {
-              if (datasetsForCharts[a].label == this.labels[0]) {
+              if (datasetsForCharts[a].label == this.labels[j]) {
                 datasetsForCharts[a].data.push(dataToPush);
                 found = true;
               }
             }
             if(!found) {
               let obj = {
-                label: this.labels[0],
-                backgroundColor: convertHex(brand[0], 10),
-                borderColor: brand[0],
+                label: this.labels[j],
+                backgroundColor: convertHex(brand[j], 10),
+                borderColor: brand[j],
                 pointHoverBackgroundColor: '#fff',
                 borderWidth: 2,
                 data: [dataToPush]
               };
               datasetsForCharts.push(obj);
             }
-          // }
+          }
         }
       }
       if(datasetsForCharts.length == 0) {

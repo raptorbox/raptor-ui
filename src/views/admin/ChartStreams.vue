@@ -16,9 +16,6 @@ function convertHex (hex, opacity) {
 const brandSuccess = '#4dbd74'
 const brandInfo = '#63c2de'
 const brandDanger = '#f86c6b'
-function random (min, max) {
-  return Math.floor(Math.random() * (max - min + 1) + min)
-}
 
 export default Line.extend({
   props: ['height','labels', 'data'],
@@ -49,55 +46,31 @@ export default Line.extend({
         let data = [];
         for (var l = 0; l < ds.length; l++) {
           let finalObject = ds[l];
-          let keys = Object.keys(finalObject);
-          // console.log(keys);
-          for (var j = 0; j < keys.length; j++) {
-            let k = keys[j];
-            // console.log(k + " : " + finalObject[k]);
-            let dataToPush = null;
-            if(finalObject[k] == "stages") {
-              dataToPush = 50;
-            } else if (finalObject[k] == -1) {
-              dataToPush = 0;
-            } else {
-              dataToPush = 0;
-            }
-            // console.log(k + " = SleepQuality ");
-            if(k != "SleepQuality") {
-              dataToPush = parseInt(finalObject[k]);
-            }
+          // console.log(finalObject);
             let found = false;
+            let dataToPush = parseInt(finalObject);
             for (let a = 0; a < datasetsForCharts.length; a++) {
-              if (datasetsForCharts[a].label == this.labels[j]) {
+              if (datasetsForCharts[a].label == this.labels[0]) {
                 datasetsForCharts[a].data.push(dataToPush);
                 found = true;
               }
             }
             if(!found) {
               let obj = {
-                label: this.labels[j],
-                backgroundColor: convertHex(brand[j], 10),
-                borderColor: brand[j],
+                label: this.labels[0],
+                backgroundColor: convertHex(brand[0], 10),
+                borderColor: brand[0],
                 pointHoverBackgroundColor: '#fff',
                 borderWidth: 2,
                 data: [dataToPush]
               };
               datasetsForCharts.push(obj);
             }
-          }
+          // }
         }
       }
       if(datasetsForCharts.length == 0) {
         var elements = 27
-        var data1 = []
-        var data2 = []
-        var data3 = []
-
-        for (var i = 0; i <= elements; i++) {
-          data1.push(random(50, 200))
-          data2.push(random(80, 100))
-          data3.push(65)
-        }
         datasetsForCharts = [
         {
           label: 'My First dataset',
@@ -105,7 +78,7 @@ export default Line.extend({
           borderColor: brandInfo,
           pointHoverBackgroundColor: '#fff',
           borderWidth: 2,
-          data: data1
+          data: []
         },
         {
           label: 'My Second dataset',
@@ -113,7 +86,7 @@ export default Line.extend({
           borderColor: brandSuccess,
           pointHoverBackgroundColor: '#fff',
           borderWidth: 2,
-          data: data2
+          data: []
         },
         {
           label: 'My Third dataset',
@@ -122,7 +95,7 @@ export default Line.extend({
           pointHoverBackgroundColor: '#fff',
           borderWidth: 1,
           borderDash: [8, 5],
-          data: data3
+          data: []
         }
         ];
       }

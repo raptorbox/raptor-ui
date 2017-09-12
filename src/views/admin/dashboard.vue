@@ -10,13 +10,22 @@
           <line-chart-total-users class="chart-wrapper" style="height:80px;" :data="dataChartTotalUser" :labels="labelUsers" height="80"/>
         </b-card>
       </div><!--/.col-->
-      <div class="col-sm-6 col-lg-3">
+      <!-- <div class="col-sm-6 col-lg-3">
         <b-card class="bg-primary" :no-block="true" style="min-height:200px; max-height:200px; height:200px">
           <div class="card-body pb-0">
             <h4 class="mb-0">{{devices.length}}</h4>
             <p>Total Devices</p>
           </div>
           <line-chart-total-devices class="chart-wrapper" style="height:80px;" :data="dataChartTotalDevice" :labels="labelDevs" height="80"/>
+        </b-card>
+      </div> --><!--/.col-->
+      <div class="col-sm-6 col-lg-3">
+        <b-card class="bg-success" :no-block="true" style="min-height:200px; max-height:200px; height:200px">
+          <div class="card-body pb-0">
+            <h4 class="mb-0">{{devices.length}}</h4>
+            <p>Total Devices</p>
+          </div>
+          <bar-chart-total-devices class="chart-wrapper px-3" style="height:80px;" :data="dataChartTotalDevice" :labels="labelDevs" height="80"/>
         </b-card>
       </div><!--/.col-->
       <div class="col-sm-6 col-lg-3">
@@ -35,7 +44,7 @@
         </b-card>
       </div><!--/.col-->
       <div class="col-sm-6 col-lg-3">
-        <b-card class="bg-info" :no-block="true" style="min-height:200px; max-height:200px; height:200px">
+        <b-card class="bg-success" :no-block="true" style="min-height:200px; max-height:200px; height:200px">
           <div class="card-body pb-0">
             <h4 class="mb-0 float-left">Select a Device</h4>
             <div class="float-right">
@@ -94,7 +103,7 @@
           <div class="small text-muted">{{deviceDataTime}}</div>
         </div><!--/.col-->
         <div class="col-sm-7 hidden-sm-down">
-          <b-button type="button" variant="primary" class="float-right"><i class="icon-cloud-download"></i></b-button>
+          <!-- <b-button type="button" variant="primary" class="float-right"><i class="icon-cloud-download"></i></b-button> -->
           <b-button-toolbar class="float-right" aria-label="Toolbar with button groups">
             <b-button-group class="mr-3" aria-label="First group">
               <!-- <template>
@@ -102,17 +111,18 @@
                   <b-form-select variant="outline-secondary"  @change.native="onChangeOption" v-model="selectedDevice" :options="optionsDevice" />
                 </div>
               </template> -->
-              <template>
-                <div>
-                  <b-form-select variant="outline-secondary"  @change.native="onChangeOptionStream" v-model="selectedStream" :options="optionsStreams" />
-                </div>
-              </template>
               <b-button variant="outline-secondary" value="minutes" @click="onChangeDisplayDataTime">Minutes</b-button>
               <b-button variant="outline-secondary" value="hours" @click="onChangeDisplayDataTime">Hours</b-button>
               <b-button variant="outline-secondary" value="day" @click="onChangeDisplayDataTime">Day</b-button>
               <b-button variant="outline-secondary" value="month" @click="onChangeDisplayDataTime">Month</b-button>
             </b-button-group>
           </b-button-toolbar>
+          <div class="float-right">
+            <b-form-select variant="outline-secondary" class="mr-3" @change.native="onChangeOptionChannel" v-model="selectedChannel" :options="optionsChannel" />
+          </div>
+          <div class="float-right">
+            <b-form-select variant="outline-secondary" class="mr-3" @change.native="onChangeOptionStream" v-model="selectedStream" :options="optionsStreams" />
+          </div>
         </div><!--/.col-->
       </div><!--/.row-->
       <chart-streams class="chart-wrapper" style="height:300px;margin-top:40px;" :data="dataChartDevice" :labels="labelDevice" height="300"></chart-streams>
@@ -126,25 +136,17 @@
 <script>
   import LineChartTotalDevices from './LineChartTotalDevices'
   import LineChartTotalUsers from './LineChartTotalUsers'
-  import CardLine2ChartExample from './CardLine2ChartExample'
-  import CardLine3ChartExample from './CardLine3ChartExample'
-  import CardBarChartExample from './CardBarChartExample'
+  import BarChartTotalDevices from './BarChartTotalDevices'
   import ChartStreams from './ChartStreams'
-  import SocialBoxChartExample from './SocialBoxChartExample'
   import moment from 'moment'
-  import { Callout } from '../../components/'
 
   export default {
     name: 'dashboard',
     components: {
-      Callout,
       LineChartTotalDevices,
       LineChartTotalUsers,
-      CardLine2ChartExample,
-      CardLine3ChartExample,
-      CardBarChartExample,
-      ChartStreams,
-      SocialBoxChartExample
+      BarChartTotalDevices,
+      ChartStreams
     },
     data () {
       return {
@@ -182,7 +184,10 @@
         colorVarients: ['green','blue','lightblue','yellow','red','pink','black','purple','cyan','orange','brown'],
         selectedUserDetails: null,
         selectedDeviceDetails: null,
-        streamChartDetails: null
+        streamChartDetails: null,
+        selectedChannel: null,
+        optionsChannel: [{ value: null, text: 'Please select a Channel' }],
+        selectedDev: null
       }
     },
     mounted () {
@@ -279,12 +284,44 @@
           }
         }
       },
+      extractChartDataDeviceStreamOneChannel (d, val, channel) {
+        this.dictDevice = [];
+        // console.log(d)
+        // console.log(channel)
+        for (var i = 0; i < d.length; i++) {
+          let s = d[i];
+          if(i == 0) {
+            this.deviceDataTime = this.formatDate(s.timestamp * 1000);
+          }
+          let sDate = (new Date(s.timestamp * 1000)).getMinutes();
+          if(val == 'hours'){
+            sDate = (new Date(s.timestamp * 1000)).getHours();
+          } else if(val == 'day'){
+            sDate = (new Date(s.timestamp * 1000)).getDay();
+          } else if(val == 'month'){
+            sDate = (new Date(s.timestamp * 1000)).getMonth();
+          }
+          if((typeof s.channels[channel]) === 'number' || (typeof s.channels[channel]) === 'boolean') {
+            if(!this.dictDevice[sDate]) {
+              this.dictDevice[sDate] = [];
+            }
+            if(this.dictDevice[sDate]) {
+              this.dictDevice[sDate].push(s.channels[channel]);
+            }
+          } else {
+            alert("Only numbers and booleans are allowed");
+            break;
+          }
+        }
+        // console.log("=============================================")
+        // console.log(this.dictDevice)
+      },
       fetchDevices (condition) {
         //{name: val}
         this.$raptor.Inventory().search(condition).then((devices) => {
           this.arrayOfDevices = devices;
           devices.forEach( (e) => this.listOfDevicesForSelectOptions.push({value: e.id, text: e.name+' - '+e.id}));
-          console.log(devices);
+          // console.log(devices);
           console.log(this.listOfDevicesForSelectOptions);
           if(devices.length > 0 && devices[0]) {
             let keys = Object.keys(devices[0].json.streams);
@@ -335,12 +372,10 @@
         if(stream){
           this.$raptor.Stream().list(stream, 0, ts)
           .then((streams) => {
-            console.log(JSON.stringify(streams));
-            this.dictDevice = [];
-            this.getChannelsDetails(Object.keys(streams[0].channels));
+            // console.log(JSON.stringify(streams));
             this.selectedStreamData = streams;
-            this.extractChartDataDeviceStream(streams,'minutes');
-            this.changeStreamData();
+            // this.extractChartDataDeviceStream(streams,'minutes');
+            // this.changeStreamData();
           })
           .catch((e) => {
             this.$log.debug('Failed to load streams');
@@ -353,7 +388,7 @@
         this.streamChartDetails = '<ul>';
         for (var i = 0; i < channels.length; i++) {
           this.streamChartDetails += '<li>';
-          this.streamChartDetails += '<div class="text-muted">'+ channels[i] +'</div><strong>40.15%</strong>';
+          this.streamChartDetails += '<div class="text-muted">'+ channels[i] +'</div>';
           this.streamChartDetails += '<div class="mt-2" style="min-height: 5px; padding-left: 10%; padding-right:10%;background:' + this.colorVarients[i] + '" />';
           this.streamChartDetails += '</li>'
         }
@@ -394,6 +429,7 @@
           let s = this.labelDevice[i];
           arr.push(this.dictDevice[s]);
         }
+        // console.log(arr)
         this.dataChartDevice = arr;
       },
       onChangeUser (evt) {
@@ -437,12 +473,48 @@
       },
       onChangeOptionStream (evt) {
         let val = evt.target.value;
-        this.fetchStreamData(val);
+        if(this.selectedDev) {
+          // console.log(this.selectedDev.json.streams)
+          let ch = this.selectedDev.json.streams[val];
+          let keys = Object.keys(ch.channels);
+          // console.log(keys);
+          this.optionsChannel = [];
+          this.optionsChannel.push({ value: null,text: 'Please select a Channel' });
+          for (var i = 0; i < keys.length; i++) {
+            this.optionsChannel.push({ value: keys[i],text: keys[i] });
+          }
+          // this.selectedChannel = keys[0];
+          this.fetchStreamData(val);
+        }
       },
       onChangeDisplayDataTime (evt) {
         let val = evt.target.value;
+        // console.log(this.selectedChannel)
+        if(this.selectedStreamData && this.selectedChannel) {
+          this.extractChartDataDeviceStreamOneChannel(this.selectedStreamData, val, this.selectedChannel);
+          this.changeStreamData();
+        }
+      },
+      onChangeOptionChannel (evt) {
+        let val = evt.target.value;
+        // console.log(val)
+        /*if(this.selectedDev) {
+          // console.log(this.selectedDev.json.streams)
+          let ch = this.selectedDev.json.streams[val];
+          let keys = Object.keys(ch.channels);
+          for (var i = 0; i < keys.length; i++) {
+            if(keys[i] == val){
+              if(ch.channels[val].type != "")
+            }
+          }
+          // this.selectedChannel = keys[0];
+          this.fetchStreamData(val);
+        }*/
+        this.dictDevice = [];
         if(this.selectedStreamData) {
-          this.extractChartDataDeviceStream(this.selectedStreamData, val);
+          // this.getChannelsDetails(Object.keys(this.selectedStreamData.channels));
+          // console.log(this.selectedStreamData)
+          this.extractChartDataDeviceStreamOneChannel(this.selectedStreamData,'minutes',val);
           this.changeStreamData();
         }
       }
