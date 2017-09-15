@@ -21,6 +21,9 @@ import DeviceForm from '@/views/device/device_form'
 // Streams
 import StreamList from '@/views/device/streams/stream_list'
 
+// Device RecordSet
+import DeviceRecordSet from '@/views/device/records/records'
+
 // Project
 import Dashboard from '@/views/stats/dashboard'
 
@@ -86,7 +89,11 @@ const router = new Router({
           name: 'Widgets',
           component: Widgets
         },
-
+        {
+          path: 'tables',
+          name: 'Tables',
+          component: Tables
+        },
         {
           path: 'admin',
           redirect: '/admin/users',
@@ -254,6 +261,15 @@ const router = new Router({
               name: 'Streams',
               meta: {
                 label: 'Streams'
+              },
+              props: true
+            },
+            {
+              path: ':deviceId/data',
+              component: DeviceRecordSet,
+              name: 'RecordSet',
+              meta: {
+                label: 'Records'
               },
               props: true
             }

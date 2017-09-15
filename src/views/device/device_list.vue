@@ -32,6 +32,7 @@
           <template slot="actions" scope="row">
             <div class="row">
               <b-button class="btn btn-sm" :to="{ name: 'Streams', params: { deviceId: row.item.id }}">Streams</b-button>
+              <b-button class="btn btn-primary btn-sm" :to="{ name: 'RecordSet', params: { deviceId: row.item.id }}">Records</b-button>
               <click-confirm>
                 <b-button class="btn btn-outline-danger btn-sm" @click="remove(row.item.id)">Delete</b-button>
               </click-confirm>
@@ -85,6 +86,7 @@
         .then((list) => {
           this.$log.debug('Loaded %s device list', list.length)
           console.log(list)
+          // console.log(JSON.stringify(list))
           this.loading = false
           this.list = list
           this.totalRows = list.length

@@ -113,7 +113,7 @@
           this.$data.name = device.name
           this.$data.description = device.description
           this.$data.id = device.id
-          this.$data.userId = device.it
+          this.$data.userId = device.userId
           Object.assign(this.$data, device)
         })
         .catch((e) => {
