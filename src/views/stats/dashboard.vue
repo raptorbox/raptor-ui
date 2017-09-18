@@ -224,10 +224,11 @@
             if(this.dictDevice[sDate]) {
               this.dictDevice[sDate].push(s.channels[channel]);
             }
-          } else {
-            alert("Only numbers and booleans are allowed");
-            break;
           }
+          // else {
+            // alert("Only numbers and booleans are allowed");
+            // break;
+          // }
         }
         // console.log("=============================================")
         // console.log(this.dictDevice)
@@ -311,7 +312,11 @@
           this.optionsChannel = [];
           this.optionsChannel.push({ value: null,text: 'Please select a Channel' });
           for (var i = 0; i < keys.length; i++) {
-            this.optionsChannel.push({ value: keys[i],text: keys[i] });
+            if(ch.channels[keys[i]].type === 'number' || ch.channels[keys[i]].type === 'boolean') {
+              this.optionsChannel.push({ value: keys[i],text: keys[i] });
+            } else {
+              this.optionsChannel.push({ text: keys[i], disabled: true });
+            }
           }
           // this.selectedChannel = keys[0];
           this.fetchStreamData(val);

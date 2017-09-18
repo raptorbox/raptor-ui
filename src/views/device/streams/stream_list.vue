@@ -186,7 +186,7 @@
             let channels = this.tableDataStreams[i].channels
             for (var j = 0; j < channels.length; j++) {
               if(channel.id == channels[j].id){
-                channels[i]['type'] = val;
+                channels[j]['type'] = val;
                 break
               }
             }

@@ -38,6 +38,7 @@ export default Line.extend({
   },
   methods: {
     renderLineChart () {
+      let max = 0 //Number.MAX_VALUE
       let datasetsForCharts = Array();
       for (var i = 0; i < this.chartData.length; i++) {
         let ds = this.chartData[i];
@@ -52,6 +53,9 @@ export default Line.extend({
               if (datasetsForCharts[a].label == this.labels[0]) {
                 datasetsForCharts[a].data.push(dataToPush);
                 found = true;
+                if(dataToPush > max) {
+                  max = dataToPush
+                }
               }
             }
             if(!found) {
@@ -119,8 +123,8 @@ export default Line.extend({
             ticks: {
               beginAtZero: true,
               maxTicksLimit: 5,
-              stepSize: Math.ceil(250 / 5),
-              max: 250
+              stepSize: Math.ceil((max) / 5),
+              max: max + 10
             },
             gridLines: {
               display: true
