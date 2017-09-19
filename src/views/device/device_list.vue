@@ -56,7 +56,7 @@
     data () {
       return {
         loading: false,
-        list: null,
+        list: [],
         error: null,
         currentPage: 1,
         fields: {

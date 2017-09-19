@@ -35,6 +35,7 @@
     <!--/.col-->
   </div>
   <!--/.row-->
+  <stream class="chart-wrapper" id="streams" :SaveData="SaveData" :deviceData="device" />
 
   <div class="row">
     <div class="col-md-12">
@@ -55,6 +56,7 @@
 </template>
 
 <script>
+  import Stream from './../components/editStream'
   import Raptor from 'raptor-sdk'
   const defaultData = () => {
     console.log("***************************************")
@@ -90,10 +92,16 @@
 
   export default {
     name: 'device_form',
+    components: {
+      Stream
+    },
     data() {
       return {
         loading: false,
         error: false,
+        SaveData: false,
+        device: null,
+        saveIt: 0,
         ...defaultData()
       }
     },
@@ -114,6 +122,7 @@
           this.$data.description = device.description
           this.$data.id = device.id
           this.$data.userId = device.userId
+          this.$data.device = device
           Object.assign(this.$data, device)
         })
         .catch((e) => {
@@ -126,7 +135,7 @@
         this.$router.push("/inventory/list")
       },
       save() {
-
+        var context = this
         const d = defaultData()
         const u = {}
         for(let p in d) {
@@ -136,22 +145,31 @@
         this.$log.debug('Saving device', u)
 
         if (this.$route.params.deviceId) {
-          this.$raptor.Inventory().update(u)
-          .then((device) => {
-            this.$log.debug('device %s saved', device.id)
-            this.loading = false
-          })
-          .catch((e) => {
-            this.$log.debug('Failed to save device')
-            this.$log.error(e)
-            this.loading = false
-          })
+          // this.$raptor.Inventory().update(u)
+          // .then((device) => {
+          //   this.$log.debug('device %s saved', device.id)
+          this.device.name = this.$data.name
+          this.device.description = this.$data.description
+          console.log(this.saveIt++ + " stupid " + context.SaveData)
+          context.SaveData = this.saveIt++;
+            // this.loading = false
+            // context.$router.push("/inventory/list")
+          // })
+          // .catch((e) => {
+          //   this.$log.debug('Failed to save device')
+          //   this.$log.error(e)
+          //   this.loading = false
+          // })
+          context.$router.push("/inventory/list")
         } else {
           this.$log.debug('creating device', u)
           this.$raptor.Inventory().create(u)
           .then((device) => {
             this.$log.debug('device %s created', device.id)
+            this.device = device
+            context.SaveData = context.saveIt++
             this.loading = false
+            context.$router.push("/inventory/list")
           })
           .catch((e) => {
             this.$log.debug('Failed to create device')
@@ -159,7 +177,6 @@
             this.loading = false
           })
         }
-        this.$router.push("/inventory/list")
       }
     }
   }
