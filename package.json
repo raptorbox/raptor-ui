@@ -23,6 +23,7 @@
     "raptor-sdk": "^4.3.13",
     "request": "^2.81.0",
     "simple-line-icons": "^2.4.1",
+    "simple-vue-validator": "^0.14.0",
     "vue": "2.4.2",
     "vue-chartjs": "2.8.1",
     "vue-router": "2.7.0",

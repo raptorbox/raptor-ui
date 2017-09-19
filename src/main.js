@@ -14,6 +14,9 @@ Vue.use(BootstrapVue)
 Vue.use(RaptorVue)
 Vue.component('clickConfirm', ClickConfirm)
 
+var SimpleVueValidation = require('simple-vue-validator')
+Vue.use(SimpleVueValidation)
+
 /* eslint-disable no-new */
 new Vue({
   el: '#app',

@@ -6,19 +6,30 @@
       <!-- <div slot="header">
         <strong>Basic Form</strong> Elements
       </div> -->
-
-      <b-form-fieldset description="Please enter an username" label="Username" :horizontal="false">
-        <b-form-input type="text" placeholder="Enter username" v-model="username"></b-form-input>
-      </b-form-fieldset>
-
-      <b-form-fieldset description="Please enter an email" label="Email" :horizontal="false">
-        <b-form-input type="email" placeholder="Enter email" v-model="email"></b-form-input>
-      </b-form-fieldset>
-
-      <b-form-fieldset description="Please enter a password" label="Password" :horizontal="false">
-        <b-form-input type="password" placeholder="Enter password" v-model="password"></b-form-input>
-      </b-form-fieldset>
-
+      <div class="form-group" :class="{error: validation.hasError('username')}">
+        <div class="content">
+          <b-form-fieldset description="Please enter an username" label="Username" :horizontal="false">
+            <b-form-input type="text" placeholder="Enter username" v-model="username"></b-form-input>
+          </b-form-fieldset>
+        </div>
+        <div class="message">{{ validation.firstError('username') }}</div>
+      </div>
+      <div class="form-group" :class="{error: validation.hasError('email')}">
+        <div class="content">
+          <b-form-fieldset description="Please enter an email" label="Email" :horizontal="false">
+            <b-form-input type="email" placeholder="Enter email" v-model="email"></b-form-input>
+          </b-form-fieldset>
+        </div>
+        <div class="message">{{ validation.firstError('email') }}</div>
+      </div>
+      <div class="form-group" :class="{error: validation.hasError('password')}">
+        <div class="content">
+          <b-form-fieldset description="Please enter a password" label="Password" :horizontal="false">
+            <b-form-input type="password" placeholder="Enter password" v-model="password"></b-form-input>
+          </b-form-fieldset>
+        </div>
+        <div class="message">{{ validation.firstError('password') }}</div>
+      </div>
     </div>
 
     <div class="col-md-6">
@@ -56,6 +67,8 @@
 
 <script>
   import Raptor from 'raptor-sdk'
+  var SimpleVueValidation = require('simple-vue-validator');
+  var Validator = SimpleVueValidation.Validator;
   const defaultData = () => {
     const d = new Raptor.models.User().defaultFields()
     const u = {}
@@ -73,6 +86,17 @@
         loading: false,
         error: false,
         ...defaultData()
+      }
+    },
+    validators: {
+      email: function (value) {
+        return Validator.value(value).required().email();
+      },
+      username: function (value) {
+        return Validator.value(value).required();
+      },
+      password: function (value) {
+        return Validator.value(value).required();
       }
     },
     mounted() {
@@ -100,7 +124,7 @@
         this.$router.push("/admin/users")
       },
       save() {
-
+        var context = this
         const d = defaultData()
         const u = {}
         for(let p in d) {
@@ -108,38 +132,45 @@
         }
         this.loading = true
         this.$log.debug('Saving user', u)
-        if (this.$route.params.userId) {
-          this.$raptor.Admin().User().save(u)
-          .then((u) => {
-            this.$log.debug('User %s saved', u.uuid)
-            this.loading = false
-          })
-          .catch((e) => {
-            this.$log.debug('Failed to save user')
-            this.$log.error(e)
-            this.loading = false
-          })
-        } else {
-          let roles = Array()
-          for(let p in d) {
-            if(p == "roles") {
-              roles.push(this[p])
+
+        this.$validate()
+        .then(function (success) {
+          if (success) {
+            if (context.$route.params.userId) {
+              context.$raptor.Admin().User().save(u)
+              .then((u) => {
+                context.$log.debug('User %s saved', u.uuid)
+                context.loading = false
+                context.$router.push("/admin/users")
+              })
+              .catch((e) => {
+                context.$log.debug('Failed to save user')
+                context.$log.error(e)
+                context.loading = false
+              })
+            } else {
+              let roles = Array()
+              for(let p in d) {
+                if(p == "roles") {
+                  roles.push(context[p])
+                }
+              }
+              u['roles'] = roles
+              context.$log.debug('creating user', u)
+              context.$raptor.Admin().User().create(u)
+              .then((u) => {
+                context.$log.debug('User %s created', u.uuid)
+                context.loading = false
+                context.$router.push("/admin/users")
+              })
+              .catch((e) => {
+                context.$log.debug('Failed to create user')
+                context.$log.error(e)
+                context.loading = false
+              })
             }
           }
-          u['roles'] = roles
-          this.$log.debug('creating user', u)
-          this.$raptor.Admin().User().create(u)
-          .then((u) => {
-            this.$log.debug('User %s created', u.uuid)
-            this.loading = false
-          })
-          .catch((e) => {
-            this.$log.debug('Failed to create user')
-            this.$log.error(e)
-            this.loading = false
-          })
-        }
-        this.$router.push("/admin/users")
+        });
       }
     }
   }

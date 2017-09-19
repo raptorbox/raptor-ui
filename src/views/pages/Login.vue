@@ -5,7 +5,7 @@
       <div class="col-md-8">
         <div class="card-group mb-0">
           <div class="card p-4">
-            <div class="card-body">
+            <div class="card-body" @keydown.enter="login()">
               <h1>Login</h1>
               <p class="text-muted">Sign In to your account</p>
               <div class="input-group mb-3">
