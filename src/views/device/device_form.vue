@@ -14,6 +14,9 @@
       <b-form-fieldset description="Please enter a description" label="Description" :horizontal="false">
         <b-form-input type="text" placeholder="Enter description" v-model="description"></b-form-input>
       </b-form-fieldset>
+      <b-form-fieldset description="Please enter a UserId" label="Description" :horizontal="false">
+        <b-form-input type="text" placeholder="Enter UserId" v-model="userId"></b-form-input>
+      </b-form-fieldset>
 
       <!-- <b-form-fieldset description="Please select a device" label="Password" :horizontal="false">
         <b-form-input type="password" placeholder="Enter password" v-model="password"></b-form-input>
@@ -150,6 +153,7 @@
           //   this.$log.debug('device %s saved', device.id)
           this.device.name = this.$data.name
           this.device.description = this.$data.description
+          this.device.userId = this.$data.userId
           console.log(this.saveIt++ + " stupid " + context.SaveData)
           context.SaveData = this.saveIt++;
             // this.loading = false
