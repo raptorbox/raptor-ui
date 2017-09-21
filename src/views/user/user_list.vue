@@ -15,7 +15,7 @@
           </div> -->
           <div>
             <div style="float: left;">
-            <p style="text-align: center; font-weight:bold; margin:0;">Users</p>
+              <p style="text-align: center; font-weight:bold; margin:0;">Users</p>
             </div>
             <div class="col-md-2 col-md-offset-2" style="float: right;">
               <div class="row" style="margin-left:auto; margin-right:0;">
@@ -79,9 +79,14 @@
           <span v-bind:class="['badge', { 'badge-success': row.item.enabled,'badge-warning': !row.item.enabled }]"> {{row.item.enabled ? 'Enabled' : 'Disabled'}}</span>
         </template>
         <template slot="actions" scope="row">
-          <click-confirm>
-            <b-button class="btn btn-outline-danger btn-sm" @click="remove(row.item.uuid)">Delete</b-button>
-          </click-confirm>
+          <span v-if="user.uuid == row.item.uuid">
+            <b-button class="btn btn-outline-danger btn-sm" disabled>Delete</b-button>
+          </span>
+          <span v-else>
+            <click-confirm>
+              <b-button class="btn btn-outline-danger btn-sm" @click="remove(row.item.uuid)">Delete</b-button>
+            </click-confirm>
+          </span>
         </template>
       </b-table>
 
@@ -128,10 +133,13 @@
         },
         perPage: 10,
         totalRows: 0,
+        user: null,
         pageOptions: [{text:10,value:10},{text:25,value:25},{text:50,value:50}]
       }
     },
     mounted () {
+      this.user = this.$raptor.Auth().getUser()
+      console.log(this.user)
       this.fetchData()
     },
     methods: {

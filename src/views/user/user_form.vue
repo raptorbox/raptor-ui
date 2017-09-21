@@ -22,14 +22,16 @@
         </div>
         <div class="message">{{ validation.firstError('email') }}</div>
       </div>
-      <div class="form-group" :class="{error: validation.hasError('password')}">
-        <div class="content">
-          <b-form-fieldset description="Please enter a password" label="Password" :horizontal="false">
-            <b-form-input type="password" placeholder="Enter password" v-model="password"></b-form-input>
-          </b-form-fieldset>
+      <span v-if="loggedInUser && loggedInUser.uuid == uuid">
+        <div class="form-group" :class="{error: validation.hasError('password')}">
+          <div class="content">
+            <b-form-fieldset description="Please enter a password" label="Password" :horizontal="false">
+              <b-form-input type="password" placeholder="Enter password" v-model="password"></b-form-input>
+            </b-form-fieldset>
+          </div>
+          <div class="message">{{ validation.firstError('password') }}</div>
         </div>
-        <div class="message">{{ validation.firstError('password') }}</div>
-      </div>
+      </span>
     </div>
 
     <div class="col-md-6">
@@ -85,6 +87,7 @@
       return {
         loading: false,
         error: false,
+        loggedInUser: null,
         ...defaultData()
       }
     },
@@ -100,6 +103,8 @@
       }
     },
     mounted() {
+      this.loggedInUser = this.$raptor.Auth().getUser()
+      console.log(this.loggedInUser)
       if (this.$route.params.userId) {
         this.$log.debug('Load %s ', this.$route.params.userId)
         this.load(this.$route.params.userId)

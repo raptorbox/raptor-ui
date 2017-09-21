@@ -26,6 +26,7 @@
     "simple-vue-validator": "^0.14.0",
     "vue": "2.4.2",
     "vue-chartjs": "2.8.1",
+    "vue-flatpickr-component": "^3.0.0",
     "vue-router": "2.7.0",
     "vuex": "^2.3.1"
   },

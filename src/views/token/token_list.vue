@@ -61,7 +61,7 @@
         <div class="col-md-2 col-md-offset-2" style="float: right;">
           <div class="row" style="margin-left:auto; margin-right:0;">
             <div class="col-md-6">
-              <b-button class="btn btn-primary" :to="{ name: 'UsersCreate'}">Create Token</b-button>
+              <b-button class="btn btn-primary" :to="{ name: 'TokensCreate'}">Create Token</b-button>
             </div>
             <div class="col-md-6">
               <b-form-fieldset horizontal>
@@ -73,18 +73,34 @@
       </div>  
 
       <b-table striped hover show-empty :items="list" :fields="fields" :current-page="currentPage" :per-page="perPage" >
-        <template slot="username" scope="row">
-          <b-button class="btn btn-link" :to="{ name: 'UsersUpdate', params: { userId: row.item.uuid }}">
-            {{row.item.username}}
+        <template slot="name" scope="row">
+          <b-button class="btn btn-link" :to="{ name: 'TokensUpdate', params: { tokenId: row.item.id }}">
+            {{row.item.name}}
           </b-button>
         </template>
         <template slot="registered" scope="row">{{formatDate(row.item.created)}}</template>
-        <template slot="roles" scope="row">{{row.item.roles ? row.item.roles.join(', ') : ''}}</template>
+        <!-- <template slot="token" scope="row">{{row.item.token}}</template> -->
+        <!-- <template slot="secret" scope="row">{{row.item.secret}}</template> -->
+        <!-- <template slot="device" scope="row">{{row.item.deviceId}}</template> -->
+        <template slot="owner" scope="row">{{row.item.owner.username}}</template>
         <template slot="status" scope="row">
           <span v-bind:class="['badge', { 'badge-success': row.item.enabled,'badge-warning': !row.item.enabled }]"> {{row.item.enabled ? 'Enabled' : 'Disabled'}}</span>
         </template>
-        <template slot="token" scope="row">
-          {{row.item.username}}
+        <template slot="permission" scope="row">
+        <div @click="loadPermissions(row.item)">
+            <span v-if="listWithPermissions[row.item.id] && listWithPermissions[row.item.id].length > 0"><p><span v-bind:id="row.item.id" v-for="p in listWithPermissions[row.item.id]">{{p}}, </span></p></span>
+            <span v-else>
+              <b-button class="btn btn-sm">Show Permissions</b-button>
+            </span>
+          </div>
+        </template>
+        <template slot="valid" scope="row">
+          <span v-bind:class="['badge', { 'badge-success': row.item.valid,'badge-warning': !row.item.valid }]"> {{row.item.valid ? 'Valid' : 'Not Valid'}}</span>
+        </template>
+        <template slot="actions" scope="row">
+          <click-confirm>
+            <b-button class="btn btn-outline-danger btn-sm" @click="remove(row.item.id)">Delete</b-button>
+          </click-confirm>
         </template>
       </b-table>
 
@@ -108,19 +124,25 @@
     data () {
       return {
         loading: false,
-        list: null,
+        list: [],
         error: null,
         currentPage: 1,
         fields: {
-          username:     { label: 'Username' },
+          name:         { label: 'Name' },
           registered:   { label: 'Registered' },
-          roles:        { label: 'Roles' },
-          status:       { label: 'Status' },
-          token:      { label: 'Token' }
+          // token:        { label: 'token' },
+          // secret:       { label: 'Secret' },
+          // device:       { label: 'Device Id' },
+          owner:        { label: 'Owner' },
+          permission:   { label: 'Permissions' },
+          status:       { label: 'Status'},
+          valid:        { label: 'Is Valid'},
+          actions:      { }
         },
         perPage: 10,
         totalRows: 0,
-        pageOptions: [{text:10,value:10},{text:25,value:25},{text:50,value:50}]
+        pageOptions: [{text:10,value:10},{text:25,value:25},{text:50,value:50}],
+        listWithPermissions: {}
       }
     },
     mounted () {
@@ -137,20 +159,59 @@
         this.$raptor.Admin().Token().list()
         .then((list) => {
           this.$log.debug('Loaded %s tokens', list.length)
-
+          console.log(list)
           this.loading = false
           this.list = list
           this.totalRows = list.length
+          for (var i = 0; i < list.length; i++) {
+            this.listWithPermissions[list[i].id] = []
+          }
+          console.log(this.listWithPermissions)
         })
         .catch((e) => {
           this.$log.debug('Failed to load list')
           this.$log.error(e)
-
+          console.log(e)
           this.error = e.message
           this.list = []
           this.loading = false
         })
-      }
+      },
+      loadPermissions (tok) {
+        this.$raptor.Admin().Token().Permission().get(tok)
+        .then((permission) => {
+          console.log(JSON.stringify(permission))
+          if(permission) {
+            let backup = this.listWithPermissions
+            for (var i = 0; i < this.list.length; i++) {
+              if(this.list[i].id == tok.id) {
+                backup[this.list[i].id] = permission
+              }
+            }
+            this.listWithPermissions = {}
+            this.listWithPermissions = backup
+          }
+          this.permissions = ['admin','list','read','update','create','delete','push','pull','execute','data','tree']
+        })
+        .catch((e) => {
+          this.$log.debug('Failed to load permission')
+          this.$log.error(e)
+          console.log(e)
+          this.loading = false
+        })
+      },
+      remove (tokenId) {
+        this.$log.debug("Deleting %s", tokenId)
+        this.$raptor.Admin().Token().delete({ id: tokenId})
+        .then(() => {
+          this.$log.debug("Deleted %s", tokenId)
+          this.fetchData()
+        })
+        .catch((e) => {
+          console.log(e)
+          this.$log.error("Error deleting %s", tokenId)
+        })
+      },
     }
 
   }

@@ -144,6 +144,7 @@
         .catch((e) => {
           this.$log.debug('Failed to load user list');
           this.$log.error(e);
+          console.log(e)
         });
         // this.fetchDevices(this.selectedDevice);
       },
@@ -245,6 +246,7 @@
           .catch((e) => {
             this.$log.debug('Failed to load streams');
             this.$log.error(e);
+            console.log(e)
           });
         }
       },
@@ -290,6 +292,18 @@
             this.selectedDeviceDetails += '<li><strong>id:</strong>       ' + details.id + '</li>';
             this.selectedDeviceDetails += '<li><strong>Created:</strong>  ' + this.formatDate(details.createdAt*1000) + '</li>';
             this.selectedDeviceDetails += '</ul>';
+            // getClient().Tree().subscribe({ id: config.tree }, function(msg) {
+            //   if(!(msg.type === 'stream' && msg.op === 'data' && msg.streamId === r.stream)) {
+            //       return
+            //   }
+            //   d('Data from %s', msg.device.name)
+
+            //   emitter.emit('data.update', msg)
+            // })
+            // console.log(this.$raptor.Tree())
+            // this.$raptor.Tree().subscribe(this.selectedDev, function(msg) {
+            //   console.log(msg)
+            // });
           }
         }
       },
