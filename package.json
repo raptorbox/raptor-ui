@@ -20,7 +20,7 @@
     "font-awesome": "^4.7.0",
     "loglevel": "^1.4.1",
     "moment": "^2.18.1",
-    "raptor-sdk": "^4.3.13",
+    "raptor-sdk": "^4.3.18",
     "request": "^2.81.0",
     "simple-line-icons": "^2.4.1",
     "simple-vue-validator": "^0.14.0",

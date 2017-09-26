@@ -75,7 +75,10 @@
   import LineChartTotalDevices from './LineChartTotalDevices'
   import ChartStreams from './ChartStreams'
   import moment from 'moment'
+  import Raptor from 'raptor-sdk'
+  import EventEmitter from "eventemitter3"
 
+  var emitter = new EventEmitter({})
   export default {
     name: 'dashboard',
     components: {
@@ -185,14 +188,7 @@
           if(i == 0) {
             this.deviceDataTime = this.formatDate(s.timestamp * 1000);
           }
-          let sDate = (new Date(s.timestamp * 1000)).getMinutes();
-          if(val == 'hours'){
-            sDate = (new Date(s.timestamp * 1000)).getHours();
-          } else if(val == 'day'){
-            sDate = (new Date(s.timestamp * 1000)).getDay();
-          } else if(val == 'month'){
-            sDate = (new Date(s.timestamp * 1000)).getMonth();
-          }
+          let sDate = this.getDate(s, val)
           if(!this.dictDevice[sDate]) {
             this.dictDevice[sDate] = [];
           }
@@ -201,23 +197,16 @@
           }
         }
       },
-      extractChartDataDeviceStreamOneChannel (d, val, channel) {
+      extractChartDataDeviceStreamOneChannel (d, val, channel, pushData) {
         this.dictDevice = [];
-        // console.log(d)
+        console.log(d)
         // console.log(channel)
         for (var i = 0; i < d.length; i++) {
           let s = d[i];
           if(i == 0) {
             this.deviceDataTime = this.formatDate(s.timestamp * 1000);
           }
-          let sDate = (new Date(s.timestamp * 1000)).getMinutes();
-          if(val == 'hours'){
-            sDate = (new Date(s.timestamp * 1000)).getHours();
-          } else if(val == 'day'){
-            sDate = (new Date(s.timestamp * 1000)).getDay();
-          } else if(val == 'month'){
-            sDate = (new Date(s.timestamp * 1000)).getMonth();
-          }
+          let sDate = this.getDate(s, val)
           if((typeof s.channels[channel]) === 'number' || (typeof s.channels[channel]) === 'boolean') {
             if(!this.dictDevice[sDate]) {
               this.dictDevice[sDate] = [];
@@ -226,22 +215,27 @@
               this.dictDevice[sDate].push(s.channels[channel]);
             }
           }
-          // else {
-            // alert("Only numbers and booleans are allowed");
-            // break;
-          // }
         }
-        // console.log("=============================================")
-        // console.log(this.dictDevice)
+      },
+      getDate(s, val) {
+        let sDate = (new Date(s.timestamp * 1000)).getMinutes();
+        if(val == 'hours'){
+          sDate = (new Date(s.timestamp * 1000)).getHours();
+        } else if(val == 'day'){
+          sDate = (new Date(s.timestamp * 1000)).getDay();
+        } else if(val == 'month'){
+          sDate = (new Date(s.timestamp * 1000)).getMonth();
+        }
+        return sDate;
       },
       fetchStreamData (str) {
+        var context = this;
         var ts = Math.round((new Date()).getTime() / 1000);
         let stream = this.selectedDev.getStream(str);
         if(stream){
           this.$raptor.Stream().list(stream, 0, ts)
           .then((streams) => {
-            // console.log(JSON.stringify(streams));
-            this.selectedStreamData = streams;
+            context.selectedStreamData = streams;
           })
           .catch((e) => {
             this.$log.debug('Failed to load streams');
@@ -292,20 +286,29 @@
             this.selectedDeviceDetails += '<li><strong>id:</strong>       ' + details.id + '</li>';
             this.selectedDeviceDetails += '<li><strong>Created:</strong>  ' + this.formatDate(details.createdAt*1000) + '</li>';
             this.selectedDeviceDetails += '</ul>';
-            // getClient().Tree().subscribe({ id: config.tree }, function(msg) {
-            //   if(!(msg.type === 'stream' && msg.op === 'data' && msg.streamId === r.stream)) {
-            //       return
-            //   }
-            //   d('Data from %s', msg.device.name)
-
-            //   emitter.emit('data.update', msg)
-            // })
-            // console.log(this.$raptor.Tree())
-            // this.$raptor.Tree().subscribe(this.selectedDev, function(msg) {
-            //   console.log(msg)
-            // });
           }
         }
+      },
+      getNode () {
+        let name = "memosa-nodes"
+        return this.$raptor.Tree().list().then((list) => {
+          const res = list.filter((n) => n.name === name)
+          if (res.length === 0) {
+            console.log("Creating new `%s` node", name)
+            return this.$raptor.Tree().create({name})
+          }
+          console.log("Found `%s` node", name)
+          return Promise.resolve(res[0])
+        })
+      },
+      addDeviceNode (parentNode, device) {
+        console.log("Adding to group %s device %s (id:%s)", parentNode.name, device.name, device.id)
+        return this.$raptor.Tree().add(parentNode, new Raptor.models.Tree({
+          userId: parentNode.userId,
+          name: device.name,
+          id: device.id,
+          type: "device"
+        }))
       },
       onChangeOption: function(evt) {
         let val = evt.target.value;
@@ -320,13 +323,13 @@
         let val = evt.target.value;
         if(this.selectedDev) {
           // console.log(this.selectedDev.json.streams)
-          let ch = this.selectedDev.json.streams[val];
-          let keys = Object.keys(ch.channels);
+          let stream = this.selectedDev.json.streams[val];
+          let keys = Object.keys(stream.channels);
           // console.log(keys);
           this.optionsChannel = [];
           this.optionsChannel.push({ value: null,text: 'Please select a Channel' });
           for (var i = 0; i < keys.length; i++) {
-            if(ch.channels[keys[i]].type === 'number' || ch.channels[keys[i]].type === 'boolean') {
+            if(stream.channels[keys[i]].type === 'number' || stream.channels[keys[i]].type === 'boolean') {
               this.optionsChannel.push({ value: keys[i],text: keys[i] });
             } else {
               this.optionsChannel.push({ text: keys[i], disabled: true });
@@ -334,6 +337,7 @@
           }
           // this.selectedChannel = keys[0];
           this.fetchStreamData(val);
+          this.subscribeStream(stream);
         }
       },
       ChangeDisplayDataTime (evt) {
@@ -350,6 +354,18 @@
           this.extractChartDataDeviceStreamOneChannel(this.selectedStreamData,'minutes',val);
           this.changeStreamData();
         }
+      },
+      subscribeStream (stream) {
+        var context = this;
+        this.$raptor.Stream().subscribe(stream, function(msg) {
+          console.log(msg)
+          context.selectedStreamData.push(msg.record);
+          context.extractChartDataDeviceStream(context.selectedStreamData,'minutes',context.selectedChannel);
+          context.changeStreamData();
+          // if(!(msg.type === 'stream' && msg.op === 'data' && msg.streamId === this.$raptor.stream)) {
+          //   return
+          // }
+        });
       }
     }
   }
