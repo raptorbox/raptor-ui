@@ -68,115 +68,121 @@
 </template>
 
 <script>
-  import Raptor from 'raptor-sdk'
-  var SimpleVueValidation = require('simple-vue-validator');
-  var Validator = SimpleVueValidation.Validator;
-  const defaultData = () => {
-    const d = new Raptor.models.User().defaultFields()
-    const u = {}
-    for(let p in d) {
-      u[p] = null
-    }
-    console.warn(u);
-    return u
+import Raptor from 'raptor-sdk'
+var SimpleVueValidation = require('simple-vue-validator');
+var Validator = SimpleVueValidation.Validator;
+const defaultData = () => {
+  const d = new Raptor.models.User().defaultFields()
+  const u = {}
+  for(let p in d) {
+    u[p] = null
   }
+  console.warn(u);
+  return u
+}
 
-  export default {
-    name: 'user_form',
-    data() {
-      return {
-        loading: false,
-        error: false,
-        loggedInUser: null,
-        ...defaultData()
-      }
+export default {
+  name: 'user_form',
+  data() {
+    return {
+      loading: false,
+      error: false,
+      loggedInUser: null,
+      ...defaultData()
+    }
+  },
+  validators: {
+    email: function (value) {
+      return Validator.value(value).required().email();
     },
-    validators: {
-      email: function (value) {
-        return Validator.value(value).required().email();
-      },
-      username: function (value) {
-        return Validator.value(value).required();
-      },
-      password: function (value) {
-        return Validator.value(value).required();
-      }
+    username: function (value) {
+      return Validator.value(value).required();
     },
-    mounted() {
-      this.loggedInUser = this.$raptor.Auth().getUser()
-      console.log(this.loggedInUser)
-      if (this.$route.params.userId) {
-        this.$log.debug('Load %s ', this.$route.params.userId)
-        this.load(this.$route.params.userId)
-      }
+    password: function (value) {
+      return Validator.value(value).required();
+    }
+  },
+  mounted() {
+    this.loggedInUser = this.$raptor.Auth().getUser()
+    console.log(this.loggedInUser)
+    if (this.$route.params.userId) {
+      this.$log.debug('Load %s ', this.$route.params.userId)
+      this.load(this.$route.params.userId)
+    }
+  },
+  methods: {
+    load(userId) {
+      this.loading = true
+      this.$raptor.Admin().User().read(userId)
+      .then((user) => {
+        this.$log.debug('User %s loaded', userId)
+        this.loading = false
+        Object.assign(this.$data, user)
+      })
+      .catch((e) => {
+        this.$log.debug('Failed to load user list')
+        this.$log.error(e)
+        this.loading = false
+      })
     },
-    methods: {
-      load(userId) {
-        this.loading = true
-        this.$raptor.Admin().User().read(userId)
-        .then((user) => {
-          this.$log.debug('User %s loaded', userId)
-          this.loading = false
-          Object.assign(this.$data, user)
-        })
-        .catch((e) => {
-          this.$log.debug('Failed to load user list')
-          this.$log.error(e)
-          this.loading = false
-        })
-      },
-      cancel() {
-        this.$router.push("/admin/users")
-      },
-      save() {
-        var context = this
-        const d = defaultData()
-        const u = {}
-        for(let p in d) {
-          u[p] = this[p]
-        }
-        this.loading = true
-        this.$log.debug('Saving user', u)
+    cancel() {
+      this.$router.push("/admin/users")
+    },
+    save() {
+      var context = this
+      const d = defaultData()
+      const u = {}
+      for(let p in d) {
+        u[p] = this[p]
+      }
+      this.loading = true
+      this.$log.debug('Saving user', u)
 
-        this.$validate()
-        .then(function (success) {
-          if (success) {
-            if (context.$route.params.userId) {
-              context.$raptor.Admin().User().save(u)
-              .then((u) => {
-                context.$log.debug('User %s saved', u.uuid)
-                context.loading = false
-                context.$router.push("/admin/users")
-              })
-              .catch((e) => {
-                context.$log.debug('Failed to save user')
-                context.$log.error(e)
-                context.loading = false
-              })
-            } else {
-              let roles = Array()
-              for(let p in d) {
-                if(p == "roles") {
-                  roles.push(context[p])
-                }
+      this.$validate()
+      .then(function (success) {
+        if (success) {
+          if (context.$route.params.userId) {
+            context.$raptor.Admin().User().save(u)
+            .then((u) => {
+              context.$log.debug('User %s saved', u.uuid)
+              context.loading = false
+              context.$router.push("/admin/users")
+            })
+            .catch(function(e) {
+              console.log(e)
+              console.log(JSON.stringify(e))
+              if(e.toString().indexOf("Unauthorized") !== -1) {
+                context.$raptor.Auth().logout();
+                context.$router.push("/pages/login");
               }
-              u['roles'] = roles
-              context.$log.debug('creating user', u)
-              context.$raptor.Admin().User().create(u)
-              .then((u) => {
-                context.$log.debug('User %s created', u.uuid)
-                context.loading = false
-                context.$router.push("/admin/users")
-              })
-              .catch((e) => {
-                context.$log.debug('Failed to create user')
-                context.$log.error(e)
-                context.loading = false
-              })
+            });
+          } else {
+            let roles = Array()
+            for(let p in d) {
+              if(p == "roles") {
+                roles.push(context[p])
+              }
             }
+            u['roles'] = roles
+            context.$log.debug('creating user', u)
+            context.$raptor.Admin().User().create(u)
+            .then((u) => {
+              context.$log.debug('User %s created', u.uuid)
+              context.loading = false
+              context.$router.push("/admin/users")
+            })
+            .catch(function(e) {
+              console.log(e)
+              console.log(JSON.stringify(e))
+              if(e.toString().indexOf("Unauthorized") !== -1) {
+                context.$raptor.Auth().logout();
+                context.$router.push("/pages/login");
+              }
+            });
           }
-        });
-      }
+        }
+      });
     }
   }
+}
 </script>

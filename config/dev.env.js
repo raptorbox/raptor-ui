@@ -7,7 +7,7 @@ module.exports = merge(prodEnv, {
   NODE_ENV: '"development"',
   RAPTOR: `{
       "url": "http://raptorbox.ddns.net",
-      "username": "memosa",
-      "password": "memosa.EIT2017",
+      "username": "admin",
+      "password": "admin.openiot",
   }`
 })

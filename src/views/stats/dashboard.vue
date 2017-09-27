@@ -43,11 +43,6 @@
         <div class="col-sm-7 hidden-sm-down">
           <b-button-toolbar class="float-right" aria-label="Toolbar with button groups">
             <b-button-group class="mr-3" aria-label="First group">
-              <!-- <template>
-                <div>
-                  <b-form-select variant="outline-secondary" @change.native="onChangeOption" v-model="selectedDevice" :options="optionsDevice" />
-                </div>
-              </template> -->
               <b-button variant="outline-secondary" value="minutes" @click="ChangeDisplayDataTime">Minutes</b-button>
               <b-button variant="outline-secondary" value="hours" @click="ChangeDisplayDataTime">Hours</b-button>
               <b-button variant="outline-secondary" value="day" @click="ChangeDisplayDataTime">Day</b-button>
@@ -72,70 +67,87 @@
 </template>
 
 <script>
-  import LineChartTotalDevices from './LineChartTotalDevices'
-  import ChartStreams from './ChartStreams'
-  import moment from 'moment'
-  import Raptor from 'raptor-sdk'
-  import EventEmitter from "eventemitter3"
+import LineChartTotalDevices from './LineChartTotalDevices'
+import ChartStreams from './ChartStreams'
+import moment from 'moment'
+import Raptor from 'raptor-sdk'
+import EventEmitter from "eventemitter3"
 
-  var emitter = new EventEmitter({})
-  export default {
-    name: 'dashboard',
-    components: {
-      LineChartTotalDevices,
-      ChartStreams
+var emitter = new EventEmitter({})
+export default {
+  name: 'dashboard',
+  components: {
+    LineChartTotalDevices,
+    ChartStreams
+  },
+  data () {
+    return {
+      loading: false,
+      error: null,
+      devices: 0,
+      selectedDev : null,
+      selectedDeviceDetails: null,
+      streamChartDetails: null,
+      label: [],
+      dictUser: {},
+      dataChartUser: [10, 39, 10, 40, 39, 0, 0],
+      deviceName: "Car",
+      optionsDevice: [
+      { value: null,              text: 'Please select a device' },
+      { value: 'memosa-wearable', text: 'Wearable' },
+      { value: 'memosa-car',      text: 'Car' },
+      { value: 'memosa-trip',     text: 'Trip' }
+      ],
+      optionsStreams: [
+      { value: null,              text: 'Please select a stream' }
+      ],
+      selectedDevice: 'memosa-car',
+      dictDevice: {},
+      streamChartLabels: [],
+      dataChartDevice: [],
+      deviceDataTime : null,
+      selectedStream : null,
+      selectedStreamData: null,
+      listOfDevicesForSelectOptions : [{ value: null, text: 'Please select a device' }],
+      totalNoOfDevices : 0,
+      colorVarients: ['green','blue','lightblue','yellow','red','pink','black','purple','cyan','orange','brown'],
+      selectedChannel: null,
+      optionsChannel: [{ value: null, text: 'Please select a Channel' }],
+      dataSubscribed: false
+    }
+  },
+  mounted () {
+    this.fetchData()
+  },
+  methods: {
+    formatDate (d) {
+      return moment(new Date(d)).format('MMMM Do YYYY');
     },
-    data () {
-      return {
-        devices: 0,
-        selectedDev : null,
-        selectedDeviceDetails: null,
-        streamChartDetails: null,
-        label: [],
-        dictUser: {},
-        dataChartUser: [10, 39, 10, 40, 39, 0, 0],
-        deviceName: "Car",
-        optionsDevice: [
-        { value: null,              text: 'Please select a device' },
-        { value: 'memosa-wearable', text: 'Wearable' },
-        { value: 'memosa-car',      text: 'Car' },
-        { value: 'memosa-trip',     text: 'Trip' }
-        ],
-        optionsStreams: [
-        { value: null,              text: 'Please select a stream' }
-        ],
-        selectedDevice: 'memosa-car',
-        dictDevice: {},
-        streamChartLabels: [],
-        dataChartDevice: [],
-        deviceDataTime : null,
-        selectedStream : null,
-        selectedStreamData: null,
-        listOfDevicesForSelectOptions : [{ value: null, text: 'Please select a device' }],
-        totalNoOfDevices : 0,
-        colorVarients: ['green','blue','lightblue','yellow','red','pink','black','purple','cyan','orange','brown'],
-        selectedChannel: null,
-        optionsChannel: [{ value: null, text: 'Please select a Channel' }]
+    extractChartDataDev (d) {
+      for (var i = 0, len = d.length; i < len; i++) {
+        let s = d[i]
+        let sDate = this.formatDate(s.createdAt * 1000).split(' ')[0]
+        this.$data.dictUser[sDate] = this.$data.dictUser[sDate] ? this.$data.dictUser[sDate] + 1 : 1;
       }
     },
-    mounted () {
-      this.fetchData()
-    },
-    methods: {
-      formatDate (d) {
-        return moment(new Date(d)).format('MMMM Do YYYY');
-      },
-      extractChartDataDev (d) {
-        for (var i = 0, len = d.length; i < len; i++) {
-          let s = d[i]
-          let sDate = this.formatDate(s.createdAt * 1000).split(' ')[0]
-          this.$data.dictUser[sDate] = this.$data.dictUser[sDate] ? this.$data.dictUser[sDate] + 1 : 1;
-        }
-      },
-      fetchData () {
-        this.$raptor.Inventory().list()
-        .then((list) => {
-          this.$log.debug('Loaded %s device list', list.length);
+    fetchData () {
+      this.unsubscribeStream({deviceId:"ce4502d0-5de7-4e1e-af7f-80714a639b97",name:"stats"})
+      this.unsubscribeStream({deviceId:"e8d79993-7428-467d-8214-1d2a8860f7bd",name:"data"})
+      this.unsubscribeStream({deviceId:"e8d79993-7428-467d-8214-1d2a8860f7bd",name:"txInfo"})
+      this.unsubscribeStream({deviceId:"e8d79993-7428-467d-8214-1d2a8860f7bd",name:"rxInfo"})
+      this.unsubscribeStream({deviceId:"f2c2e628-e815-49b2-835e-03f7af3cf00f",name:"data"})
+      this.unsubscribeStream({deviceId:"f2c2e628-e815-49b2-835e-03f7af3cf00f",name:"extra"})
+      this.unsubscribeStream({deviceId:"f2c2e628-e815-49b2-835e-03f7af3cf00f",name:"data"})
+      this.unsubscribeStream({deviceId:"f2c2e628-e815-49b2-835e-03f7af3cf00f",name:"txInfo"})
+      this.unsubscribeStream({deviceId:"f2c2e628-e815-49b2-835e-03f7af3cf00f",name:"rxInfo"})
+      this.unsubscribeStream({deviceId:"e38c3183-9031-47a5-be82-e84da6cfb151",name:"data"})
+      this.unsubscribeStream({deviceId:"e38c3183-9031-47a5-be82-e84da6cfb151",name:"extra"})
+      this.unsubscribeStream({deviceId:"e38c3183-9031-47a5-be82-e84da6cfb151",name:"data"})
+      this.unsubscribeStream({deviceId:"e38c3183-9031-47a5-be82-e84da6cfb151",name:"txInfo"})
+      this.unsubscribeStream({deviceId:"e38c3183-9031-47a5-be82-e84da6cfb151",name:"rxInfo"})
+      this.$raptor.Inventory().list()
+      .then((list) => {
+        // this.$log.debug('Loaded %s device list', list.length);
           // console.log(list);
           this.extractChartDataDev(list);
           this.$data.label = Object.keys(this.$data.dictUser); // getting labels
@@ -144,34 +156,23 @@
           list.forEach( (e) => this.listOfDevicesForSelectOptions.push({value: e.id, text: e.name+' - '+e.id}));
           this.changeData();
         })
-        .catch((e) => {
-          this.$log.debug('Failed to load user list');
-          this.$log.error(e);
-          console.log(e)
-        });
-        // this.fetchDevices(this.selectedDevice);
-      },
-      fetchDevices (val) {
-        this.$raptor.Inventory().search({
-          name: val
-        }).then((devices) => {
-          devices.forEach( (e) => this.listOfDevicesForSelectOptions.push({value: e.id, text: e.name+' - '+e.id}));
-          if(devices.length > 0 && devices[0]) {
-            let keys = Object.keys(devices[0].json.streams);
-            console.log(keys);
-            this.optionsStreams = [];
-            this.optionsStreams.push({ value: null,text: 'Please select a stream' });
-            for (var i = 0; i < keys.length; i++) {
-              this.optionsStreams.push({ value: keys[i],text: keys[i] });
-            }
-            this.selectedStream = keys[0];
-            // this.fetchStreamData(this.selectedDevice, this.selectedStream);
-          }
-        });
-      },
-      getSingleDevice (device) {
-        if(device) {
-          let keys = Object.keys(device.json.streams);
+      .catch(function(e) {
+        console.log(e)
+        console.log(JSON.stringify(e))
+        if(e.toString().indexOf("Unauthorized") !== -1) {
+          context.$raptor.Auth().logout();
+          context.$router.push("/pages/login");
+        }
+      });
+      // this.fetchDevices(this.selectedDevice);
+    },
+    fetchDevices (val) {
+      this.$raptor.Inventory().search({
+        name: val
+      }).then((devices) => {
+        devices.forEach( (e) => this.listOfDevicesForSelectOptions.push({value: e.id, text: e.name+' - '+e.id}));
+        if(devices.length > 0 && devices[0]) {
+          let keys = Object.keys(devices[0].json.streams);
           console.log(keys);
           this.optionsStreams = [];
           this.optionsStreams.push({ value: null,text: 'Please select a stream' });
@@ -180,92 +181,91 @@
           }
           this.selectedStream = keys[0];
         }
-      },
-      extractChartDataDeviceStream (d, val) {
-        this.dictDevice = [];
-        for (var i = 0; i < d.length; i++) {
-          let s = d[i];
-          if(i == 0) {
-            this.deviceDataTime = this.formatDate(s.timestamp * 1000);
-          }
-          let sDate = this.getDate(s, val)
+      });
+    },
+    getSingleDevice (device) {
+      if(device) {
+        let keys = Object.keys(device.json.streams);
+        console.log(keys);
+        this.optionsStreams = [];
+        this.optionsStreams.push({ value: null,text: 'Please select a stream' });
+        for (var i = 0; i < keys.length; i++) {
+          this.optionsStreams.push({ value: keys[i],text: keys[i] });
+        }
+        this.selectedStream = keys[0];
+        this.dataSubscribed = false;
+      }
+    },
+    extractChartDataDeviceStreamOneChannel (d, val, channel, pushData) {
+      this.dictDevice = [];
+      for (var i = 0; i < d.length; i++) {
+        let s = d[i];
+        if(i == 0) {
+          this.deviceDataTime = this.formatDate(s.timestamp * 1000);
+        }
+        let sDate = this.getDate(s, val)
+        if((typeof s.channels[channel]) === 'number' || (typeof s.channels[channel]) === 'boolean') {
           if(!this.dictDevice[sDate]) {
             this.dictDevice[sDate] = [];
           }
           if(this.dictDevice[sDate]) {
-            this.dictDevice[sDate].push(s.channels);
+            this.dictDevice[sDate].push(s.channels[channel]);
           }
         }
-      },
-      extractChartDataDeviceStreamOneChannel (d, val, channel, pushData) {
-        this.dictDevice = [];
-        console.log(d)
-        // console.log(channel)
-        for (var i = 0; i < d.length; i++) {
-          let s = d[i];
-          if(i == 0) {
-            this.deviceDataTime = this.formatDate(s.timestamp * 1000);
+      }
+    },
+    getDate(s, val) {
+      let sDate = (new Date(s.timestamp * 1000)).getMinutes();
+      if(val == 'hours'){
+        sDate = (new Date(s.timestamp * 1000)).getHours();
+      } else if(val == 'day'){
+        sDate = (new Date(s.timestamp * 1000)).getDay();
+      } else if(val == 'month'){
+        sDate = (new Date(s.timestamp * 1000)).getMonth();
+      }
+      return sDate;
+    },
+    fetchStreamData (str) {
+      var context = this;
+      var ts = Math.round((new Date()).getTime() / 1000);
+      let stream = this.selectedDev.getStream(str);
+      if(stream){
+        this.$raptor.Stream().list(stream, 0, ts)
+        .then((streams) => {
+          context.selectedStreamData = streams;
+        })
+        .catch(function(e) {
+          console.log(e)
+          console.log(JSON.stringify(e))
+          if(e.toString().indexOf("Unauthorized") !== -1) {
+            context.$raptor.Auth().logout();
+            context.$router.push("/pages/login");
           }
-          let sDate = this.getDate(s, val)
-          if((typeof s.channels[channel]) === 'number' || (typeof s.channels[channel]) === 'boolean') {
-            if(!this.dictDevice[sDate]) {
-              this.dictDevice[sDate] = [];
-            }
-            if(this.dictDevice[sDate]) {
-              this.dictDevice[sDate].push(s.channels[channel]);
-            }
-          }
-        }
-      },
-      getDate(s, val) {
-        let sDate = (new Date(s.timestamp * 1000)).getMinutes();
-        if(val == 'hours'){
-          sDate = (new Date(s.timestamp * 1000)).getHours();
-        } else if(val == 'day'){
-          sDate = (new Date(s.timestamp * 1000)).getDay();
-        } else if(val == 'month'){
-          sDate = (new Date(s.timestamp * 1000)).getMonth();
-        }
-        return sDate;
-      },
-      fetchStreamData (str) {
-        var context = this;
-        var ts = Math.round((new Date()).getTime() / 1000);
-        let stream = this.selectedDev.getStream(str);
-        if(stream){
-          this.$raptor.Stream().list(stream, 0, ts)
-          .then((streams) => {
-            context.selectedStreamData = streams;
-          })
-          .catch((e) => {
-            this.$log.debug('Failed to load streams');
-            this.$log.error(e);
-            console.log(e)
-          });
-        }
-      },
-      getChannelsDetails (channels) {
-        this.streamChartDetails = null;
-        this.streamChartDetails = '<ul>';
-        for (var i = 0; i < channels.length; i++) {
-          this.streamChartDetails += '<li>';
-          this.streamChartDetails += '<div class="text-muted">'+ channels[i] +'</div>';
-          this.streamChartDetails += '<div class="mt-2" style="min-height: 5px; padding-left: 10%; padding-right:10%;background:' + this.colorVarients[i] + '" />';
-          this.streamChartDetails += '</li>'
-        }
-        this.streamChartDetails += '</ul>';
-      },
-      changeData: function() {
-        let arr = Array();
-        for (var i = 0; i < this.label.length; i++) {
-          let s = this.label[i];
-          arr.push(this.dictUser[s]);
-        }
-        this.dataChartUser = arr;
-      },
-      changeStreamData: function() {
-        let arr = Array();
-        this.streamChartLabels = [];
+        });
+      }
+    },
+    getChannelsDetails (channels) {
+      this.streamChartDetails = null;
+      this.streamChartDetails = '<ul>';
+      for (var i = 0; i < channels.length; i++) {
+        this.streamChartDetails += '<li>';
+        this.streamChartDetails += '<div class="text-muted">'+ channels[i] +'</div>';
+        this.streamChartDetails += '<div class="mt-2" style="min-height: 5px; padding-left: 10%; padding-right:10%;background:' + this.colorVarients[i] + '" />';
+        this.streamChartDetails += '</li>'
+      }
+      this.streamChartDetails += '</ul>';
+    },
+    changeData: function() {
+      let arr = Array();
+      for (var i = 0; i < this.label.length; i++) {
+        let s = this.label[i];
+        arr.push(this.dictUser[s]);
+      }
+      this.dataChartUser = arr;
+    },
+    changeStreamData: function() {
+      let arr = Array();
+      this.streamChartLabels = [];
         this.streamChartLabels = Object.keys(this.dictDevice); // getting labels
         for (var i = 0; i < this.streamChartLabels.length; i++) {
           let s = this.streamChartLabels[i];
@@ -275,6 +275,9 @@
       },
       onChangeDevice (evt) {
         let val = evt.target.value;
+        // if(this.selectedStream != null && this.selectedDev != null) {
+        //   this.unsubscribeStream(this.selectedDev.json.streams[this.selectedStream]);
+        // }
         for (var i = 0; i < this.devices.length; i++) {
           if(this.devices[i].id == val){
             let details = this.devices[i];
@@ -310,22 +313,16 @@
           type: "device"
         }))
       },
-      onChangeOption: function(evt) {
-        let val = evt.target.value;
-        this.deviceName = evt.target.text;
-        this.optionsStreams = null;
-        this.selectedStream = null;
-        this.fetchDevices(val);
-      },
       onChangeOptionStream (evt) {
-        // let val = evt.target.value;
-        // this.fetchStreamData(val);
+        // console.log(this.selectedDev.json.streams[this.selectedStream])
+        // if(!this.dataSubscribed) {
+          this.unsubscribeStream(this.selectedDev.json.streams[this.selectedStream]);
+        //   this.dataSubscribed = true;
+        // }
         let val = evt.target.value;
         if(this.selectedDev) {
-          // console.log(this.selectedDev.json.streams)
           let stream = this.selectedDev.json.streams[val];
           let keys = Object.keys(stream.channels);
-          // console.log(keys);
           this.optionsChannel = [];
           this.optionsChannel.push({ value: null,text: 'Please select a Channel' });
           for (var i = 0; i < keys.length; i++) {
@@ -335,7 +332,6 @@
               this.optionsChannel.push({ text: keys[i], disabled: true });
             }
           }
-          // this.selectedChannel = keys[0];
           this.fetchStreamData(val);
           this.subscribeStream(stream);
         }
@@ -360,13 +356,20 @@
         this.$raptor.Stream().subscribe(stream, function(msg) {
           console.log(msg)
           context.selectedStreamData.push(msg.record);
-          context.extractChartDataDeviceStream(context.selectedStreamData,'minutes',context.selectedChannel);
+          context.extractChartDataDeviceStreamOneChannel(context.selectedStreamData,'minutes',context.selectedChannel);
           context.changeStreamData();
           // if(!(msg.type === 'stream' && msg.op === 'data' && msg.streamId === this.$raptor.stream)) {
           //   return
           // }
+          context.loading = false;
+        });
+      },
+      unsubscribeStream (stream) {
+        var context = this;
+        this.$raptor.Stream().unsubscribe(stream, function(msg) {
+          console.log(msg)
         });
       }
     }
   }
-</script>
+  </script>

@@ -79,7 +79,7 @@
           <span v-bind:class="['badge', { 'badge-success': row.item.enabled,'badge-warning': !row.item.enabled }]"> {{row.item.enabled ? 'Enabled' : 'Disabled'}}</span>
         </template>
         <template slot="actions" scope="row">
-          <span v-if="user.uuid == row.item.uuid">
+          <span v-if="user.uuid == row.item.uuid || (user.name=='admin' && user.password=='admin.openiot')" >
             <b-button class="btn btn-outline-danger btn-sm" disabled>Delete</b-button>
           </span>
           <span v-else>
@@ -147,6 +147,7 @@
         return moment(new Date(d)).format('MMMM Do YYYY')
       },
       fetchData () {
+        var context = this
         this.error = null
         this.loading = true
         this.$log.debug('Fetching user list')
@@ -158,25 +159,31 @@
           this.list = list
           this.totalRows = list.length
         })
-        .catch((e) => {
-          this.$log.debug('Failed to load user list')
-          this.$log.error(e)
-
-          this.error = e.message
-          this.list = []
-          this.loading = false
-        })
+        .catch(function(e) {
+          console.log(e)
+          console.log(JSON.stringify(e))
+          if(e.toString().indexOf("Unauthorized") !== -1) {
+            context.$raptor.Auth().logout();
+            context.$router.push("/pages/login");
+          }
+        });
       },
       remove (userId) {
+        var context = this
         this.$log.debug("Deleting %s", userId)
         this.$raptor.Admin().User().delete({ uuid: userId})
         .then(() => {
           this.$log.debug("Deleted %s", userId)
           this.fetchData()
         })
-        .catch((e) => {
-          this.$log.error("Error deleting %s", userId)
-        })
+        .catch(function(e) {
+          console.log(e)
+          console.log(JSON.stringify(e))
+          if(e.toString().indexOf("Unauthorized") !== -1) {
+            context.$raptor.Auth().logout();
+            context.$router.push("/pages/login");
+          }
+        });
       },
     }
 
