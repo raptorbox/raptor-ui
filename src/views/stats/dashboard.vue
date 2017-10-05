@@ -131,20 +131,6 @@ export default {
       }
     },
     fetchData () {
-      this.unsubscribeStream({deviceId:"ce4502d0-5de7-4e1e-af7f-80714a639b97",name:"stats"})
-      this.unsubscribeStream({deviceId:"e8d79993-7428-467d-8214-1d2a8860f7bd",name:"data"})
-      this.unsubscribeStream({deviceId:"e8d79993-7428-467d-8214-1d2a8860f7bd",name:"txInfo"})
-      this.unsubscribeStream({deviceId:"e8d79993-7428-467d-8214-1d2a8860f7bd",name:"rxInfo"})
-      this.unsubscribeStream({deviceId:"f2c2e628-e815-49b2-835e-03f7af3cf00f",name:"data"})
-      this.unsubscribeStream({deviceId:"f2c2e628-e815-49b2-835e-03f7af3cf00f",name:"extra"})
-      this.unsubscribeStream({deviceId:"f2c2e628-e815-49b2-835e-03f7af3cf00f",name:"data"})
-      this.unsubscribeStream({deviceId:"f2c2e628-e815-49b2-835e-03f7af3cf00f",name:"txInfo"})
-      this.unsubscribeStream({deviceId:"f2c2e628-e815-49b2-835e-03f7af3cf00f",name:"rxInfo"})
-      this.unsubscribeStream({deviceId:"e38c3183-9031-47a5-be82-e84da6cfb151",name:"data"})
-      this.unsubscribeStream({deviceId:"e38c3183-9031-47a5-be82-e84da6cfb151",name:"extra"})
-      this.unsubscribeStream({deviceId:"e38c3183-9031-47a5-be82-e84da6cfb151",name:"data"})
-      this.unsubscribeStream({deviceId:"e38c3183-9031-47a5-be82-e84da6cfb151",name:"txInfo"})
-      this.unsubscribeStream({deviceId:"e38c3183-9031-47a5-be82-e84da6cfb151",name:"rxInfo"})
       this.$raptor.Inventory().list()
       .then((list) => {
         // this.$log.debug('Loaded %s device list', list.length);
