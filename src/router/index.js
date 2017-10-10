@@ -30,6 +30,9 @@ import Dashboard from '@/views/stats/dashboard'
 // Admin
 import AdminDashboard from '@/views/admin/dashboard'
 
+// User Dashboard
+import UserDashboard from '@/views/userdashboard/dashboard'
+
 // Views - Components
 import Buttons from '@/views/components/Buttons'
 import SocialButtons from '@/views/components/SocialButtons'
@@ -68,6 +71,11 @@ const router = new Router({
           path: 'dashboard',
           name: 'Dashboard',
           component: Dashboard
+        },
+        {
+          path: 'drag',
+          name: 'UserDashboard',
+          component: UserDashboard
         },
         {
           path: 'dashboarddef',
