@@ -12,9 +12,19 @@
             <b-form-input type="text" placeholder="Enter Secret" v-model="token.secret"></b-form-input>
           </b-form-fieldset>
 
-          <b-form-fieldset label="Expires On" :horizontal="false">
-            <date-picker class="form-control" :config="dateTimePicker" placeholder="Select date" v-model="date"></date-picker>
-          </b-form-fieldset>
+          <span v-if="token && token.token">
+            <b-form-fieldset description="Token" label="Secret" :horizontal="false">
+              <b-form-input type="text" placeholder="Token" disabled v-model="token.token"></b-form-input>
+            </b-form-fieldset>
+          </span>
+
+          <div>
+            <b-form-fieldset label="Expires On" :horizontal="false">
+              <date-picker class="form-control" :config="dateTimePicker" placeholder="Select date" v-model="date" @change="onChangeDate"></date-picker>
+              <b-form-checkbox v-model="token.expires" @change="onChangeExpiryDate">Non Expiring Token</b-form-checkbox>
+            </b-form-fieldset>
+          </div>
+
         </div>
 
         <div class="col-md-6">
@@ -195,7 +205,17 @@
           this.$log.error(e)
           this.loading = false
         })
-      }
+      },
+      onChangeExpiryDate(event) {
+        console.log(event)
+        if(this.token.expires) {
+          this.date = 0;
+        }
+      },
+      onChangeDate(event) {
+        console.log(event)
+        this.token.expires = false;
+      },
     }
   }
 </script>

@@ -2,11 +2,11 @@ var merge = require('webpack-merge')
 var prodEnv = require('./prod.env')
 
 var url = 'http://raptor.local'
-var urlPro = 'http://raptorbox.ddns.net'
+var urlPro = 'https://api.raptorbox.eu'
 module.exports = merge(prodEnv, {
   NODE_ENV: '"development"',
   RAPTOR: `{
-      "url": "http://raptorbox.ddns.net",
+      "url": "http://raptor.local",
       "username": "memosa",
       "password": "memosa.EIT2017",
   }`

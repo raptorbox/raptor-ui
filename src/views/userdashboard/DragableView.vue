@@ -2,7 +2,7 @@
   import { Line } from 'vue-chartjs'
 
   export default Line.extend({
-    props: ['height', 'data', 'labels'],
+    props: ['height', 'data', 'labels', 'width'],
     mounted () {
       // this.fetchData()
       this.renderLineChart();
