@@ -1,10 +1,8 @@
 <template>
     <div class="animated fadeIn">
-        <div class="grid-stack-item-content">
-            <b-card class="bg-primary" :no-block="true" style="min-height:160px; max-height:160px; height:160px">
-                <slot></slot>
-            </b-card>
-        </div>
+        <b-card class="bg-primary">
+            <slot></slot>
+        </b-card>
     </div>
 </template>
 
@@ -15,12 +13,17 @@
         component: {
             DragableView
         },
-        props: ['height', 'data', 'chart', 'labels', 'width'],
+        props: ['data', 'chart', 'labels'],
         data() {
             return {
                 greeting: 'Hello',
                 dictUser: {},
                 dataChartUser: [10, 39, 10, 40, 39, 0, 0],
+                width: 70,
+                height: 70,
+                x: 0,
+                y: 0,
+                label: [],
             }
         },
         mounted () {
@@ -35,6 +38,16 @@
           }
         },
         methods: {
+            onResize: function (x, y, width, height) {
+              this.x = x
+              this.y = y
+              this.width = width
+              this.height = height
+            },
+            onDrag: function (x, y) {
+              this.x = x
+              this.y = y
+            },
         },
         watch: {
             data: function() {

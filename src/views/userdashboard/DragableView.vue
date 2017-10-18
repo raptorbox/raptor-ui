@@ -26,7 +26,8 @@
             data: this.chartData
           }]
         }, {
-          maintainAspectRatio: false,
+          responsive: false,
+          maintainAspectRatio: true,
           legend: {
             display: false
           },

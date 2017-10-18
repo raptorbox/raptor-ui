@@ -23,7 +23,7 @@
               <div class="text-left text-center" style="float: left;">
                 <!-- <p style="text-align: center; font-weight:bold; margin:0;">{{stream.title}}</p> -->
                 <b-form-input v-model="stream.title"
-                type="text" style="border: none !important; border-color: transparent !important; background-color: transparent !important; font-weight: bold;"
+                type="text" style="border: none !important; border-color: transparent !important; background-color: transparent !important; border-bottom: 1px solid black; font-weight: bold;"
                 placeholder="Enter Stream Name"></b-form-input>
               </div>
               <div class="col-md-2" style="float: right;">
@@ -45,9 +45,9 @@
               <div class="col-md-3 text-left" style="padding: 10px">
                 <label><strong>Channel Type</strong></label>
               </div>
-              <div class="col-md-3 text-left" style="padding: 10px">
+              <!-- <div class="col-md-3 text-left" style="padding: 10px">
                 <label><strong>Channel Unit</strong></label>
-              </div>
+              </div> -->
             </div>
             <div id="channelDivDetail" class="row row-fluid" v-for="channel in stream.channels">
               <div class="col-md-3 text-left" id="divChannelName" v-bind:data="stream" :data-ch="channel" style="padding: 10px">
@@ -59,11 +59,11 @@
               <div class="col-md-3 text-left" id="divChannelType" data="stream" data-ch="channel" style="padding: 10px">
                 <b-form-select variant="outline-secondary" class="mr-3" @change.native="(event) => { onChangeOptionChannelType(event, stream, channel) }" v-model="channel.type" :options="channelTypes"> </b-form-select>
               </div>
-              <div class="col-md-3 text-left" id="divChannelUnit" data="stream" data-ch="channel" style="padding: 10px">
+              <!-- <div class="col-md-3 text-left" id="divChannelUnit" data="stream" data-ch="channel" style="padding: 10px">
                 <b-form-input v-model="channel.unit"
                 type="text"
                 placeholder="Enter Channel Unit"></b-form-input>
-              </div>
+              </div> -->
               <div class="col-md-3 text-center" data="stream" data-ch="channel" right style="padding: 10px">
                 <button class="btn btn-danger" type="button" @click="(event) => { onDeleteChannelButton(event, stream, channel) }">Delete</button>
               </div>

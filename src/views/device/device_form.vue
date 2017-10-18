@@ -14,10 +14,11 @@
       <b-form-fieldset description="Please enter a description" label="Description" :horizontal="false">
         <b-form-input type="text" placeholder="Enter description" v-model="description"></b-form-input>
       </b-form-fieldset>
-      <b-form-fieldset description="Please enter a UserId" label="Description" :horizontal="false">
-        <b-form-input type="text" placeholder="Enter UserId" v-model="userId"></b-form-input>
-      </b-form-fieldset>
-
+      <span v-if="deviceUserId">
+        <b-form-fieldset description="Please enter a UserId" label="Change User" :horizontal="false">
+          <b-form-input type="text" placeholder="Enter UserId" v-model="userId"></b-form-input>
+        </b-form-fieldset>
+      </span>
       <!-- <b-form-fieldset description="Please select a device" label="Password" :horizontal="false">
         <b-form-input type="password" placeholder="Enter password" v-model="password"></b-form-input>
       </b-form-fieldset> -->
@@ -25,15 +26,13 @@
     </div>
 
     <div class="col-md-6">
-
-      <!-- <b-form-fieldset label="Roles" :horizontal="false">
-        <b-form-checkbox v-model="roles" :plain="true" value="admin">Admin</b-form-checkbox><br>
-        <b-form-checkbox v-model="roles" :plain="true" value="super_admin">Super Admin</b-form-checkbox><br>
-      </b-form-fieldset> -->
-
-      <!-- <b-form-fieldset label="Status" :horizontal="false">
-        <b-form-checkbox v-model="enabled">enabled</b-form-checkbox>
-      </b-form-fieldset> -->
+      <b-form-fieldset label="Device Properties" :horizontal="false">
+        <textarea class="col-md-12" rows="8" v-model="propertiesTextArea" placeholder="Enter Device Properties:
+        { 
+          &quot;userId&quot;:&quot;Eh0ihMBFqmWP7YECvT2uyGcff9A2&quot;,
+          &quot;tripId&quot;:&quot;-KuciIGkgMOYKI5Tfa1L&quot;
+        }"></textarea>
+      </b-form-fieldset>
     </div>
     <!--/.col-->
   </div>
@@ -105,6 +104,8 @@
         SaveData: false,
         device: null,
         saveIt: 0,
+        deviceUserId: "",
+        propertiesTextArea: "",
         ...defaultData()
       }
     },
@@ -126,6 +127,11 @@
           this.$data.id = device.id
           this.$data.userId = device.userId
           this.$data.device = device
+          this.$data.deviceUserId = device.id
+          let prop = JSON.stringify(device.properties)
+          if(device.properties && prop != "{}") {
+            this.propertiesTextArea = prop
+          }
           Object.assign(this.$data, device)
         })
         .catch((e) => {
@@ -146,7 +152,9 @@
         }
         this.loading = true
         this.$log.debug('Saving device', u)
-
+        if(this.properties != null) {
+          u.properties = propertiesTextArea
+        }
         if (this.$route.params.deviceId) {
           // this.$raptor.Inventory().update(u)
           // .then((device) => {
@@ -166,6 +174,7 @@
           // })
           context.$router.push("/inventory/list")
         } else {
+          u.userId = this.$raptor.Auth().getUser().uuid
           this.$log.debug('creating device', u)
           this.$raptor.Inventory().create(u)
           .then((device) => {

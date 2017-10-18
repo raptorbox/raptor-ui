@@ -6,37 +6,46 @@
           </button>
         </p>
 
-        <!-- <div class="grid-stack">
-        </div> -->
-
-        <div :height="70" :width="70" style="border: 1px solid red; position: relative;">
-          <vue-draggable-resizable :w="160" :h="160" v-on:dragging="onDrag" v-on:resizing="onResize" :parent="true">
-            <b-card class="bg-primary" :no-block="true" style="min-height:160px; max-height:160px; height:160px">
-              <div class="card-body pb-0">
-                <p>Total Devices</p>
-              </div>
-              <dragable-view class="chart-wrapper" style="height:70px;" :data="dataChartUser" :labels="label" height="70" width="70"/>
-            </b-card>
-          </vue-draggable-resizable>
-        </div>
+        <grid-layout :layout.sync="widgets" :col-num="12" :row-height="30" :is-draggable="true" :is-resizable="true" :vertical-compact="true" :margin="[10, 10]" :use-css-transforms="true" >
+            <grid-item v-for="wid in widgets" :key="wid.i" :minH="6" :minW="3" :maxH="12" :maxW="9" :x.sync="wid.x" :y.sync="wid.y" :w.sync="wid.w" :h.sync="wid.h" :i="wid.i">
+                <b-card class="bg-primary">
+                  <div class="card-body pb-0">
+                    <p>Total Devices</p>
+                  </div>
+                  <div v-if="wid.chart == 'barchart'">
+                    <dragable-view class="chart-wrapper" :data="wid.data" :labels="wid.label"/>
+                  </div>
+                  <div v-else-if="wid.chart == 'linechart'">
+                    <dragable-view class="chart-wrapper" :data="wid.data" :labels="wid.label"/>
+                  </div>
+                  <div v-else-if="wid.chart == 'piechart'">
+                    <dragable-view class="chart-wrapper" :data="wid.data" :labels="wid.label"/>
+                  </div>
+                  <div v-else-if="wid.chart == 'chart'">
+                    <dragable-view class="chart-wrapper" :data="wid.data" :labels="wid.label"/>
+                  </div>
+                </b-card>
+            </grid-item>
+        </grid-layout>
   </div>
 </template>
 
 <script>
   import DragableView from './DragableView'
-  import GridStackItem from './GridStackItem'
-  import gridstack from 'gridstack'
-  import $ from 'jquery'
+  import DragableViewItem from './DragableViewItem'
   import moment from 'moment'
-  import Vue from 'vue'
-  import VueDraggableResizable from 'vue-draggable-resizable'
-  Vue.component('vue-draggable-resizable', VueDraggableResizable)
+  import VueGridLayout from 'vue-grid-layout'
+
+  var GridLayout = VueGridLayout.GridLayout;
+  var GridItem = VueGridLayout.GridItem;
 
 export default {
   name: 'dashboard',
   components: {
-    GridStackItem,
-    DragableView
+    DragableView,
+    DragableViewItem,
+    GridLayout,
+    GridItem,
   },
   data () {
     return {
@@ -46,11 +55,7 @@ export default {
       label: [],
       dictUser: {},
       dataChartUser: [10, 39, 10, 40, 39, 0, 0],
-      width: 70,
-      height: 70,
-      x: 0,
-      y: 0,
-      chart: null
+      chart: null,
     }
   },
   mounted () {
@@ -58,10 +63,7 @@ export default {
         cellHeight: 80,
         verticalMargin: 10
     }
-    // $('.grid-stack').gridstack(options);
-    // this.gridContainer = $('.grid-stack');
-    // this.grid = this.gridContainer.data('gridstack');
-    // this.loadDefaultCharts();
+    this.loadDefaultCharts();
     this.fetchData();
   },
   methods: {
@@ -75,6 +77,7 @@ export default {
           // console.log(list);
           this.extractChartDataDev(list);
           this.$data.label = Object.keys(this.$data.dictUser);
+          this.chart = "barchart"
         })
       .catch(function(e) {
         console.log(e)
@@ -87,31 +90,10 @@ export default {
       // this.fetchDevices(this.selectedDevice);
     },
     loadDefaultCharts() {
-      this.chart = `<div class="grid-stack-item" data-gs-x="0" data-gs-y="0" data-gs-width="150" data-gs-height="70">
-              <div class="grid-stack-item-content ui-draggable-handle" style="background: red; color: white;">
-              </div>
-          </div>`
-      this.widgets.push(`
-          <div class="grid-stack-item" data-gs-x="0" data-gs-y="0" data-gs-width="150" data-gs-height="70">
-              <div class="grid-stack-item-content ui-draggable-handle" style="background: red; color: white;">
-                <dragable-view class="chart-wrapper" style="height:70px;" :data="dataChartUser" :labels="label" height="70"/>
-              </div>
-          </div>`);
-      this.widgets.push(`
-          <grid-stack-item data-gs-x="0" data-gs-y="0" data-gs-width="1" data-gs-height="1">
-              <div class="grid-stack-item-content ui-draggable-handle" style="background: red; color: white;">
-                <p>Vue (added)</p>
-              </div>
-          </grid-stack-item>`);
-      this.widgets.push(`
-          <grid-stack-item data-gs-x="0" data-gs-y="0" data-gs-width="1" data-gs-height="1">
-              <div class="grid-stack-item-content ui-draggable-handle" style="background: red; color: white;">
-                <p>Vue (added)</p>
-              </div>
-          </grid-stack-item>`)
-      for (var i = 0; i < this.widgets.length; i++) {
-        this.grid.addWidget(this.widgets[i], 0, 0, 1, 1, true)
-      }
+      this.widgets.push({x:0,y:0,w:4,h:7,i:"0", chart: "barchart", data:[10, 39, 10, 40, 39, 0, 0], labels:"label"})
+      this.widgets.push({x:4,y:0,w:4,h:7,i:"1", chart: "linechart", data:[10, 39, 10, 40, 39, 0, 0], labels:"label"})
+      this.widgets.push({x:8,y:0,w:4,h:7,i:"2", chart: "piechart", data:[10, 39, 10, 40, 39, 0, 0], labels:"label"})
+      this.widgets.push({x:0,y:7,w:4,h:7,i:"3", chart: "chart", data:[10, 39, 10, 40, 39, 0, 0], labels:"label"})
     },
     extractChartDataDev (d) {
       for (var i = 0, len = d.length; i < len; i++) {
@@ -121,24 +103,7 @@ export default {
       }
     },
     addWidget() {
-      let widget = this.grid.addWidget(`
-        <grid-stack-item data-gs-x="0" data-gs-y="0" data-gs-width="1" data-gs-height="1">
-          <div class="grid-stack-item-content ui-draggable-handle" style="background: red; color: white;">
-            <p>Vue (added)</p>
-          </div>
-        </grid-stack-item>
-      `, 0, 0, 1, 1, true)
-      this.grid.addWidget(GridStackItem,0,0,1,1,true)
-    },
-    onResize: function (x, y, width, height) {
-      this.x = x
-      this.y = y
-      this.width = width
-      this.height = height
-    },
-    onDrag: function (x, y) {
-      this.x = x
-      this.y = y
+      this.widgets.push({x:0,y:0,w:4,h:7,i:this.widgets.length+1, chart: "chart", data:[10, 39, 10, 40, 39, 0, 0], labels:"label"})
     },
   }
 }

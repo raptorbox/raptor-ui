@@ -20,7 +20,9 @@
 
           <div>
             <b-form-fieldset label="Expires On" :horizontal="false">
-              <date-picker class="form-control" :config="dateTimePicker" placeholder="Select date" v-model="date" @change="onChangeDate"></date-picker>
+              <div @click="onChangeDate">
+              <date-picker class="form-control" :config="dateTimePicker" placeholder="Select date" v-model="date"></date-picker>
+              </div>
               <b-form-checkbox v-model="token.expires" @change="onChangeExpiryDate">Non Expiring Token</b-form-checkbox>
             </b-form-fieldset>
           </div>
@@ -155,7 +157,7 @@
             this.selectedPermission = permission
           }
           console.log(permission)
-          this.permissions = ['admin','list','read','update','create','delete','push','pull','execute','data','tree']
+          this.permissions = ['admin','list','read','update','create','delete','push','pull','execute','tree']
         })
         .catch((e) => {
           this.$log.debug('Failed to load permission')

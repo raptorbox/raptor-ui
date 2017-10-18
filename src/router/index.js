@@ -74,7 +74,7 @@ const router = new Router({
         },
         {
           path: 'drag',
-          name: 'UserDashboard',
+          name: 'User Dashboard',
           component: UserDashboard
         },
         {
