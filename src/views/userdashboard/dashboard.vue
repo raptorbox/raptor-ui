@@ -9,32 +9,38 @@
       </p>
 
       <grid-layout :layout.sync="widgets" :col-num="12" :row-height="30" :is-draggable="true" :is-resizable="true" :vertical-compact="true" :margin="[10, 10]" :use-css-transforms="true" >
-          <grid-item v-for="wid in widgets" :key="wid.i" :minH="6" :minW="3" :maxH="12" :maxW="9" :x.sync="wid.x" :y.sync="wid.y" :w.sync="wid.w" :h.sync="wid.h" :i="wid.i">
-              <div class="bg-primary">
-                <div class="float-right">
-                  <button type="button" i="wid.i" class="btn btn-link btn-sm" @click="(ev) => { onRemoveWidgetButtonClick(ev, wid) }">
-                    <icon name="remove" scale="2" color="red"></icon>
-                  </button>
-                </div>
-                <div class="card-body pb-0">
-                  <p>{{wid.title}}</p>
-                </div>
-                <b-card>
-                  <div v-if="wid.chart == 'barchart'">
-                    <dragable-view class="chart-wrapper" :chartData="wid.data" :labels="wid.label"/>
-                  </div>
-                  <div v-else-if="wid.chart == 'linechart'">
-                    <dragable-view class="chart-wrapper" :chartData="wid.data" :labels="wid.label"/>
-                  </div>
-                  <div v-else-if="wid.chart == 'piechart'">
-                    <dragable-view class="chart-wrapper" :chartData="wid.data" :labels="wid.label"/>
-                  </div>
-                  <div v-else-if="wid.chart == 'chart'">
-                    <dragable-view class="chart-wrapper" :chartData="wid.data" :labels="wid.label"/>
-                  </div>
-                </b-card>
+        <grid-item v-for="wid in widgets" :key="wid.i" :minH="6" :minW="3" :maxH="12" :maxW="9" :x.sync="wid.x" :y.sync="wid.y" :w.sync="wid.w" :h.sync="wid.h" :i="wid.i">
+          <div class="bg-primary">
+            <div class="float-right">
+              <button type="button" i="wid.i" class="btn btn-link btn-sm" @click="(ev) => { onRemoveWidgetButtonClick(ev, wid) }">
+                <icon name="remove" scale="2" color="red"></icon>
+              </button>
+            </div>
+            <div class="card-body pb-0">
+              <p>{{wid.title}}</p>
+            </div>
+            <b-card>
+              <div v-if="wid.chart == 'bar'">
+                <bar-chart class="chart-wrapper" :chartData="wid.data"/>
               </div>
-          </grid-item>
+              <div v-if="wid.chart == 'polar'">
+                <polar-area-chart class="chart-wrapper" :chartData="wid.data"/>
+              </div>
+              <div v-else-if="wid.chart == 'line'">
+                <line-chart class="chart-wrapper" :chartData="wid.data"/>
+              </div>
+              <div v-else-if="wid.chart == 'pie'">
+                <pie-chart class="chart-wrapper" :chartData="wid.data"/>
+              </div>
+              <div v-else-if="wid.chart == 'radar'">
+                <radar-chart class="chart-wrapper" :chartData="wid.data"/>
+              </div>
+              <div v-else-if="wid.chart == 'doughnut'">
+                <doughnut-chart class="chart-wrapper" :chartData="wid.data"/>
+              </div>
+            </b-card>
+          </div>
+        </grid-item>
       </grid-layout>
     </div>
 
@@ -76,22 +82,34 @@
 </template>
 
 <script>
-  import DragableView from './DragableView'
-  import VueGridLayout from 'vue-grid-layout'
-  import Vue from 'vue'
-  import Icon from 'vue-awesome/components/Icon'
-  import 'vue-awesome/icons/remove'
+import DragableView from './DragableView'
+import BarChart from './charts/BarChart'
+import LineChart from './charts/LineChart'
+import DoughnutChart from './charts/DoughnutChart'
+import RadarChart from './charts/RadarChart'
+import PieChart from './charts/PieChart'
+import PolarAreaChart from './charts/PolarAreaChart'
 
-  Vue.component('icon', Icon)
+import VueGridLayout from 'vue-grid-layout'
+import Vue from 'vue'
+import Icon from 'vue-awesome/components/Icon'
+import 'vue-awesome/icons/remove'
 
-  var GridLayout = VueGridLayout.GridLayout;
-  var GridItem = VueGridLayout.GridItem;
-  // var fs = require('fs');
+Vue.component('icon', Icon)
+
+var GridLayout = VueGridLayout.GridLayout;
+var GridItem = VueGridLayout.GridItem;
 
 export default {
   name: 'dashboard',
   components: {
     DragableView,
+    BarChart,
+    LineChart,
+    DoughnutChart,
+    RadarChart,
+    PieChart,
+    PolarAreaChart,
     GridLayout,
     GridItem,
     Icon,
@@ -112,13 +130,13 @@ export default {
       optionsStreams: [{ value: null, text: 'Please select a stream' }],
       optionsChannel: [{ value: null, text: 'Please select a channel' }],
       optionsChart: [
-        { value: null,        text: 'Please select a chart' },
-        { value: 'line',      text: 'Line Chart' },
-        { value: 'bar',       text: 'Bar Chart' },
-        { value: 'pie',       text: 'Pie Chart' },
-        { value: 'polar',     text: 'Polar Chart' },
-        { value: 'radar',     text: 'Radar Chart' },
-        { value: 'doughnut',  text: 'Doughnut Chart' },
+      { value: null,        text: 'Please select a chart' },
+      { value: 'line',      text: 'Line Chart' },
+      { value: 'bar',       text: 'Bar Chart' },
+      { value: 'pie',       text: 'Pie Chart' },
+      { value: 'polar',     text: 'Polar Chart' },
+      { value: 'radar',     text: 'Radar Chart' },
+      { value: 'doughnut',  text: 'Doughnut Chart' },
       ],
       selectedDevice: null,
       selectedStream : null,
@@ -131,7 +149,6 @@ export default {
     }
   },
   mounted () {
-    // this.loadDefaultCharts();
     this.fetchData();
     this.fetchDevicesData();
   },
@@ -143,57 +160,54 @@ export default {
         {
           user: "ac8b3312-0648-432b-8d9d-faacb7b2875d",
           dashboard: [
-            {
-              title:"Total Device",
-              chart: "bar",
-              data:{
-                device: "",
-                stream: "stats",
-                channel: ""
-              }
-            },
-            {
-              title:"Total Device",
-              chart: "line",
-              data:{
-                device: "",
-                stream: "stats",
-                channel: ""
-              }
-            },
-            {
-              title:"Total Device",
-              chart: "pie",
-              data:{
-                device: "",
-                stream: "stats",
-                channel: ""
-              }
-            },
-            {
-              title:"Total Device",
-              chart: "bar",
-              data:{
-                device: "",
-                stream: "stats",
-                channel: ""
-              }
-            },
+          {
+            title:"Pie",
+            chart: "pie",
+            data:{
+              device: "9de8e803-04d6-4de6-9133-e144bc88e410",
+              stream: "locations",
+              channel: "lat"
+            }
+          },
+          {
+            title:"Line",
+            chart: "line",
+            data:{
+              device: "0a3614c5-9762-4751-ad08-c77354a86e57",
+              stream: "obd",
+              channel: "speed"
+            }
+          },
+          {
+            title:"Polar",
+            chart: "polar",
+            data:{
+              device: "4750ada9-a3aa-4d98-9612-6ca8ea7654be",
+              stream: "stats",
+              channel: "distance"
+            }
+          },
+          {
+            title:"Bar",
+            chart: "bar",
+            data:{
+              device: "ab9bed83-629a-4d64-91e9-c5c816f353d5",
+              stream: "wearable",
+              channel: "hr"
+            }
+          },
           ]
         },
-      ]}
-      this.writeInFile(json)
+        ]}
+        this.loadDefaultCharts(json.users[0].dashboard);
     },
     fetchDevicesData () {
       this.$raptor.Inventory().list()
       .then((list) => {
         // this.$log.debug('Loaded %s device list', list.length);
           // console.log(list);
-          this.$data.label = Object.keys(this.$data.dictUser);
           this.$data.devices = list;
           list.forEach( (e) => this.listOfDevicesForSelectOptions.push({value: e.id, text: e.name+' - '+e.id}));
-          // this.changeData();
-          // this.chart = "barchart"
         })
       .catch(function(e) {
         // console.log(e)
@@ -204,11 +218,16 @@ export default {
         }
       });
     },
-    loadDefaultCharts() {
-      this.widgets.push({x:0,y:0,w:4,h:7,i:"0", title:"Total Device", chart: "barchart", data:{device: this.selectedDevice, stream: this.selectedStream, channel: this.selectedChannel}})
-      this.widgets.push({x:4,y:0,w:4,h:7,i:"1", title:"Total Device", chart: "linechart", data:{device: this.selectedDevice, stream: this.selectedStream, channel: this.selectedChannel}})
-      this.widgets.push({x:8,y:0,w:4,h:7,i:"2", title:"Total Device", chart: "piechart", data:{device: this.selectedDevice, stream: this.selectedStream, channel: this.selectedChannel}})
-      this.widgets.push({x:0,y:7,w:4,h:7,i:"3", title:"Total Device", chart: "chart", data:{device: this.selectedDevice, stream: this.selectedStream, channel: this.selectedChannel}})
+    loadDefaultCharts(dasboardWidgets) {
+      let arr = []
+      for (var j = 0; j < dasboardWidgets.length; j++) {
+        let widget = {x:(j%3)*4,y:(j%3)*7,w:4,h:7,i:j+"", title:dasboardWidgets[j].title, chart: dasboardWidgets[j].chart, data:dasboardWidgets[j].data}
+        arr.push(widget)
+      }
+      this.widgets = arr
+      // this.widgets.push({x:4,y:0,w:4,h:7,i:"1", title:"Total Device", chart: "line", data:{device: "ab9bed83-629a-4d64-91e9-c5c816f353d5", stream: "wearable", channel: "hr"}})
+      // this.widgets.push({x:8,y:0,w:4,h:7,i:"2", title:"Total Device", chart: "pie", data:{device: "ab9bed83-629a-4d64-91e9-c5c816f353d5", stream: "wearable", channel: "hr"}})
+      // this.widgets.push({x:0,y:7,w:4,h:7,i:"3", title:"Total Device", chart: "chart", data:{device: "ab9bed83-629a-4d64-91e9-c5c816f353d5", stream: "wearable", channel: "hr"}})
     },
     addWidget(device, stream, channel) {
       this.widgets.push({x:0,y:0,w:4,h:7,i:this.widgets.length+1, title:"Device "+(this.widgets.length+1), chart: "chart", data:{device: device, stream: stream, channel: channel}})
@@ -238,8 +257,8 @@ export default {
             for (var j = 0; j < keys.length; j++) {
               this.optionsStreams.push({ value: keys[j],text: keys[j] });
             }
-            // this.selectedStream = keys[0];
-            // this.selectedStreamDetail = this.selectedDeviceDetail.json.streams[keys[0]]
+            this.selectedStream = keys[0];
+            this.selectedStreamDetail = this.selectedDeviceDetail.json.streams[keys[0]]
           }
         }
       }
@@ -248,6 +267,7 @@ export default {
       let val = evt.target.value;
       if(this.selectedDeviceDetail) {
         let stream = this.selectedDeviceDetail.json.streams[val];
+        console.log(stream)
         this.selectedStreamDetail = stream
         let keys = Object.keys(stream.channels);
         this.optionsChannel = [];
@@ -274,26 +294,6 @@ export default {
       let index = this.widgets.indexOf(widget)
       this.widgets.splice(index, 1)
     },
-    // create or open db for dashboard setting
-    writeInFile (jsonData) {
-      // const adapter = new FileSync('RaptorBoxUsersDashboard.json')
-      // this.db = low(adapter)
-      // this.db.defaults({ users: [], dashboard: [] }).write()
-      // fs.writeFile(this.dbFile, jsonData, function(err) {
-      //   if(err) {
-      //     return console.log(err);
-      //   }
-      // });
-    },
-    readFile () {
-      // fs.readFile(this.dbFile, function(err, obj) {
-      //   if(err) {
-      //     return console.log(err);
-      //   }
-      //   console.log(obj)
-      //   return JSON.parse(obj);
-      // });
-    }
   }
 }
 </script>

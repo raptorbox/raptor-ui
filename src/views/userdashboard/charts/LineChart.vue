@@ -1,9 +1,8 @@
 <script>
-  import { Line } from 'vue-chartjs'
-  import moment from 'moment'
+import { Line } from 'vue-chartjs'
 
-  export default Line.extend({
-    props: ['height', 'chartData', 'width'],
+export default Line.extend({
+  props: ['height', 'chartData', 'width'],
     data() {
       return {
         dictUser: {},
@@ -27,15 +26,17 @@
       this.stream = this.chartData.stream
       this.subscribeStream(this.stream)
       this.renderLineChart();
+      // this.renderChart({
+      //   labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July'],
+      //   datasets: [
+      //     {
+      //       label: 'Data One',
+      //       backgroundColor: '#f87979',
+      //       data: [40, 39, 10, 40, 39, 80, 40]
+      //     }
+      //   ]
+      // }, {responsive: true, maintainAspectRatio: false})
     },
-    // computed: {
-    //   getChartData: function() {
-    //     this.channel = this.chartData.channel
-    //     this.stream = this.chartData.stream
-    //     this.device = this.chartData.device
-    //     return this.chartData
-    //   }
-    // },
     methods: {
       formatDate (d) {
         return moment(new Date(d)).format('MMMM Do YYYY');
@@ -47,9 +48,8 @@
           labels: lbls,
           datasets: [
           {
-            label: 'Users',
-            bbackgroundColor: 'rgba(255,255,255,.2)',
-            borderColor: 'rgba(255,255,255,.55)',
+            label: this.channel,
+            bbackgroundColor: '#f87979',
             data: arr
           }]
         }, {
@@ -139,11 +139,5 @@
         this.renderLineChart(arr, lbls);
       },
     },
-    // watch: {
-    //   chartData: function() {
-    //     this._chart.destroy();
-    //     this.renderLineChart();
-    //   }
-    // }
 })
 </script>

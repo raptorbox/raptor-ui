@@ -1,8 +1,7 @@
 <script>
-  import { Line } from 'vue-chartjs'
-  import moment from 'moment'
+import { Radar } from 'vue-chartjs'
 
-  export default Line.extend({
+export default Radar.extend({
     props: ['height', 'chartData', 'width'],
     data() {
       return {
@@ -26,16 +25,33 @@
       this.channel = this.chartData.channel
       this.stream = this.chartData.stream
       this.subscribeStream(this.stream)
-      this.renderLineChart();
+      this.renderRadarChart();
+    //   this.renderChart({
+    //   labels: ['Eating', 'Drinking', 'Sleeping', 'Designing', 'Coding', 'Cycling', 'Running'],
+    //   datasets: [
+    //     {
+    //       label: 'My First dataset',
+    //       backgroundColor: 'rgba(179,181,198,0.2)',
+    //       borderColor: 'rgba(179,181,198,1)',
+    //       pointBackgroundColor: 'rgba(179,181,198,1)',
+    //       pointBorderColor: '#fff',
+    //       pointHoverBackgroundColor: '#fff',
+    //       pointHoverBorderColor: 'rgba(179,181,198,1)',
+    //       data: [65, 59, 90, 81, 56, 55, 40]
+    //     },
+    //     {
+    //       label: 'My Second dataset',
+    //       backgroundColor: 'rgba(255,99,132,0.2)',
+    //       borderColor: 'rgba(255,99,132,1)',
+    //       pointBackgroundColor: 'rgba(255,99,132,1)',
+    //       pointBorderColor: '#fff',
+    //       pointHoverBackgroundColor: '#fff',
+    //       pointHoverBorderColor: 'rgba(255,99,132,1)',
+    //       data: [28, 48, 40, 19, 96, 27, 100]
+    //     }
+    //   ]
+    // }, {responsive: true, maintainAspectRatio: false})
     },
-    // computed: {
-    //   getChartData: function() {
-    //     this.channel = this.chartData.channel
-    //     this.stream = this.chartData.stream
-    //     this.device = this.chartData.device
-    //     return this.chartData
-    //   }
-    // },
     methods: {
       formatDate (d) {
         return moment(new Date(d)).format('MMMM Do YYYY');
@@ -47,35 +63,14 @@
           labels: lbls,
           datasets: [
           {
-            label: 'Users',
+            label: this.channel,
             bbackgroundColor: 'rgba(255,255,255,.2)',
             borderColor: 'rgba(255,255,255,.55)',
             data: arr
           }]
         }, {
           responsive: false,
-          maintainAspectRatio: true,
-          legend: {
-            display: false
-          },
-          scales: {
-            xAxes: [{
-              display: false
-            }],
-            yAxes: [{
-              display: false
-            }]
-          },
-          elements: {
-            line: {
-              borderWidth: 2
-            },
-            point: {
-              radius: 0,
-              hitRadius: 10,
-              hoverRadius: 4
-            }
-          }
+          maintainAspectRatio: true
         })
       },
       // subscription / unsunscription of the data for the selected charts
@@ -139,11 +134,5 @@
         this.renderLineChart(arr, lbls);
       },
     },
-    // watch: {
-    //   chartData: function() {
-    //     this._chart.destroy();
-    //     this.renderLineChart();
-    //   }
-    // }
 })
 </script>

@@ -1,9 +1,8 @@
 <script>
-  import { Line } from 'vue-chartjs'
-  import moment from 'moment'
+import { Pie } from 'vue-chartjs'
 
-  export default Line.extend({
-    props: ['height', 'chartData', 'width'],
+export default Pie.extend({
+  props: ['height', 'chartData', 'width'],
     data() {
       return {
         dictUser: {},
@@ -26,56 +25,45 @@
       this.channel = this.chartData.channel
       this.stream = this.chartData.stream
       this.subscribeStream(this.stream)
-      this.renderLineChart();
+      this.renderPieChart();
+      // this.renderChart({
+      //   labels: ['VueJs', 'EmberJs', 'ReactJs', 'AngularJs'],
+      //   datasets: [
+      //     {
+      //       backgroundColor: [
+      //         '#41B883',
+      //         '#E46651',
+      //         '#00D8FF',
+      //         '#DD1B16'
+      //       ],
+      //       data: [40, 20, 80, 10]
+      //     }
+      //   ]
+      // }, {responsive: true, maintainAspectRatio: false})
     },
-    // computed: {
-    //   getChartData: function() {
-    //     this.channel = this.chartData.channel
-    //     this.stream = this.chartData.stream
-    //     this.device = this.chartData.device
-    //     return this.chartData
-    //   }
-    // },
     methods: {
       formatDate (d) {
         return moment(new Date(d)).format('MMMM Do YYYY');
       },
-      renderLineChart (arr, lbls) {
+      renderPieChart (arr, lbls) {
         arr = this.dataForChart
         this.renderChart(
         {
           labels: lbls,
           datasets: [
           {
-            label: 'Users',
-            bbackgroundColor: 'rgba(255,255,255,.2)',
-            borderColor: 'rgba(255,255,255,.55)',
+            label: this.channel,
+            bbackgroundColor: [
+              '#41B883',
+              '#E46651',
+              '#00D8FF',
+              '#DD1B16'
+            ],
             data: arr
           }]
         }, {
           responsive: false,
           maintainAspectRatio: true,
-          legend: {
-            display: false
-          },
-          scales: {
-            xAxes: [{
-              display: false
-            }],
-            yAxes: [{
-              display: false
-            }]
-          },
-          elements: {
-            line: {
-              borderWidth: 2
-            },
-            point: {
-              radius: 0,
-              hitRadius: 10,
-              hoverRadius: 4
-            }
-          }
         })
       },
       // subscription / unsunscription of the data for the selected charts
@@ -139,11 +127,5 @@
         this.renderLineChart(arr, lbls);
       },
     },
-    // watch: {
-    //   chartData: function() {
-    //     this._chart.destroy();
-    //     this.renderLineChart();
-    //   }
-    // }
 })
 </script>
