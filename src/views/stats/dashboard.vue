@@ -134,7 +134,7 @@ export default {
       this.$raptor.Inventory().list()
       .then((list) => {
         // this.$log.debug('Loaded %s device list', list.length);
-          // console.log(list);
+          console.log(list);
           this.extractChartDataDev(list);
           this.$data.label = Object.keys(this.$data.dictUser); // getting labels
           this.$data.devices = list;

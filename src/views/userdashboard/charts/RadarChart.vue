@@ -56,7 +56,7 @@ export default Radar.extend({
       formatDate (d) {
         return moment(new Date(d)).format('MMMM Do YYYY');
       },
-      renderLineChart (arr, lbls) {
+      renderRadarChart (arr, lbls) {
         arr = this.dataForChart
         this.renderChart(
         {

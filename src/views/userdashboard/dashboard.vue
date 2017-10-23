@@ -2,10 +2,8 @@
   <div class="wrapper">
     <div class="animated fadeIn">
       <p>
-        <button @click="addWidget">
-          Add Widget
-        </button>
-        <b-button type="button" variant="success" @click="infoModal = true">Launch info modal</b-button>
+        <!-- <button @click="addWidget">Add Widget</button> -->
+        <b-button type="button" variant="success" @click="infoModal = true">Add Widget</b-button>
       </p>
 
       <grid-layout :layout.sync="widgets" :col-num="12" :row-height="30" :is-draggable="true" :is-resizable="true" :vertical-compact="true" :margin="[10, 10]" :use-css-transforms="true" >
@@ -138,6 +136,7 @@ export default {
       { value: 'radar',     text: 'Radar Chart' },
       { value: 'doughnut',  text: 'Doughnut Chart' },
       ],
+      selectedTitle: null,
       selectedDevice: null,
       selectedStream : null,
       selectedChannel: null,
@@ -154,12 +153,10 @@ export default {
   },
   methods: {
     fetchData () {
+      let userId = this.$raptor.Auth().getUser().uuid
       // let dataInFile = readFile()
       // console.log(dataInFile)
-      let json = { users: [
-        {
-          user: "ac8b3312-0648-432b-8d9d-faacb7b2875d",
-          dashboard: [
+      let json = { dashboard: [
           {
             title:"Pie",
             chart: "pie",
@@ -196,10 +193,26 @@ export default {
               channel: "hr"
             }
           },
-          ]
-        },
-        ]}
-        this.loadDefaultCharts(json.users[0].dashboard);
+          ]}
+        // { users: [
+        // {
+        //   user: "ac8b3312-0648-432b-8d9d-faacb7b2875d",
+        // },
+        // ]}
+        let context = this
+        let pathDashboard = '/users/'+userId+'/dashboard'
+        this.readDataFirebase('/users/', function(snapshot) {
+          if(snapshot.hasChild(userId)) {
+            console.log(snapshot.val())
+            if(snapshot.child(userId).hasChild('dashboard')) {
+              let arr = snapshot.child(userId).child('dashboard').val()
+              context.loadDefaultCharts(arr)
+            }
+          } else {
+            context.$dbFirebase.ref('users/' + userId).set(json);
+            context.loadDefaultCharts(json.dashboard)
+          }
+        })
     },
     fetchDevicesData () {
       this.$raptor.Inventory().list()
@@ -225,15 +238,40 @@ export default {
         arr.push(widget)
       }
       this.widgets = arr
-      // this.widgets.push({x:4,y:0,w:4,h:7,i:"1", title:"Total Device", chart: "line", data:{device: "ab9bed83-629a-4d64-91e9-c5c816f353d5", stream: "wearable", channel: "hr"}})
-      // this.widgets.push({x:8,y:0,w:4,h:7,i:"2", title:"Total Device", chart: "pie", data:{device: "ab9bed83-629a-4d64-91e9-c5c816f353d5", stream: "wearable", channel: "hr"}})
-      // this.widgets.push({x:0,y:7,w:4,h:7,i:"3", title:"Total Device", chart: "chart", data:{device: "ab9bed83-629a-4d64-91e9-c5c816f353d5", stream: "wearable", channel: "hr"}})
     },
-    addWidget(device, stream, channel) {
-      this.widgets.push({x:0,y:0,w:4,h:7,i:this.widgets.length+1, title:"Device "+(this.widgets.length+1), chart: "chart", data:{device: device, stream: stream, channel: channel}})
+    addWidget(widData) {
+      this.widgets.push({
+        x:0,
+        y:0,
+        w:4,
+        h:7,
+        i:this.widgets.length+1,
+        title:widData.title,
+        chart: widData.chart,
+        data:{
+          device: widData.data.device,
+          stream: widData.data.stream,
+          channel: widData.data.channel
+        }
+      })
       this.selectedDevice = null
       this.selectedStream = null
       this.selectedChannel = null
+      this.selectedChart = null
+      this.selectedTitle = null
+      let userId = this.$raptor.Auth().getUser().uuid
+      let pathDashboard = '/users/'+userId+'/dashboard'
+      var context = this
+      this.readDataFirebase(pathDashboard, function(snapshot) {
+        console.log(snapshot.val())
+        console.log(snapshot.key)
+        if(snapshot.key == 'dashboard') {
+          let widgets = snapshot.val()
+          console.log(widgets)
+          widgets.push(widData)
+          context.$dbFirebase.ref(pathDashboard).set(widgets);
+        }
+      })
     },
     // changeData: function() {
     //   let arr = Array();
@@ -288,12 +326,25 @@ export default {
     onAddChartButtonClick (evt) {
       console.log("device: " + this.selectedDevice + " stream: " + this.selectedStream + " channel: " + this.selectedChannel + " chart: " + this.selectedChart)
       this.infoModal = false
-      this.addWidget(this.selectedDevice, this.selectedStream, this.selectedChannel);
+      let widData = {
+        chart: this.selectedChart,
+        title: this.selectedTitle,
+        data: {
+          device: this.selectedDevice,
+          stream: this.selectedStream,
+          channel: this.selectedChannel
+        }
+      }
+      this.addWidget(widData);
     },
     onRemoveWidgetButtonClick (widget) {
       let index = this.widgets.indexOf(widget)
       this.widgets.splice(index, 1)
     },
+    // firebase functions
+    readDataFirebase(path, fun) {
+      return this.$dbFirebase.ref(path).once('value').then(fun);
+    }
   }
 }
 </script>
