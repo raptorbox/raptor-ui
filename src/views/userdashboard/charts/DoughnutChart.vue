@@ -1,5 +1,6 @@
 <script>
 import { Doughnut } from 'vue-chartjs'
+import moment from 'moment'
 
 export default Doughnut.extend({
   props: ['height', 'chartData', 'width'],
@@ -20,46 +21,32 @@ export default Doughnut.extend({
     },
     mounted () {
       // this.fetchData()
-      console.log(this.chartData)
+      // console.log(this.chartData)
       this.device = this.chartData.device
       this.channel = this.chartData.channel
       this.stream = this.chartData.stream
-      this.subscribeStream(this.stream)
+      // this.subscribeStream({name: this.stream, deviceId: this.device})
+      this.load()
       this.renderDoughnutChart();
-      // this.renderChart({
-      //   labels: ['VueJs', 'EmberJs', 'ReactJs', 'AngularJs'],
-      //   datasets: [
-      //     {
-      //       backgroundColor: [
-      //         '#41B883',
-      //         '#E46651',
-      //         '#00D8FF',
-      //         '#DD1B16'
-      //       ],
-      //       data: [40, 20, 80, 10]
-      //     }
-      //   ]
-      // }, {responsive: true, maintainAspectRatio: false})
     },
     methods: {
       formatDate (d) {
         return moment(new Date(d)).format('MMMM Do YYYY');
       },
-      renderDoughnutChart (arr, lbls) {
-        arr = this.dataForChart
+      renderDoughnutChart (lbls) {
         this.renderChart(
         {
           labels: lbls,
           datasets: [
           {
             label: this.channel,
-            bbackgroundColor: [
+            backgroundColor: [
               '#41B883',
               '#E46651',
               '#00D8FF',
               '#DD1B16'
             ],
-            data: arr
+            data: this.dataForChart
           }]
         }, {
           responsive: false,
@@ -72,34 +59,49 @@ export default Doughnut.extend({
               display: false
             }],
             yAxes: [{
-              display: false
+              display: true
             }]
           },
-          elements: {
-            line: {
-              borderWidth: 2
-            },
-            point: {
-              radius: 0,
-              hitRadius: 10,
-              hoverRadius: 4
-            }
-          }
+        })
+      },
+      load() {
+        this.$raptor.Inventory().read(this.device)
+        .then((device) => {
+          // console.log(device)
+          this.stream = device.getStream(this.stream)
+          this.subscribeStream(this.stream);
+          // this.getStream("obd");
+        })
+        .catch((e) => {
+          this.$log.debug('Failed to load device')
+          this.$log.error(e)
         })
       },
       // subscription / unsunscription of the data for the selected charts
       subscribeStream (stream) {
         var context = this;
-        this.$raptor.Stream().subscribe(stream, function(msg) {
-          console.log(msg)
-          context.selectedStreamData.push(msg.record);
-          context.extractChartDataDeviceStreamOneChannel(context.selectedStreamData,'minutes',context.channel);
-          context.changeStreamData();
-          // if(!(msg.type === 'stream' && msg.op === 'data' && msg.streamId === this.$raptor.stream)) {
-          //   return
-          // }
-        });
-        context.unsubscribeStream(stream)
+        var ts = Math.round((new Date()).getTime() / 1000);
+        this.$raptor.Stream().list(stream, 0, ts)
+        .then((streams) => {
+          // console.log(streams)
+          context.selectedStreamData = streams
+          context.extractChartDataDeviceStreamOneChannel(context.selectedStreamData, context.channel);
+        })
+        .catch((e) => {
+          this.$log.debug('Failed to load streams')
+          this.$log.error(e)
+          this.loading = false
+        })
+        // this.$raptor.Stream().subscribe(stream, function(msg) {
+        //   console.log(msg)
+        //   context.selectedStreamData.push(msg.record);
+        //   context.extractChartDataDeviceStreamOneChannel(context.selectedStreamData,'minutes',context.channel);
+        //   context.changeStreamData();
+        //   // if(!(msg.type === 'stream' && msg.op === 'data' && msg.streamId === this.$raptor.stream)) {
+        //   //   return
+        //   // }
+        // });
+        // context.unsubscribeStream(stream)
       },
       unsubscribeStream (stream) {
         var context = this;
@@ -107,45 +109,21 @@ export default Doughnut.extend({
           console.log(msg)
         });
       },
-      extractChartDataDeviceStreamOneChannel (d, val, channel, pushData) {
-        this.dictDevice = [];
+      extractChartDataDeviceStreamOneChannel (d, channel, pushData) {
+        this.dataForChart = [];
+        this.streamChartLabels = []
         for (var i = 0; i < d.length; i++) {
           let s = d[i];
           if(i == 0) {
             this.deviceDataTime = this.formatDate(s.timestamp * 1000);
           }
-          let sDate = this.getDate(s, val)
+          let sDate = (new Date(s.timestamp * 1000)).toUTCString();
           if((typeof s.channels[channel]) === 'number' || (typeof s.channels[channel]) === 'boolean') {
-            if(!this.dictDevice[sDate]) {
-                    this.dictDevice[sDate] = [];
-            }
-            if(this.dictDevice[sDate]) {
-                this.dictDevice[sDate].push(s.channels[channel]);
-            }
+            this.streamChartLabels.push(sDate)
+            this.dataForChart.push(s.channels[channel])
           }
         }
-      },
-      getDate(s, val) {
-        let sDate = (new Date(s.timestamp * 1000)).getMinutes();
-        if(val == 'hours'){
-          sDate = (new Date(s.timestamp * 1000)).getHours();
-        } else if(val == 'day'){
-          sDate = (new Date(s.timestamp * 1000)).getDay();
-        } else if(val == 'month'){
-          sDate = (new Date(s.timestamp * 1000)).getMonth();
-        }
-        return sDate;
-      },
-      changeStreamData: function() {
-        let arr = Array();
-        this.streamChartLabels = [];
-        this.streamChartLabels = Object.keys(this.dictDevice); // getting labels
-        for (var i = 0; i < this.streamChartLabels.length; i++) {
-          let s = this.streamChartLabels[i];
-          arr.push(this.dictDevice[s]);
-        }
-        // this.dataForChart = arr;
-        this.renderLineChart(arr, lbls);
+        this.renderDoughnutChart(this.streamChartLabels);
       },
     },
 })

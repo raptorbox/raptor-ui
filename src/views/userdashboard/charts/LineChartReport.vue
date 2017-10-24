@@ -1,9 +1,9 @@
 <script>
-import { Radar } from 'vue-chartjs'
+import { Line } from 'vue-chartjs'
 import moment from 'moment'
 
-export default Radar.extend({
-    props: ['height', 'chartData', 'width'],
+export default Line.extend({
+  props: ['height', 'width'],
     data() {
       return {
         dictUser: {},
@@ -20,51 +20,66 @@ export default Radar.extend({
       }
     },
     mounted () {
-      // this.fetchData()
-      console.log(this.chartData)
-      this.device = this.chartData.device
-      this.channel = this.chartData.channel
-      this.stream = this.chartData.stream
-      // this.subscribeStream({name: this.stream, deviceId: this.device})
       this.load()
-      this.renderRadarChart();
+      this.renderLineChart();
     },
     methods: {
       formatDate (d) {
         return moment(new Date(d)).format('MMMM Do YYYY');
       },
-      renderRadarChart (lbls) {
+      renderLineChart (lbls) {
         this.renderChart(
         {
           labels: lbls,
           datasets: [
           {
             label: this.channel,
-            backgroundColor: 'rgba(255,99,132,0.2)',
-            borderColor: 'rgba(255,99,132,1)',
-            pointBackgroundColor: 'rgba(255,99,132,1)',
-            pointBorderColor: '#fff',
-            pointHoverBackgroundColor: '#fff',
-            pointHoverBorderColor: 'rgba(255,99,132,1)',
+            backgroundColor: '#f87979',
             data: this.dataForChart
           }]
         }, {
-          responsive: false,
-          maintainAspectRatio: true
+          responsive: true,
+          maintainAspectRatio: false,
+          legend: {
+            display: true
+          },
+          scales: {
+            xAxes: [{
+              display: false
+            }],
+            yAxes: [{
+              display: true
+            }]
+          },
         })
       },
+      extractChartDataDev (d) {
+        for (var i = 0, len = d.length; i < len; i++) {
+          let s = d[i]
+          let sDate = this.formatDate(s.createdAt * 1000).split(' ')[0]
+          this.$data.dictUser[sDate] = this.$data.dictUser[sDate] ? this.$data.dictUser[sDate] + 1 : 1;
+        }
+      },
       load() {
-        this.$raptor.Inventory().read(this.device)
-        .then((device) => {
-          // console.log(device)
-          this.stream = device.getStream(this.stream)
-          this.subscribeStream(this.stream);
-          // this.getStream("obd");
-        })
-        .catch((e) => {
-          this.$log.debug('Failed to load device')
-          this.$log.error(e)
-        })
+        this.$raptor.Inventory().list()
+        .then((list) => {
+          // this.$log.debug('Loaded %s device list', list.length);
+            console.log(list);
+            this.extractChartDataDev(list);
+            this.$data.labels = Object.keys(this.$data.dictUser); // getting labels
+            this.$data.devices = list;
+            this.totalNoOfDevices = list.length;
+            list.forEach( (e) => this.listOfDevicesForSelectOptions.push({value: e.id, text: e.name+' - '+e.id}));
+            this.changeData();
+          })
+        .catch(function(e) {
+          console.log(e)
+          console.log(JSON.stringify(e))
+          if(e.toString().indexOf("Unauthorized") !== -1) {
+            context.$raptor.Auth().logout();
+            context.$router.push("/pages/login");
+          }
+        });
       },
       // subscription / unsunscription of the data for the selected charts
       subscribeStream (stream) {
@@ -79,23 +94,8 @@ export default Radar.extend({
         .catch((e) => {
           this.$log.debug('Failed to load streams')
           this.$log.error(e)
+          this.loading = false
         })
-        // this.$raptor.Stream().subscribe(stream, function(msg) {
-        //   console.log(msg)
-        //   context.selectedStreamData.push(msg.record);
-        //   context.extractChartDataDeviceStreamOneChannel(context.selectedStreamData,'minutes',context.channel);
-        //   context.changeStreamData();
-        //   // if(!(msg.type === 'stream' && msg.op === 'data' && msg.streamId === this.$raptor.stream)) {
-        //   //   return
-        //   // }
-        // });
-        // context.unsubscribeStream(stream)
-      },
-      unsubscribeStream (stream) {
-        var context = this;
-        this.$raptor.Stream().unsubscribe(stream, function(msg) {
-          console.log(msg)
-        });
       },
       extractChartDataDeviceStreamOneChannel (d, channel, pushData) {
         this.dataForChart = [];
@@ -111,7 +111,7 @@ export default Radar.extend({
             this.dataForChart.push(s.channels[channel])
           }
         }
-        this.renderRadarChart(this.streamChartLabels);
+        this.renderLineChart(this.streamChartLabels);
       },
     },
 })

@@ -1,5 +1,6 @@
 <script>
 import { Bar } from 'vue-chartjs'
+import moment from 'moment'
 
 export default Bar.extend({
   props: ['height', 'chartData', 'width'],
@@ -24,52 +25,78 @@ export default Bar.extend({
       this.device = this.chartData.device
       this.channel = this.chartData.channel
       this.stream = this.chartData.stream
-      this.subscribeStream(this.stream)
+      // this.subscribeStream({name: this.stream, deviceId: this.device})
+      this.load()
       this.renderBarChart();
-      // this.renderChart({
-      //   labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
-      //   datasets: [
-      //     {
-      //       label: 'GitHub Commits',
-      //       backgroundColor: '#f87979',
-      //       data: [40, 20, 12, 39, 10, 40, 39, 80, 40, 20, 12, 11]
-      //     }
-      //   ]
-      // })
     },
     methods: {
       formatDate (d) {
         return moment(new Date(d)).format('MMMM Do YYYY');
       },
-      renderBarChart (arr, lbls) {
-        arr = this.dataForChart
+      renderBarChart (lbls) {
         this.renderChart(
         {
           labels: lbls,
           datasets: [
           {
             label: this.channel,
-            bbackgroundColor: '#f87979',
-            data: arr
+            backgroundColor: '#f87979',
+            data: this.dataForChart
           }]
         }, {
           responsive: false,
           maintainAspectRatio: true,
+          legend: {
+            display: true
+          },
+          scales: {
+            xAxes: [{
+              display: false
+            }],
+            yAxes: [{
+              display: true
+            }]
+          },
+        })
+      },
+      load() {
+        this.$raptor.Inventory().read(this.device)
+        .then((device) => {
+          // console.log(device)
+          this.stream = device.getStream(this.stream)
+          this.subscribeStream(this.stream);
+          // this.getStream("obd");
+        })
+        .catch((e) => {
+          this.$log.debug('Failed to load device')
+          this.$log.error(e)
+          this.loading = false
         })
       },
       // subscription / unsunscription of the data for the selected charts
       subscribeStream (stream) {
         var context = this;
-        this.$raptor.Stream().subscribe(stream, function(msg) {
-          console.log(msg)
-          context.selectedStreamData.push(msg.record);
-          context.extractChartDataDeviceStreamOneChannel(context.selectedStreamData,'minutes',context.channel);
-          context.changeStreamData();
-          // if(!(msg.type === 'stream' && msg.op === 'data' && msg.streamId === this.$raptor.stream)) {
-          //   return
-          // }
-        });
-        context.unsubscribeStream(stream)
+        var ts = Math.round((new Date()).getTime() / 1000);
+        this.$raptor.Stream().list(stream, 0, ts)
+        .then((streams) => {
+          // console.log(streams)
+          context.selectedStreamData = streams
+          context.extractChartDataDeviceStreamOneChannel(context.selectedStreamData,context.channel);
+        })
+        .catch((e) => {
+          this.$log.debug('Failed to load streams')
+          this.$log.error(e)
+        })
+        // this.$raptor.Stream().subscribe(stream, function(msg) {
+        //   console.log(msg)
+        //   context.selectedStreamData.push(msg.record);
+        //   context.extractChartDataDeviceStreamOneChannel(context.selectedStreamData,'minutes',context.channel);
+        //   context.changeStreamData();
+        //   // if(!(msg.type === 'stream' && msg.op === 'data' && msg.streamId === this.$raptor.stream)) {
+        //   //   return
+        //   // }
+        // });
+        // context.unsubscribeStream(stream)
       },
       unsubscribeStream (stream) {
         var context = this;
@@ -77,45 +104,21 @@ export default Bar.extend({
           console.log(msg)
         });
       },
-      extractChartDataDeviceStreamOneChannel (d, val, channel, pushData) {
-        this.dictDevice = [];
+      extractChartDataDeviceStreamOneChannel (d, channel, pushData) {
+        this.dataForChart = [];
+        this.streamChartLabels = []
         for (var i = 0; i < d.length; i++) {
           let s = d[i];
           if(i == 0) {
             this.deviceDataTime = this.formatDate(s.timestamp * 1000);
           }
-          let sDate = this.getDate(s, val)
+          let sDate = (new Date(s.timestamp * 1000)).toUTCString();
           if((typeof s.channels[channel]) === 'number' || (typeof s.channels[channel]) === 'boolean') {
-            if(!this.dictDevice[sDate]) {
-                    this.dictDevice[sDate] = [];
-            }
-            if(this.dictDevice[sDate]) {
-                this.dictDevice[sDate].push(s.channels[channel]);
-            }
+            this.streamChartLabels.push(sDate)
+            this.dataForChart.push(s.channels[channel])
           }
         }
-      },
-      getDate(s, val) {
-        let sDate = (new Date(s.timestamp * 1000)).getMinutes();
-        if(val == 'hours'){
-          sDate = (new Date(s.timestamp * 1000)).getHours();
-        } else if(val == 'day'){
-          sDate = (new Date(s.timestamp * 1000)).getDay();
-        } else if(val == 'month'){
-          sDate = (new Date(s.timestamp * 1000)).getMonth();
-        }
-        return sDate;
-      },
-      changeStreamData: function() {
-        let arr = Array();
-        this.streamChartLabels = [];
-        this.streamChartLabels = Object.keys(this.dictDevice); // getting labels
-        for (var i = 0; i < this.streamChartLabels.length; i++) {
-          let s = this.streamChartLabels[i];
-          arr.push(this.dictDevice[s]);
-        }
-        // this.dataForChart = arr;
-        this.renderLineChart(arr, lbls);
+        this.renderBarChart(this.streamChartLabels);
       },
     },
 })
