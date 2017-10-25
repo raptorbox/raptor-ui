@@ -21,7 +21,7 @@
                   </button>
                 </div>
                 <div class="pb-0">
-                  <p>{{wid.title}}</p>
+                  <h5>{{wid.title}}</h5>
                 </div>
               </div>
               <div class="chart-wrapper" v-if="wid.chart == 'bar'">
@@ -30,7 +30,7 @@
               <div class="chart-wrapper" v-else-if="wid.chart == 'polar'">
                 <polar-area-chart :chartData="wid.data"/>
               </div>
-              <div class="chart-wrapper" v-else-if="wid.chart == 'line'">
+              <div class="chart-wrapper" v-else-if="wid.chart == 'line' && wid.data">
                 <line-chart :chartData="wid.data"/>
               </div>
               <div class="chart-wrapper" v-else-if="wid.chart == 'pie'">
@@ -150,6 +150,7 @@ export default {
     RadarChart,
     PieChart,
     PolarAreaChart,
+    LineChartReport,
     GridLayout,
     GridItem,
     Icon,
@@ -170,6 +171,8 @@ export default {
       { value: 'polar',     text: 'Polar Chart' },
       { value: 'radar',     text: 'Radar Chart' },
       { value: 'doughnut',  text: 'Doughnut Chart' },
+      // { value: 'bubble',    text: 'Bubble Chart' },
+      // { value: 'scatter',   text: 'Scatter Chart' },
       ],
       selectedTitle: null,
       selectedDevice: null,
@@ -399,8 +402,8 @@ export default {
         w:6,
         h:11,
         i:this.widgets.length+1,
-        title:widData.title,
-        chart: widData.chart
+        title: 'Report',
+        chart: 'line'
       }
       this.widgets.push(widget)
       this.writeToFirebase(widget)
@@ -424,6 +427,7 @@ export default {
       let index = this.widgets.indexOf(widget)
       this.widgets.splice(index, 1)
       let userId = this.$raptor.Auth().getUser().uuid
+      var context = this
       this.readDataFirebase('/users/'+userId, function(snapshot) {
         if(snapshot.hasChild('dashboard')) {
           let arr = snapshot.child(userId).child('dashboard').val()

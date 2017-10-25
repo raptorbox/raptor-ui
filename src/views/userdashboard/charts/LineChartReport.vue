@@ -2,12 +2,20 @@
 import { Line } from 'vue-chartjs'
 import moment from 'moment'
 
+var colors = [
+              '#41B883',
+              '#E46651',
+              '#00D8FF',
+              '#DD1B16'
+            ]
+
 export default Line.extend({
   props: ['height', 'width'],
     data() {
       return {
         dictUser: {},
         streamChartLabels: [],
+        chartDatasets: [],
         dataChartDevice: null,
         labels: [],
         device: null,
@@ -27,16 +35,11 @@ export default Line.extend({
       formatDate (d) {
         return moment(new Date(d)).format('MMMM Do YYYY');
       },
-      renderLineChart (lbls) {
+      renderLineChart () {
         this.renderChart(
         {
-          labels: lbls,
-          datasets: [
-          {
-            label: this.channel,
-            backgroundColor: '#f87979',
-            data: this.dataForChart
-          }]
+          labels: this.streamChartLabels,
+          datasets: this.chartDatasets
         }, {
           responsive: true,
           maintainAspectRatio: false,
@@ -53,24 +56,53 @@ export default Line.extend({
           },
         })
       },
-      extractChartDataDev (d) {
-        for (var i = 0, len = d.length; i < len; i++) {
-          let s = d[i]
-          let sDate = this.formatDate(s.createdAt * 1000).split(' ')[0]
-          this.$data.dictUser[sDate] = this.$data.dictUser[sDate] ? this.$data.dictUser[sDate] + 1 : 1;
+      populateChart (records) {
+        let arr = []
+        let lbls = []
+        for (var i = 0; i < records.length; i++) {
+          let dev = records[i]
+          let sDate = this.formatDate(dev.createdAt * 1000)
+          lbls.push(sDate)
+          if(!arr[dev.json.name]) {
+            let name = dev.json.name
+            arr[name] = []
+          } else {
+            arr[dev.json.name].push(dev)
+          }
         }
+        this.streamChartLabels = lbls.filter(function(elem, index, self) {
+          return index == self.indexOf(elem);
+        })
+        this.chartDatasets = []
+        let keys = Object.keys(arr)
+        for (var i = 0; i < keys.length; i++) {
+          let dataset = {
+            label: keys[i],
+            backgroundColor: colors[i],
+            data: []
+          }
+          let countArray = {}
+          for (var j = 0; j < arr[keys[i]].length; j++) {
+            let dev = arr[keys[i]][j]
+            let sDate = this.formatDate(dev.createdAt * 1000)
+            countArray[sDate] = countArray[sDate] ? countArray[sDate] + 1 : 1;
+          }
+          dataset.data = Object.values(countArray)
+          this.chartDatasets.push(dataset)
+        }
+        // console.log(this.streamChartLabels)
+        this.renderLineChart();
       },
       load() {
         this.$raptor.Inventory().list()
         .then((list) => {
           // this.$log.debug('Loaded %s device list', list.length);
-            console.log(list);
-            this.extractChartDataDev(list);
-            this.$data.labels = Object.keys(this.$data.dictUser); // getting labels
-            this.$data.devices = list;
-            this.totalNoOfDevices = list.length;
-            list.forEach( (e) => this.listOfDevicesForSelectOptions.push({value: e.id, text: e.name+' - '+e.id}));
-            this.changeData();
+            // console.log(list);
+            this.populateChart(list);
+            // this.$data.labels = Object.keys(this.$data.dictUser); // getting labels
+            // this.$data.devices = list;
+            // this.totalNoOfDevices = list.length;
+            // this.changeData();
           })
         .catch(function(e) {
           console.log(e)
@@ -80,38 +112,6 @@ export default Line.extend({
             context.$router.push("/pages/login");
           }
         });
-      },
-      // subscription / unsunscription of the data for the selected charts
-      subscribeStream (stream) {
-        var context = this;
-        var ts = Math.round((new Date()).getTime() / 1000);
-        this.$raptor.Stream().list(stream, 0, ts)
-        .then((streams) => {
-          // console.log(streams)
-          context.selectedStreamData = streams
-          context.extractChartDataDeviceStreamOneChannel(context.selectedStreamData,context.channel);
-        })
-        .catch((e) => {
-          this.$log.debug('Failed to load streams')
-          this.$log.error(e)
-          this.loading = false
-        })
-      },
-      extractChartDataDeviceStreamOneChannel (d, channel, pushData) {
-        this.dataForChart = [];
-        this.streamChartLabels = []
-        for (var i = 0; i < d.length; i++) {
-          let s = d[i];
-          if(i == 0) {
-            this.deviceDataTime = this.formatDate(s.timestamp * 1000);
-          }
-          let sDate = (new Date(s.timestamp * 1000)).toUTCString();
-          if((typeof s.channels[channel]) === 'number' || (typeof s.channels[channel]) === 'boolean') {
-            this.streamChartLabels.push(sDate)
-            this.dataForChart.push(s.channels[channel])
-          }
-        }
-        this.renderLineChart(this.streamChartLabels);
       },
     },
 })
