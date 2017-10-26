@@ -5,8 +5,8 @@ export default {
       url: '/dashboard',
       icon: 'icon-speedometer',
       badge: {
-        variant: 'primary',
-        text: 'NEW'
+        variant: 'primary'
+        // text: 'NEW'
       }
     },
     {
@@ -21,7 +21,7 @@ export default {
         {
           name: 'Users',
           url: '/admin/users',
-          icon: 'icon-puzzle'
+          icon: 'icon-user'
         },
         {
           name: 'Tokens',
@@ -36,8 +36,20 @@ export default {
     },
     {
       name: 'Devices',
-      url: '/inventory/list',
-      icon: 'icon-puzzle'
+      url: '/inventory',
+      icon: 'icon-screen-smartphone',
+      children: [
+        {
+          name: 'List',
+          url: '/inventory/list',
+          icon: 'icon-list'
+        },
+        {
+          name: 'Search',
+          url: '/inventory/search',
+          icon: 'icon-magnifier'
+        }
+      ]
     }
   ]
 }

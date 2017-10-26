@@ -218,7 +218,7 @@ export default Line.extend({
               label: this.datasets[i].channel,
               // fill: false,
               // borderColor: colors[i],
-              // backgroundColor: colors[i],
+              backgroundColor: colors[i],
               data: this.datasets[i].dataForChart
             })
           }

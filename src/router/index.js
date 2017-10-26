@@ -17,6 +17,8 @@ import TokensForm from '@/views/token/token_form'
 
 import DeviceList from '@/views/device/device_list'
 import DeviceForm from '@/views/device/device_form'
+import DeviceSearch from '@/views/device/search'
+import DeviceDataChart from '@/views/device/realtimechart'
 
 // Streams
 import StreamList from '@/views/device/streams/stream_list'
@@ -92,6 +94,38 @@ const router = new Router({
           name: 'Charts',
           component: Charts
         },
+        // {
+        //   path: 'inventory/search',
+        //   component: DeviceSearch,
+        //   name: 'Search Device',
+        //   children: [
+        //     {
+        //       path: 'chart',
+        //       name: 'RealTimeChart',
+        //       component: DeviceDataChart
+        //     }
+        //   ]
+        // },
+        // {
+        //   path: '/inventory/search',
+        //   name: 'Search Device',
+        //   redirect: '/inventory/search',
+        //   component: {
+        //     render (c) { return c('router-view') }
+        //   },
+        //   children: [
+        //     {
+        //       path: 'search',
+        //       component: DeviceSearch,
+        //       name: 'Search Device'
+        //     },
+        //     {
+        //       path: ':deviceId/chart',
+        //       name: 'RealTimeChart',
+        //       component: DeviceDataChart
+        //     }
+        //   ]
+        // },
         {
           path: 'widgets',
           name: 'Widgets',
@@ -238,48 +272,76 @@ const router = new Router({
           },
           children: [
             {
-              path: 'list',
-              name: 'DeviceList',
-              meta: {
-                label: 'List'
+              path: '',
+              name: 'Devices',
+              redirect: '/inventory/search',
+              component: {
+                render (c) { return c('router-view') }
               },
-              component: DeviceList
+              children: [
+                {
+                  path: 'search',
+                  component: DeviceSearch,
+                  name: 'Search'
+                },
+                {
+                  path: ':deviceId/chart',
+                  name: 'RealTimeChart',
+                  component: DeviceDataChart
+                }
+              ]
             },
             {
-              path: 'create',
-              name: 'DeviceCreate',
-              meta: {
-                label: 'Create'
+              path: '',
+              name: 'Device',
+              redirect: '/inventory/list',
+              component: {
+                render (c) { return c('router-view') }
               },
-              component: DeviceForm,
-              props: true
-            },
-            {
-              path: ':deviceId',
-              component: DeviceForm,
-              name: 'DeviceUpdate',
-              meta: {
-                label: 'Update'
+              children: [{
+                path: 'list',
+                name: 'DeviceList',
+                meta: {
+                  label: 'List'
+                },
+                component: DeviceList
               },
-              props: true
-            },
-            {
-              path: ':deviceId/streams',
-              component: StreamList,
-              name: 'Streams',
-              meta: {
-                label: 'Streams'
+              {
+                path: 'create',
+                name: 'DeviceCreate',
+                meta: {
+                  label: 'Create'
+                },
+                component: DeviceForm,
+                props: true
               },
-              props: true
-            },
-            {
-              path: ':deviceId/data',
-              component: DeviceRecordSet,
-              name: 'RecordSet',
-              meta: {
-                label: 'Records'
+              {
+                path: ':deviceId',
+                component: DeviceForm,
+                name: 'DeviceUpdate',
+                meta: {
+                  label: 'Update'
+                },
+                props: true
               },
-              props: true
+              {
+                path: ':deviceId/streams',
+                component: StreamList,
+                name: 'Streams',
+                meta: {
+                  label: 'Streams'
+                },
+                props: true
+              },
+              {
+                path: ':deviceId/data',
+                component: DeviceRecordSet,
+                name: 'RecordSet',
+                meta: {
+                  label: 'Records'
+                },
+                props: true
+              }]
             }
           ]
         },

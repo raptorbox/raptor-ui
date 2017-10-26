@@ -21,7 +21,7 @@ function random (min, max) {
 }
 
 export default Line.extend({
-  props: ['height','labels', 'data'],
+  props: ['height','labels', 'data', 'chartLabel'],
   computed: {
     chartData: function() {
       return this.data
@@ -50,7 +50,7 @@ export default Line.extend({
             let found = false;
             let dataToPush = parseInt(finalObject);
             for (let a = 0; a < datasetsForCharts.length; a++) {
-              if (datasetsForCharts[a].label == this.labels[0]) {
+              if (datasetsForCharts[a].label == this.chartLabel) {
                 datasetsForCharts[a].data.push(dataToPush);
                 found = true;
                 if(dataToPush > max) {
@@ -60,7 +60,7 @@ export default Line.extend({
             }
             if(!found) {
               let obj = {
-                label: this.labels[0],
+                label: this.chartLabel,
                 backgroundColor: convertHex(brand[0], 10),
                 borderColor: brand[0],
                 pointHoverBackgroundColor: '#fff',
@@ -111,12 +111,13 @@ export default Line.extend({
       }, {
         maintainAspectRatio: false,
         legend: {
-          display: false
+          display: true
         },
         scales: {
           xAxes: [{
+            display: false,
             gridLines: {
-              drawOnChartArea: false
+              display: true
             }
           }],
           yAxes: [{
