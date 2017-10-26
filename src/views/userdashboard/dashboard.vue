@@ -7,48 +7,45 @@
         <b-button type="button" variant="success" @click="singleDataModal = true">Add Widget</b-button>
         <b-button type="button" variant="success" @click="multipleDataModal = true">Add Mix Chart Widget</b-button>
       </p>
-
-      <!-- <grid-layout :layout.sync="widgets" :col-num="12" :row-height="30" :is-draggable="true" :is-resizable="true" :vertical-compact="true" :margin="[10, 10]" :use-css-transforms="true" >
-        <grid-item v-for="wid in widgets" :key="wid.i" :minH="6" :minW="3" :maxH="12" :maxW="9" :x.sync="wid.x" :y.sync="wid.y" :w.sync="wid.w" :h.sync="wid.h" :i="wid.i"> -->
       <div class="card-columns cols-3">
-        <div v-for="wid in widgets">
-          <!-- <div class="bg-primary"> -->
-            <b-card show-header>
-              <div slot="header">
-                <div class="float-right">
-                  <button type="button" i="wid.i" class="btn btn-link" @click="(ev) => { onRemoveWidgetButtonClick(ev, wid) }">
-                    <icon name="remove" scale="2" color="red"></icon>
-                  </button>
+        <div class="container" v-dragula="widgets" drake="first">
+          <div v-for="wid in widgets">
+            <!-- <div class="bg-primary"> -->
+              <b-card show-header>
+                <div slot="header">
+                  <div class="float-right">
+                    <button type="button" i="wid.i" class="btn btn-link" @click="(ev) => { onRemoveWidgetButtonClick(ev, wid) }">
+                      <icon name="remove" scale="2" color="red"></icon>
+                    </button>
+                  </div>
+                  <div class="pb-0">
+                    <h5>{{wid.title}}</h5>
+                  </div>
                 </div>
-                <div class="pb-0">
-                  <h5>{{wid.title}}</h5>
+                <div class="chart-wrapper" v-if="wid.chart == 'bar'">
+                  <bar-chart :chartData="wid.data"/>
                 </div>
-              </div>
-              <div class="chart-wrapper" v-if="wid.chart == 'bar'">
-                <bar-chart :chartData="wid.data"/>
-              </div>
-              <div class="chart-wrapper" v-else-if="wid.chart == 'polar'">
-                <polar-area-chart :chartData="wid.data"/>
-              </div>
-              <div class="chart-wrapper" v-else-if="wid.chart == 'line' && wid.data">
-                <line-chart :chartData="wid.data"/>
-              </div>
-              <div class="chart-wrapper" v-else-if="wid.chart == 'pie'">
-                <pie-chart :chartData="wid.data"/>
-              </div>
-              <div class="chart-wrapper" v-else-if="wid.chart == 'radar'">
-                <radar-chart :chartData="wid.data"/>
-              </div>
-              <div class="chart-wrapper" v-else-if="wid.chart == 'doughnut'">
-                <doughnut-chart :chartData="wid.data"/>
-              </div>
-              <div class="chart-wrapper" v-if="wid.data == null">
-                <line-chart-report />
-              </div>
-            </b-card>
-          <!-- </div> -->
-        <!-- </grid-item>
-      </grid-layout> -->
+                <div class="chart-wrapper" v-else-if="wid.chart == 'polar'">
+                  <polar-area-chart :chartData="wid.data"/>
+                </div>
+                <div class="chart-wrapper" v-else-if="wid.chart == 'line' && wid.data">
+                  <line-chart :chartData="wid.data"/>
+                </div>
+                <div class="chart-wrapper" v-else-if="wid.chart == 'pie'">
+                  <pie-chart :chartData="wid.data"/>
+                </div>
+                <div class="chart-wrapper" v-else-if="wid.chart == 'radar'">
+                  <radar-chart :chartData="wid.data"/>
+                </div>
+                <div class="chart-wrapper" v-else-if="wid.chart == 'doughnut'">
+                  <doughnut-chart :chartData="wid.data"/>
+                </div>
+                <div class="chart-wrapper" v-if="wid.data == null">
+                  <line-chart-report />
+                </div>
+              </b-card>
+            <!-- </div> -->
+          </div>
         </div>
       </div>
     </div>
@@ -134,6 +131,13 @@ import VueGridLayout from 'vue-grid-layout'
 import Vue from 'vue'
 import Icon from 'vue-awesome/components/Icon'
 import 'vue-awesome/icons/remove'
+import { Vue2Dragula } from 'vue2-dragula'
+
+Vue.use(Vue2Dragula, {
+  logging: {
+    service: true
+  }
+});
 
 Vue.component('icon', Icon)
 
@@ -203,13 +207,8 @@ export default {
             w:6,
             h:11,
             i:0,
-            title:"Pie",
-            chart: "pie",
-            data:{
-              device: "9de8e803-04d6-4de6-9133-e144bc88e410",
-              stream: "locations",
-              channel: "lat"
-            }
+            title:"Report",
+            chart: "line"
           },
           {
             x:6,
@@ -430,8 +429,11 @@ export default {
       var context = this
       this.readDataFirebase('/users/'+userId, function(snapshot) {
         if(snapshot.hasChild('dashboard')) {
-          let arr = snapshot.child(userId).child('dashboard').val()
-          // context.$dbFirebase.ref('users/' + userId).set({dashboard: json});
+          let arr = snapshot.child('dashboard').val()
+          let index = arr.indexOf(widget)
+          arr.splice(index, 1)
+          console.log(arr)
+          context.$dbFirebase.ref('users/' + userId).set({dashboard: arr});
         }
       })
     },
