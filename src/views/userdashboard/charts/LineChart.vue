@@ -29,7 +29,7 @@ export default Line.extend({
       }
     },
     mounted () {
-      console.log(this.chartData)
+      // console.log(this.chartData)
       if( !(this.chartData instanceof Array) ) {
         this.device = this.chartData.device
         this.channel = this.chartData.channel
@@ -105,16 +105,22 @@ export default Line.extend({
           this.$log.error(e)
           this.loading = false
         })
-        // this.$raptor.Stream().subscribe(stream, function(msg) {
-        //   console.log(msg)
-        //   context.selectedStreamData.push(msg.record);
-        //   context.extractChartDataDeviceStreamOneChannel(context.selectedStreamData,'minutes',context.channel);
-        //   context.changeStreamData();
-        //   // if(!(msg.type === 'stream' && msg.op === 'data' && msg.streamId === this.$raptor.stream)) {
-        //   //   return
-        //   // }
-        // });
-        // context.unsubscribeStream({name: this.stream, deviceId: this.device})
+        .then(() => {
+          this.$raptor.Stream().subscribe(stream, function(msg) {
+            console.log(msg)
+            context.selectedStreamData.push(msg.record);
+            this.dataForChart = [];
+            this.streamChartLabels = []
+            let obj = context.extractChartDataDeviceStreamOneChannel(context.selectedStreamData,context.channel);
+            this.dataForChart = obj.data
+            this.streamChartLabels = obj.labels
+            this.populateChart(this.streamChartLabels, this.channel, this.dataForChart)
+            // if(!(msg.type === 'stream' && msg.op === 'data' && msg.streamId === this.$raptor.stream)) {
+            //   return
+            // }
+          });
+          context.unsubscribeStream({name: this.stream, deviceId: this.device})
+        })
       },
       unsubscribeStream (stream) {
         var context = this;
@@ -138,12 +144,12 @@ export default Line.extend({
       },
       populateChart(labels, lbl, dataForChart) {
         let dataset = [{
-            label: lbl,
-            backgroundColor: '#f87979',
-            data: dataForChart
-          }]
-          this.renderLineChart(dataset, labels);
-        },
+          label: lbl,
+          backgroundColor: '#f87979',
+          data: dataForChart
+        }]
+        this.renderLineChart(dataset, labels);
+      },
       // multiple sources
       loadDatasets() {
         for (var i = 0; i < this.chartData.length; i++) {
@@ -171,40 +177,24 @@ export default Line.extend({
         }
       },
       subscribeDatasetStreams (stream) {
-        console.log(stream)
+        // console.log(stream)
         var ts = Math.round((new Date()).getTime() / 1000);
         this.$raptor.Stream().list(stream, 0, ts)
         .then((streams) => {
-          console.log(streams)
+          // console.log(streams)
           if(streams.length > 0) {
             for (var j = 0; j < this.datasets.length; j++) {
               console.log(streams[0].json.deviceId + " " + this.datasets[j].device.id)
               if(this.datasets[j].device.id == streams[0].json.deviceId) {
                 this.datasets[j].selectedStreamData = streams
                 let obj = this.extractChartDataDeviceStreamOneChannel(streams,this.datasets[j].channel);
-                console.log(obj)
+                // console.log(obj)
                 this.datasets[j].dataForChart = obj.data
                 this.datasets[j].streamChartLabels = obj.labels
                 this.streamChartLabels = this.streamChartLabels.concat(obj.labels)
               }
             }
           }
-          // console.log(this.datasets)
-          // let dsets = []
-          // for (var i = 0; i < this.datasets.length; i++) {
-          //   if( this.datasets[i].device == streams[0].json.deviceId ) {
-          //     if(this.chartDatasets[i].label == this.datasets[i].channel) {
-          //       this.chartDatasets[i].data = this.datasets[i].dataForChart
-          //     } else {
-          //       this.chartDatasets.push({
-          //         label: this.datasets[i].channel,
-          //         backgroundColor: colors[i],
-          //         data: this.datasets[i].data
-          //       })
-          //     }
-          //   }
-          // }
-          // this.renderLineChart(this.chartDatasets, this.streamChartLabels);
         })
         .catch((e) => {
           this.$log.debug('Failed to load streams')
@@ -229,6 +219,35 @@ export default Line.extend({
           })
           this.renderLineChart(this.chartDatasets, this.streamChartLabels);
         })
+        //subscription
+        var context = this;
+        this.$raptor.Stream().subscribe(stream, function(msg) {
+          console.log(msg)
+          for (var j = 0; j < context.datasets.length; j++) {
+            // console.log(msg.device + " " + context.datasets[j].device)
+            console.log(context.datasets[i])
+            if(context.datasets[j].device.id == msg.device.id) {
+              context.datasets[j].selectedStreamData.push(msg.record)
+              let obj = context.extractChartDataDeviceStreamOneChannel(context.datasets[j].selectedStreamData,context.datasets[j].channel);
+              context.datasets[j].dataForChart = [];
+              context.datasets[j].streamChartLabels = []
+              context.datasets[j].dataForChart = obj.data
+              context.datasets[j].streamChartLabels = obj.labels
+              context.streamChartLabels = context.streamChartLabels.concat(obj.labels)
+              context._chart.data.datasets[j] = {
+                label: context.datasets[j].channel,
+                backgroundColor: colors[j],
+                data: context.datasets[j].dataForChart
+              }
+              console.log("data changed")
+              // this.populateChart(this.streamChartLabels, this.channel, this.dataForChart)
+            }
+            context.unsubscribeStream(context.datasets[j].stream)
+          }
+          // if(!(msg.type === 'stream' && msg.op === 'data' && msg.streamId === this.$raptor.stream)) {
+          //   return
+          // }
+        });
       }
     },
 })

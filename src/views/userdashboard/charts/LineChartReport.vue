@@ -48,7 +48,16 @@ export default Line.extend({
           },
           scales: {
             xAxes: [{
-              display: false
+              display: false,
+              ticks: {
+                autoSkip : false,
+                callback: function(value, index, values) {
+                    return new moment(value).format('DD MMM');
+                }
+              },
+              gridLines : {
+                  display : false,
+              }
             }],
             yAxes: [{
               display: true

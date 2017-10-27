@@ -1,5 +1,5 @@
 <script>
-import { PolarArea } from 'vue-chartjs'
+import { Line } from 'vue-chartjs'
 import moment from 'moment'
 
 var colors = [
@@ -9,11 +9,8 @@ var colors = [
               '#DD1B16',
               '#FFFF00'
             ]
-var monthNames = ["January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December"
-];
 
-export default PolarArea.extend({
+export default Line.extend({
   props: ['height', 'chartData', 'width'],
     data() {
       return {
@@ -27,7 +24,8 @@ export default PolarArea.extend({
         dataForChart: [10, 39, 10, 40, 39, 0, 0],
         dictDevice: null,
         selectedStreamData: [],
-        deviceDataTime: null,
+        datasets: [],
+        chartDatasets: [],
       }
     },
     mounted () {
@@ -41,20 +39,36 @@ export default PolarArea.extend({
         this.loadDatasets()
       }
       // this.subscribeStream({name: this.stream, deviceId: this.device})
-      this.renderPolarAreaChart();
+      this.renderLineChart();
     },
     methods: {
       formatDate (d) {
         return moment(new Date(d)).format('MMMM Do YYYY');
       },
-      renderPolarAreaChart (datasets, lbls) {
+      renderLineChart (datasets, lbls) {
         this.renderChart(
         {
           labels: lbls,
           datasets: datasets
         }, {
-          responsive: false,
-          maintainAspectRatio: true
+          responsive: true,
+          maintainAspectRatio: false,
+          legend: {
+            display: true
+          },
+          scales: {
+            xAxes: [{
+              display: false
+            }],
+            yAxes: [{
+              display: true
+            }]
+          },
+          plugins: {
+              filler: {
+                  propagate: true
+              }
+          }
         })
       },
       load() {
@@ -68,6 +82,7 @@ export default PolarArea.extend({
         .catch((e) => {
           this.$log.debug('Failed to load device')
           this.$log.error(e)
+          this.loading = false
         })
       },
       // subscription / unsunscription of the data for the selected charts
@@ -76,9 +91,7 @@ export default PolarArea.extend({
         var ts = Math.round((new Date()).getTime() / 1000);
         this.$raptor.Stream().list(stream, 0, ts)
         .then((streams) => {
-          console.log(streams)
-          // context.selectedStreamData = streams
-          // context.extractChartDataDeviceStreamOneChannel(context.selectedStreamData,context.channel);
+          // console.log(streams)
           context.selectedStreamData = streams
           this.dataForChart = [];
           this.streamChartLabels = []
@@ -90,6 +103,7 @@ export default PolarArea.extend({
         .catch((e) => {
           this.$log.debug('Failed to load streams')
           this.$log.error(e)
+          this.loading = false
         })
         // this.$raptor.Stream().subscribe(stream, function(msg) {
         //   console.log(msg)
@@ -100,7 +114,7 @@ export default PolarArea.extend({
         //   //   return
         //   // }
         // });
-        // context.unsubscribeStream(stream)
+        // context.unsubscribeStream({name: this.stream, deviceId: this.device})
       },
       unsubscribeStream (stream) {
         var context = this;
@@ -108,47 +122,29 @@ export default PolarArea.extend({
           console.log(msg)
         });
       },
-      getDate(s, val) {
-        let sDate = (new Date(s.timestamp * 1000)).getMinutes();
-        if(val == 'hours'){
-          sDate = (new Date(s.timestamp * 1000)).getHours();
-        } else if(val == 'day'){
-          sDate = (new Date(s.timestamp * 1000)).getDay();
-        } else if(val == 'month'){
-          sDate = (new Date(s.timestamp * 1000)).getMonth();
-        }
-        return sDate;
-      },
       extractChartDataDeviceStreamOneChannel (d, channel, pushData) {
         let dataForChart = [];
         let streamChartLabels = []
         for (var i = 0; i < d.length; i++) {
           let s = d[i];
-          let sDate = (new Date(s.timestamp * 1000)).getMonth();
+          let sDate = (new Date(s.timestamp * 1000)).toUTCString();
           if((typeof s.channels[channel]) === 'number' || (typeof s.channels[channel]) === 'boolean') {
-            streamChartLabels.push(monthNames[sDate])
+            streamChartLabels.push(sDate)
             dataForChart.push(s.channels[channel])
           }
         }
-        let labels = streamChartLabels.filter(function(elem, index, self) {
-          return index == self.indexOf(elem);
-        })
 
-        return { labels: labels, data: dataForChart }
+        return { labels: streamChartLabels, data: dataForChart }
       },
       populateChart(labels, lbl, dataForChart) {
         let dataset = [{
           label: lbl,
           backgroundColor: '#f87979',
-          pointBackgroundColor: 'rgba(255,99,132,1)',
-          pointBorderColor: '#fff',
-          pointHoverBackgroundColor: '#fff',
-          pointHoverBorderColor: 'rgba(255,99,132,1)',
           data: dataForChart
         }]
-        this.renderPolarAreaChart(dataset, labels);
+        this.renderLineChart(dataset, labels);
       },
-      // for multiple datasets
+      // multiple sources
       loadDatasets() {
         for (var i = 0; i < this.chartData.length; i++) {
           this.$raptor.Inventory().read(this.chartData[i].device)

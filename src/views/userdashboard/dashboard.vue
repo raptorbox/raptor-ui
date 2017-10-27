@@ -28,7 +28,7 @@
                 <div class="chart-wrapper" v-else-if="wid.chart == 'polar'">
                   <polar-area-chart :chartData="wid.data"/>
                 </div>
-                <div class="chart-wrapper" v-else-if="wid.chart == 'line' && wid.data">
+                <div class="chart-wrapper" style="position: relative; height: 25vh;" v-else-if="wid.chart == 'line' && wid.data">
                   <line-chart :chartData="wid.data"/>
                 </div>
                 <div class="chart-wrapper" v-else-if="wid.chart == 'pie'">
@@ -135,7 +135,7 @@ import { Vue2Dragula } from 'vue2-dragula'
 
 Vue.use(Vue2Dragula, {
   logging: {
-    service: true
+    service: false
   }
 });
 
@@ -171,10 +171,10 @@ export default {
       { value: null,        text: 'Please select a chart' },
       { value: 'line',      text: 'Line Chart' },
       { value: 'bar',       text: 'Bar Chart' },
-      { value: 'pie',       text: 'Pie Chart' },
-      { value: 'polar',     text: 'Polar Chart' },
-      { value: 'radar',     text: 'Radar Chart' },
-      { value: 'doughnut',  text: 'Doughnut Chart' },
+      { value: 'pie',       text: 'Pie Chart'               , disabled: true },
+      { value: 'polar',     text: 'Polar Chart'             , disabled: true },
+      { value: 'radar',     text: 'Radar Chart'             , disabled: true },
+      { value: 'doughnut',  text: 'Doughnut Chart'          , disabled: true },
       // { value: 'bubble',    text: 'Bubble Chart' },
       // { value: 'scatter',   text: 'Scatter Chart' },
       ],
@@ -230,12 +230,12 @@ export default {
             w:6,
             h:11,
             i:2,
-            title:"Polar",
-            chart: "polar",
+            title:"Line",
+            chart: "Line",
             data:{
-              device: "4750ada9-a3aa-4d98-9612-6ca8ea7654be",
-              stream: "stats",
-              channel: "distance"
+              device: "0a3614c5-9762-4751-ad08-c77354a86e57",
+              stream: "obd",
+              channel: "speed"
             }
           },
           {
