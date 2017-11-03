@@ -25,6 +25,8 @@ export default Pie.extend({
         dictDevice: null,
         selectedStreamData: [],
         deviceDataTime: null,
+        datasets: [],
+        chartDatasets: [],
       }
     },
     mounted () {
@@ -40,7 +42,21 @@ export default Pie.extend({
       // this.subscribeStream({name: this.stream, deviceId: this.device})
       this.renderPieChart();
     },
+    created() {
+      document.addEventListener('beforeunload', this.handler)
+    },
     methods: {
+      handler (event) {
+        if(this.datasets && this.datasets.length > 0) {
+          for (var j = 0; j < this.datasets.length; j++) {
+            if(this.datasets[j].stream) {
+              this.unsubscribeStream(this.datasets[j].stream)
+            }
+          }
+        } else {
+          this.unsubscribeStream ({name: this.stream, deviceId: this.device});
+        }
+      },
       formatDate (d) {
         return moment(new Date(d)).format('MMMM Do YYYY');
       },

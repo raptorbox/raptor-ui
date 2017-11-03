@@ -41,7 +41,21 @@ export default Line.extend({
       // this.subscribeStream({name: this.stream, deviceId: this.device})
       this.renderLineChart();
     },
+    created() {
+      document.addEventListener('beforeunload', this.handler)
+    },
     methods: {
+      handler (event) {
+        if(this.datasets && this.datasets.length > 0) {
+          for (var j = 0; j < this.datasets.length; j++) {
+            if(this.datasets[j].stream) {
+              this.unsubscribeStream(this.datasets[j].stream)
+            }
+          }
+        } else {
+          this.unsubscribeStream ({name: this.stream, deviceId: this.device});
+        }
+      },
       formatDate (d) {
         return moment(new Date(d)).format('MMMM Do YYYY');
       },
@@ -58,7 +72,10 @@ export default Line.extend({
           },
           scales: {
             xAxes: [{
-              display: false
+              display: false,
+              gridLines: {
+                display: true
+              }
             }],
             yAxes: [{
               display: true
@@ -98,7 +115,7 @@ export default Line.extend({
           let obj = context.extractChartDataDeviceStreamOneChannel(context.selectedStreamData,context.channel);
           this.dataForChart = obj.data
           this.streamChartLabels = obj.labels
-          this.populateChart(this.streamChartLabels, this.channel, this.dataForChart)
+          context.populateChart(this.streamChartLabels, this.channel, this.dataForChart)
         })
         .catch((e) => {
           this.$log.debug('Failed to load streams')
@@ -114,7 +131,7 @@ export default Line.extend({
             let obj = context.extractChartDataDeviceStreamOneChannel(context.selectedStreamData,context.channel);
             this.dataForChart = obj.data
             this.streamChartLabels = obj.labels
-            this.populateChart(this.streamChartLabels, this.channel, this.dataForChart)
+            context.populateChart(this.streamChartLabels, this.channel, this.dataForChart)
             // if(!(msg.type === 'stream' && msg.op === 'data' && msg.streamId === this.$raptor.stream)) {
             //   return
             // }
@@ -157,17 +174,22 @@ export default Line.extend({
           .then((device) => {
             // console.log(device)
             for (var j = 0; j < this.chartData.length; j++) {
+              // console.log(this.chartData[j])
+              let str = device.getStream(this.chartData[j].stream)
               if(this.chartData[j].device == device.id) {
                 let dev = {
                   device: device,
-                  stream: device.getStream(this.chartData[j].stream),
+                  stream: str,
                   channel: this.chartData[j].channel
                 }
-                this.datasets.push(dev)
-                this.subscribeDatasetStreams(dev.stream);
+                if(!this.checkDatasetExist(dev)) {
+                  this.datasets.push(dev)
+                  this.subscribeDatasetStreams(this.datasets[j].stream);
+                }
               }
             }
             // this.getStream("obd");
+            console.log(this.datasets)
           })
           .catch((e) => {
             this.$log.debug('Failed to load device')
@@ -176,15 +198,26 @@ export default Line.extend({
           })
         }
       },
+      checkDatasetExist(dev) {
+        let exist = false
+        // console.log(dev)
+        for (var k = 0; k < this.datasets.length; k++) {
+          // console.log(this.datasets[k])
+          if(this.datasets[k].device.id == dev.device.id && this.datasets[k].stream.name == dev.stream.name && dev.channel == this.datasets[k].channel) {
+            exist = true
+          }
+        }
+        return exist
+      },
       subscribeDatasetStreams (stream) {
         // console.log(stream)
         var ts = Math.round((new Date()).getTime() / 1000);
         this.$raptor.Stream().list(stream, 0, ts)
         .then((streams) => {
-          // console.log(streams)
+          console.log(streams)
           if(streams.length > 0) {
             for (var j = 0; j < this.datasets.length; j++) {
-              console.log(streams[0].json.deviceId + " " + this.datasets[j].device.id)
+              // console.log(streams[0].json.deviceId + " " + this.datasets[j].device.id)
               if(this.datasets[j].device.id == streams[0].json.deviceId) {
                 this.datasets[j].selectedStreamData = streams
                 let obj = this.extractChartDataDeviceStreamOneChannel(streams,this.datasets[j].channel);
@@ -203,6 +236,7 @@ export default Line.extend({
         })
         .then(() => {
           let dsets = []
+          console.log(this.datasets)
           for (var i = 0; i < this.datasets.length; i++) {
             dsets.push({
               label: this.datasets[i].channel,
@@ -219,35 +253,37 @@ export default Line.extend({
           })
           this.renderLineChart(this.chartDatasets, this.streamChartLabels);
         })
-        //subscription
-        var context = this;
-        this.$raptor.Stream().subscribe(stream, function(msg) {
-          console.log(msg)
-          for (var j = 0; j < context.datasets.length; j++) {
-            // console.log(msg.device + " " + context.datasets[j].device)
-            console.log(context.datasets[i])
-            if(context.datasets[j].device.id == msg.device.id) {
-              context.datasets[j].selectedStreamData.push(msg.record)
-              let obj = context.extractChartDataDeviceStreamOneChannel(context.datasets[j].selectedStreamData,context.datasets[j].channel);
-              context.datasets[j].dataForChart = [];
-              context.datasets[j].streamChartLabels = []
-              context.datasets[j].dataForChart = obj.data
-              context.datasets[j].streamChartLabels = obj.labels
-              context.streamChartLabels = context.streamChartLabels.concat(obj.labels)
-              context._chart.data.datasets[j] = {
-                label: context.datasets[j].channel,
-                backgroundColor: colors[j],
-                data: context.datasets[j].dataForChart
+        .then(()=> {
+          //subscription
+          var context = this;
+          this.$raptor.Stream().subscribe(stream, function(msg) {
+            console.log(msg)
+            for (var j = 0; j < context.datasets.length; j++) {
+              // console.log(msg.device + " " + context.datasets[j].device)
+              console.log(context.datasets[j])
+              if(context.datasets[j].device.id == msg.device.id) {
+                context.datasets[j].selectedStreamData.push(msg.record)
+                let obj = context.extractChartDataDeviceStreamOneChannel(context.datasets[j].selectedStreamData,context.datasets[j].channel);
+                context.datasets[j].dataForChart = [];
+                context.datasets[j].streamChartLabels = []
+                context.datasets[j].dataForChart = obj.data
+                context.datasets[j].streamChartLabels = obj.labels
+                context.streamChartLabels = context.streamChartLabels.concat(obj.labels)
+                context._chart.data.datasets[j] = {
+                  label: context.datasets[j].channel,
+                  backgroundColor: colors[j],
+                  data: context.datasets[j].dataForChart
+                }
+                console.log("data changed")
+                // this.populateChart(this.streamChartLabels, this.channel, this.dataForChart)
               }
-              console.log("data changed")
-              // this.populateChart(this.streamChartLabels, this.channel, this.dataForChart)
+              // context.unsubscribeStream(context.datasets[j].stream)
             }
-            context.unsubscribeStream(context.datasets[j].stream)
-          }
-          // if(!(msg.type === 'stream' && msg.op === 'data' && msg.streamId === this.$raptor.stream)) {
-          //   return
-          // }
-        });
+            // if(!(msg.type === 'stream' && msg.op === 'data' && msg.streamId === this.$raptor.stream)) {
+            //   return
+            // }
+          });
+        })
       }
     },
 })

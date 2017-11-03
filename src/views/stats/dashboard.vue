@@ -121,9 +121,22 @@ export default {
     }
   },
   mounted () {
+    this.$raptor.Stream().unsubscribe({name: 'stats', deviceId: 'ce4502d0-5de7-4e1e-af7f-80714a639b97'}, function(msg) {
+      console.log(msg)
+    });
     this.fetchData()
   },
+  created() {
+    document.addEventListener('beforeunload', this.handler)
+    window.addEventListener("beforeunload", this.handler);
+  },
   methods: {
+    handler (event) {
+      alert('leaving...')
+      this.$raptor.Stream().unsubscribe(this.selectedDev.json.streams[this.selectedStream], function(msg) {
+        console.log(msg)
+      });
+    },
     formatDate (d) {
       return moment(new Date(d)).format('MMMM Do YYYY');
     },
@@ -150,8 +163,8 @@ export default {
         console.log(e)
         console.log(JSON.stringify(e))
         if(e.toString().indexOf("Unauthorized") !== -1) {
-          context.$raptor.Auth().logout();
-          context.$router.push("/pages/login");
+          this.$raptor.Auth().logout();
+          this.$router.push("/pages/login");
         }
       });
       // this.fetchDevices(this.selectedDevice);

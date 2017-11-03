@@ -18,7 +18,7 @@
                       <icon name="remove" scale="2" color="red"></icon>
                     </button>
                   </div>
-                  <div class="pb-0">
+                  <div class="pb-0" v-on:click.capture="(ev) => { showDetails(ev, wid.data) }">
                     <h5>{{wid.title}}</h5>
                   </div>
                 </div>
@@ -50,6 +50,7 @@
       </div>
     </div>
 
+    <!-- single data source widget -->
     <b-modal title="Add Widget" class="modal-info" v-model="singleDataModal" @ok="onAddChartButtonClick">
       <b-form-fieldset description="Please enter a widget title" label="Title" :horizontal="false">
         <b-form-input type="text" placeholder="Enter Widget Name" v-model="selectedTitle"></b-form-input>
@@ -81,6 +82,7 @@
       </b-form-fieldset>
     </b-modal>
 
+    <!-- multi data source widget -->
     <b-modal title="Add Multuiple Data source Widget" size="lg" class="modal-info" v-model="multipleDataModal" @ok="onAddMixChart">
       <b-form-fieldset description="Please enter a widget title" label="Title" :horizontal="false">
         <b-form-input type="text" placeholder="Enter Widget Name" v-model="selectedTitle"></b-form-input>
@@ -114,11 +116,18 @@
       </b-form-fieldset>
     </b-modal>
 
+    <!-- Detail data source widget -->
+    <b-modal title="Detail" class="modal-info" v-model="widgetDetailModal" >
+      <div>
+        <span v-html="widgetDetails"></span>
+      </div>
+    </b-modal>
+
   </div>
 </template>
 
 <script>
-import DragableView from './DragableView'
+// import DragableView from './DragableView'
 import BarChart from './charts/BarChart'
 import LineChart from './charts/LineChart'
 import DoughnutChart from './charts/DoughnutChart'
@@ -126,8 +135,9 @@ import RadarChart from './charts/RadarChart'
 import PieChart from './charts/PieChart'
 import PolarAreaChart from './charts/PolarAreaChart'
 import LineChartReport from './charts/LineChartReport'
+import moment from 'moment'
 
-import VueGridLayout from 'vue-grid-layout'
+// import VueGridLayout from 'vue-grid-layout'
 import Vue from 'vue'
 import Icon from 'vue-awesome/components/Icon'
 import 'vue-awesome/icons/remove'
@@ -141,13 +151,13 @@ Vue.use(Vue2Dragula, {
 
 Vue.component('icon', Icon)
 
-var GridLayout = VueGridLayout.GridLayout;
-var GridItem = VueGridLayout.GridItem;
+// var GridLayout = VueGridLayout.GridLayout;
+// var GridItem = VueGridLayout.GridItem;
 
 export default {
   name: 'dashboard',
   components: {
-    DragableView,
+    // DragableView,
     BarChart,
     LineChart,
     DoughnutChart,
@@ -155,8 +165,8 @@ export default {
     PieChart,
     PolarAreaChart,
     LineChartReport,
-    GridLayout,
-    GridItem,
+    // GridLayout,
+    // GridItem,
     Icon,
   },
   data () {
@@ -187,8 +197,11 @@ export default {
       selectedStreamDetail: null,
       devices: null,
       db: null,
+      // for showing the widget detail in the modal view
+      widgetDetails: null,
+      widgetDetailModal: false,
       // for multiple data sources in charts
-      tableDataSource: []
+      tableDataSource: [],
     }
   },
   mounted () {
@@ -198,6 +211,9 @@ export default {
     this.populateMultipleDataSourceFields();
   },
   methods: {
+    formatDate (d) {
+      return moment(new Date(d)).format('MMMM Do YYYY');
+    },
     fetchData () {
       let userId = this.$raptor.Auth().getUser().uuid
       let json = { dashboard: [
@@ -308,6 +324,37 @@ export default {
       //   arr.push(widget)
       // }
       this.widgets = dasboardWidgets
+    },
+    showDetails(event, widgetsData) {
+      console.log(widgetsData)
+      this.$raptor.Inventory().read(widgetsData.device)
+        .then((device) => {
+          console.log(device)
+          this.widgetDetails = null
+          let widgetDetails = null;
+          if(device.id == widgetsData.device) {
+            widgetDetails = '<ul>';
+            widgetDetails += '<li><strong>Device Name:</strong>     ' + device.name + '</li>';
+            widgetDetails += '<li><strong>Device created at:</strong>     ' + this.formatDate(device.json.createdAt) + '</li>';
+            widgetDetails += '<li><strong>Device Id:</strong>     ' + device.id + '</li>';
+            if(device.streams[widgetsData.stream]) {
+              widgetDetails += '<li><strong>Stream Name:</strong>     ' + device.streams[widgetsData.stream].name + '</li>';
+            }
+            let stream = device.streams[widgetsData.stream]
+            if(stream.json.channels[widgetsData.channel]) {
+              let channel = stream.json.channels[widgetsData.channel]
+              widgetDetails += '<li><strong>Channel Name:</strong>     ' + channel.name + '</li>';
+              widgetDetails += '<li><strong>Channel Type:</strong>     ' + channel.type + '</li>';
+            }
+            widgetDetails += '</ul>';
+          }
+          this.widgetDetails = widgetDetails
+          this.widgetDetailModal = true
+        })
+        .catch((e) => {
+          this.$log.debug('Failed to load device')
+          this.$log.error(e)
+        })
     },
     addWidget(widData) {
       let widget = {

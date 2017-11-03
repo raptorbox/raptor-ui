@@ -25,15 +25,28 @@ export default Line.extend({
         dictDevice: null,
         selectedStreamData: [],
         deviceDataTime: null,
+        datasets: [],
+        chartDatasets: [],
       }
     },
     mounted () {
       this.load()
       this.renderLineChart();
     },
+    created() {
+      document.addEventListener('beforeunload', this.handler)
+    },
     methods: {
-      formatDate (d) {
-        return moment(new Date(d)).format('MMMM Do YYYY');
+      handler (event) {
+        if(this.datasets && this.datasets.length > 0) {
+          for (var j = 0; j < this.datasets.length; j++) {
+            if(this.datasets[j].stream) {
+              this.unsubscribeStream(this.datasets[j].stream)
+            }
+          }
+        } else {
+          this.unsubscribeStream ({name: this.stream, deviceId: this.device});
+        }
       },
       renderLineChart () {
         this.renderChart(

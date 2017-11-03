@@ -22,7 +22,7 @@
         </div>
         <div class="message">{{ validation.firstError('email') }}</div>
       </div>
-      <span v-if="loggedInUser && loggedInUser.uuid == uuid">
+      <span v-if="loggedInUser && loggedInUser.uuid != uuid">
         <div class="form-group" :class="{error: validation.hasError('password')}">
           <div class="content">
             <b-form-fieldset description="Please enter a password" label="Password" :horizontal="false">

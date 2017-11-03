@@ -132,14 +132,19 @@ export default Line.extend({
             }
           }]
         },
-        elements: {
-          point: {
-            radius: 0,
-            hitRadius: 10,
-            hoverRadius: 4,
-            hoverBorderWidth: 3
-          }
-        }
+        plugins: {
+            filler: {
+                propagate: true
+            }
+        },
+        // elements: {
+        //   point: {
+        //     radius: 0,
+        //     hitRadius: 10,
+        //     hoverRadius: 4,
+        //     hoverBorderWidth: 3
+        //   }
+        // }
       })
     }
   }
