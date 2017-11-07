@@ -66,23 +66,29 @@
           <span v-html="streamChartDetails"></span>
         </div>
       </div>
+      <div class="container">
+        <vue-slider ref="slider" v-bind="slider" v-model="slider.value" @callback="sliderValueChanged" @drag-start="sliderDragStart" @drag-end="sliderDragEnd" ></vue-slider>
+      </div>
     </b-card>
   </div>
 </template>
 
 <script>
 import LineChartTotalDevices from './LineChartTotalDevices'
-import ChartStreams from './ChartStreams'
+import ChartStreams from './../device/ChartStream'
 import moment from 'moment'
 import Raptor from 'raptor-sdk'
 import EventEmitter from "eventemitter3"
+// range slider for chartjs
+import vueSlider from 'vue-slider-component'
 
 var emitter = new EventEmitter({})
 export default {
   name: 'dashboard',
   components: {
     LineChartTotalDevices,
-    ChartStreams
+    ChartStreams,
+    vueSlider
   },
   data () {
     return {
@@ -117,7 +123,71 @@ export default {
       colorVarients: ['green','blue','lightblue','yellow','red','pink','black','purple','cyan','orange','brown'],
       selectedChannel: null,
       optionsChannel: [{ value: null, text: 'Please select a Channel' }],
-      dataSubscribed: false
+      dataSubscribed: false,
+      // slider value to show the instances of reading in chart
+      realData: null,
+      realStreamChartLabels: [],
+      isSliderDragging: false,
+      isSliderDragged: false,
+      slider: {
+        value: [
+          0,
+          100
+        ],
+        eventType: 'auto',
+        width: 'auto',
+        height: 6,
+        dotSize: 16,
+        dotHeight: null,
+        dotWidth: null,
+        min: 0,
+        max: 100,
+        interval: 1,
+        show: true,
+        speed: 0.5,
+        disabled: false,
+        piecewise: false,
+        piecewiseStyle: false,
+        piecewiseLabel: false,
+        tooltip: "always",
+        tooltipDir: ["bottom","bottom"],
+        reverse: true,
+        style: {
+          "marginBottom": "30px"
+        },
+        data: null,
+        clickable: true,
+        realTime: true,
+        lazy: false,
+        formatter: "{value}",
+        bgStyle: {
+          "backgroundColor": "#fff",
+          "boxShadow": "inset 0.5px 0.5px 3px 1px rgba(0,0,0,.36)"
+        },
+        sliderStyle: [
+          {
+            "backgroundColor": "#f05b72"
+          },
+          {
+            "backgroundColor": "#3498db"
+          }
+        ],
+        processStyle: null,
+        piecewiseActiveStyle: null,
+        piecewiseStyle: null,
+        tooltipStyle: [
+          {
+            "backgroundColor": "#f05b72",
+            "borderColor": "#f05b72"
+          },
+          {
+            "backgroundColor": "#3498db",
+            "borderColor": "#3498db"
+          }
+        ],
+        labelStyle: null,
+        labelActiveStyle: null
+      },
     }
   },
   mounted () {
@@ -208,16 +278,17 @@ export default {
           this.deviceDataTime = this.formatDate(s.timestamp * 1000);
         }
         this.streamChartLabels.push((new Date(s.timestamp * 1000)).toUTCString());
-        let sDate = this.getDate(s, val)
-        if((typeof s.channels[channel]) === 'number' || (typeof s.channels[channel]) === 'boolean') {
-          if(!this.dictDevice[sDate]) {
-            this.dictDevice[sDate] = [];
-          }
-          if(this.dictDevice[sDate]) {
-            this.dictDevice[sDate].push(s.channels[channel]);
-          }
-        }
+        // let sDate = this.getDate(s, val)
+        // if((typeof s.channels[channel]) === 'number' || (typeof s.channels[channel]) === 'boolean') {
+        //   if(!this.dictDevice[sDate]) {
+        //     this.dictDevice[sDate] = [];
+        //   }
+        //   if(this.dictDevice[sDate]) {
+            this.dictDevice.push(s.channels[channel]);
+        //   }
+        // }
       }
+      this.realStreamChartLabels = this.streamChartLabels
     },
     getDate(s, val) {
       let sDate = (new Date(s.timestamp * 1000)).getMinutes();
@@ -235,7 +306,7 @@ export default {
       var ts = Math.round((new Date()).getTime() / 1000);
       let stream = this.selectedDev.getStream(str);
       if(stream){
-        this.$raptor.Stream().list(stream, 0, ts)
+        this.$raptor.Stream().list(stream, 0, 100, 'timestamp,desc')
         .then((streams) => {
           context.selectedStreamData = streams;
         })
@@ -271,110 +342,163 @@ export default {
     changeStreamData: function() {
       let arr = Array();
       let streamChartLabels = [];
-        streamChartLabels = Object.keys(this.dictDevice); // getting labels
-        for (var i = 0; i < streamChartLabels.length; i++) {
-          let s = streamChartLabels[i];
-          arr.push(this.dictDevice[s]);
+      streamChartLabels = Object.keys(this.dictDevice); // getting labels
+      for (var i = 0; i < streamChartLabels.length; i++) {
+        let s = streamChartLabels[i];
+        arr.push(this.dictDevice[s]);
+      }
+      this.dataChartDevice = arr;
+      this.realData = this.dataChartDevice
+    },
+    onChangeDevice (evt) {
+      let val = evt.target.value;
+      // if(this.selectedStream != null && this.selectedDev != null) {
+      //   this.unsubscribeStream(this.selectedDev.json.streams[this.selectedStream]);
+      // }
+      for (var i = 0; i < this.devices.length; i++) {
+        if(this.devices[i].id == val){
+          let details = this.devices[i];
+          this.selectedDev = details;
+          this.deviceName = details.name;
+          this.getSingleDevice(details);
+          this.selectedDeviceDetails = '<ul>';
+          this.selectedDeviceDetails += '<li><strong>Name:</strong>     ' + details.name + '</li>';
+          this.selectedDeviceDetails += '<li><strong>id:</strong>       ' + details.id + '</li>';
+          this.selectedDeviceDetails += '<li><strong>Created:</strong>  ' + this.formatDate(details.createdAt*1000) + '</li>';
+          this.selectedDeviceDetails += '</ul>';
         }
-        this.dataChartDevice = arr;
-      },
-      onChangeDevice (evt) {
-        let val = evt.target.value;
-        // if(this.selectedStream != null && this.selectedDev != null) {
-        //   this.unsubscribeStream(this.selectedDev.json.streams[this.selectedStream]);
+      }
+    },
+    getNode () {
+      let name = "memosa-nodes"
+      return this.$raptor.Tree().list().then((list) => {
+        const res = list.filter((n) => n.name === name)
+        if (res.length === 0) {
+          console.log("Creating new `%s` node", name)
+          return this.$raptor.Tree().create({name})
+        }
+        console.log("Found `%s` node", name)
+        return Promise.resolve(res[0])
+      })
+    },
+    addDeviceNode (parentNode, device) {
+      console.log("Adding to group %s device %s (id:%s)", parentNode.name, device.name, device.id)
+      return this.$raptor.Tree().add(parentNode, new Raptor.models.Tree({
+        userId: parentNode.userId,
+        name: device.name,
+        id: device.id,
+        type: "device"
+      }))
+    },
+    onChangeOptionStream (evt) {
+      // console.log(this.selectedDev.json.streams[this.selectedStream])
+      // if(!this.dataSubscribed) {
+        this.unsubscribeStream(this.selectedDev.json.streams[this.selectedStream]);
+      //   this.dataSubscribed = true;
+      // }
+      let val = evt.target.value;
+      if(this.selectedDev) {
+        let stream = this.selectedDev.json.streams[val];
+        let keys = Object.keys(stream.channels);
+        this.optionsChannel = [];
+        this.optionsChannel.push({ value: null,text: 'Please select a Channel' });
+        for (var i = 0; i < keys.length; i++) {
+          if(stream.channels[keys[i]].type === 'number' || stream.channels[keys[i]].type === 'boolean') {
+            this.optionsChannel.push({ value: keys[i],text: keys[i] });
+          } else {
+            this.optionsChannel.push({ text: keys[i], disabled: true });
+          }
+        }
+        this.fetchStreamData(val);
+        this.subscribeStream(stream);
+      }
+    },
+    ChangeDisplayDataTime (evt) {
+      let val = evt.target.value;
+      if(this.selectedStreamData && this.selectedChannel) {
+        this.selectedStreamData.reverse()
+        this.extractChartDataDeviceStreamOneChannel(this.selectedStreamData, val, this.selectedChannel);
+        this.changeStreamData();
+      }
+    },
+    onChangeOptionChannel (evt) {
+      let val = evt.target.value;
+      this.dictDevice = [];
+      if(this.selectedStreamData) {
+        this.selectedStreamData.reverse()
+        this.extractChartDataDeviceStreamOneChannel(this.selectedStreamData,'minutes',val);
+        this.changeStreamData();
+      }
+    },
+    subscribeStream (stream) {
+      var context = this;
+      this.$raptor.Stream().subscribe(stream, function(msg) {
+        console.log(msg)
+        context.selectedStreamData.push(msg.record);
+        context.selectedStreamData.shift()
+        context.extractChartDataDeviceStreamOneChannel(context.selectedStreamData,'minutes',context.selectedChannel);
+        if(context.isSliderDragged) {
+          context.sliderDragEnd()
+        }
+        context.changeStreamData();
+        // if(!(msg.type === 'stream' && msg.op === 'data' && msg.streamId === this.$raptor.stream)) {
+        //   return
         // }
-        for (var i = 0; i < this.devices.length; i++) {
-          if(this.devices[i].id == val){
-            let details = this.devices[i];
-            this.selectedDev = details;
-            this.deviceName = details.name;
-            this.getSingleDevice(details);
-            this.selectedDeviceDetails = '<ul>';
-            this.selectedDeviceDetails += '<li><strong>Name:</strong>     ' + details.name + '</li>';
-            this.selectedDeviceDetails += '<li><strong>id:</strong>       ' + details.id + '</li>';
-            this.selectedDeviceDetails += '<li><strong>Created:</strong>  ' + this.formatDate(details.createdAt*1000) + '</li>';
-            this.selectedDeviceDetails += '</ul>';
-          }
+        context.loading = false;
+      });
+    },
+    unsubscribeStream (stream) {
+      var context = this;
+      this.$raptor.Stream().unsubscribe(stream, function(msg) {
+        console.log(msg)
+      });
+    },
+    // slider events
+    sliderDragEnd () {
+      // console.log("drag end")
+      if(this.realData && this.realStreamChartLabels) {
+        this.isSliderDragging = false
+        console.log(this.slider.value)
+        let valuesToShowMin = (this.slider.value[0] / 100) * this.realData.length
+        let valuesToShowMax = (this.slider.value[1] / 100) * this.realData.length
+        valuesToShowMin = (valuesToShowMin != 0) ? valuesToShowMin : 0
+        valuesToShowMax = (valuesToShowMax != this.realData.length) ? valuesToShowMax : this.realData.length
+
+        let labelsToShowMin = (this.slider.value[0] / 100) * this.realStreamChartLabels.length
+        let labelsToShowMax = (this.slider.value[1] / 100) * this.realStreamChartLabels.length
+        labelsToShowMin = (labelsToShowMin != 0) ? labelsToShowMin : 0
+        labelsToShowMax = (labelsToShowMax != this.realStreamChartLabels.length) ? labelsToShowMax : this.realStreamChartLabels.length
+
+        console.log("length: %s, min: `%s`, max: `%s`", this.realData.length, valuesToShowMin, valuesToShowMax)
+        console.log("length: %s, min: `%s`, max: `%s`", this.realStreamChartLabels.length, labelsToShowMin, labelsToShowMax)
+
+        this.dataChartDevice = this.realData.slice(valuesToShowMin, valuesToShowMax)
+        this.streamChartLabels = this.realStreamChartLabels.slice(labelsToShowMin, labelsToShowMax)
+
+        if(this.slider.value[0] >= 0 || this.slider.value[1] <= 100) {
+          this.isSliderDragged = true
+        } else {
+          this.isSliderDragged = false
         }
-      },
-      getNode () {
-        let name = "memosa-nodes"
-        return this.$raptor.Tree().list().then((list) => {
-          const res = list.filter((n) => n.name === name)
-          if (res.length === 0) {
-            console.log("Creating new `%s` node", name)
-            return this.$raptor.Tree().create({name})
-          }
-          console.log("Found `%s` node", name)
-          return Promise.resolve(res[0])
-        })
-      },
-      addDeviceNode (parentNode, device) {
-        console.log("Adding to group %s device %s (id:%s)", parentNode.name, device.name, device.id)
-        return this.$raptor.Tree().add(parentNode, new Raptor.models.Tree({
-          userId: parentNode.userId,
-          name: device.name,
-          id: device.id,
-          type: "device"
-        }))
-      },
-      onChangeOptionStream (evt) {
-        // console.log(this.selectedDev.json.streams[this.selectedStream])
-        // if(!this.dataSubscribed) {
-          this.unsubscribeStream(this.selectedDev.json.streams[this.selectedStream]);
-        //   this.dataSubscribed = true;
-        // }
-        let val = evt.target.value;
-        if(this.selectedDev) {
-          let stream = this.selectedDev.json.streams[val];
-          let keys = Object.keys(stream.channels);
-          this.optionsChannel = [];
-          this.optionsChannel.push({ value: null,text: 'Please select a Channel' });
-          for (var i = 0; i < keys.length; i++) {
-            if(stream.channels[keys[i]].type === 'number' || stream.channels[keys[i]].type === 'boolean') {
-              this.optionsChannel.push({ value: keys[i],text: keys[i] });
-            } else {
-              this.optionsChannel.push({ text: keys[i], disabled: true });
-            }
-          }
-          this.fetchStreamData(val);
-          this.subscribeStream(stream);
+      }
+      // console.log(this.dataChartDevice)
+      // console.log(this.streamChartLabels)
+    },
+    sliderDragStart () {
+      this.isSliderDragging = true
+      console.log("drag start")
+    },
+    sliderValueChanged () {
+      if(!this.isSliderDragging) {
+        console.log("slider value changed")
+        this.sliderDragEnd()
+        if(this.slider.value[0] >= 0 || this.slider.value[1] <= 100) {
+          this.isSliderDragged = true
+        } else {
+          this.isSliderDragged = false
         }
-      },
-      ChangeDisplayDataTime (evt) {
-        let val = evt.target.value;
-        if(this.selectedStreamData && this.selectedChannel) {
-          this.extractChartDataDeviceStreamOneChannel(this.selectedStreamData, val, this.selectedChannel);
-          this.changeStreamData();
-        }
-      },
-      onChangeOptionChannel (evt) {
-        let val = evt.target.value;
-        this.dictDevice = [];
-        if(this.selectedStreamData) {
-          this.extractChartDataDeviceStreamOneChannel(this.selectedStreamData,'minutes',val);
-          this.changeStreamData();
-        }
-      },
-      subscribeStream (stream) {
-        var context = this;
-        this.$raptor.Stream().subscribe(stream, function(msg) {
-          console.log(msg)
-          context.selectedStreamData.push(msg.record);
-          context.extractChartDataDeviceStreamOneChannel(context.selectedStreamData,'minutes',context.selectedChannel);
-          context.changeStreamData();
-          // if(!(msg.type === 'stream' && msg.op === 'data' && msg.streamId === this.$raptor.stream)) {
-          //   return
-          // }
-          context.loading = false;
-        });
-      },
-      unsubscribeStream (stream) {
-        var context = this;
-        this.$raptor.Stream().unsubscribe(stream, function(msg) {
-          console.log(msg)
-        });
       }
     }
   }
-  </script>
+}
+</script>

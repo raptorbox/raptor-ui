@@ -38,23 +38,36 @@
         </div><!--/.col-->
       </div><!--/.row-->
       <div class="chart-wrapper">
-        <chart-streams style="height:300px;margin-top:40px;" :chartLabel="selectedChannel" :data="dataChartDevice" :labels="streamChartLabels" height="300"></chart-streams>
+        <chart-streams :chartLabel="selectedChannel" :data="dataChartDevice" :labels="streamChartLabels"></chart-streams>
         <div slot="footer">
           <span v-html="streamChartDetails"></span>
         </div>
+      </div>
+      <div class="container">
+        <vue-slider ref="slider" v-bind="slider" v-model="slider.value" @callback="sliderValueChanged" @drag-start="sliderDragStart" @drag-end="sliderDragEnd" ></vue-slider>
       </div>
     </b-card>
   </div>
 </template>
 
+<style>
+.slider {
+  /* overwrite slider styles */
+  width: 200px;
+}
+</style>
+
 <script>
-import ChartStreams from './../stats/ChartStreams'
+import ChartStreams from './ChartStream'
 import moment from 'moment'
+// range slider for chartjs
+import vueSlider from 'vue-slider-component'
 
 export default {
   name: 'realtimechart',
   components: {
-    ChartStreams
+    ChartStreams,
+    vueSlider
   },
   data () {
     return {
@@ -67,7 +80,7 @@ export default {
       dictUser: {},
       dataChartUser: [10, 39, 10, 40, 39, 0, 0],
       optionsStreams: [
-      { value: null,              text: 'Please select a stream' }
+        { value: null,              text: 'Please select a stream' }
       ],
       selectedDevice: 'memosa-car',
       dictDevice: {},
@@ -82,7 +95,71 @@ export default {
       colorVarients: ['green','blue','lightblue','yellow','red','pink','black','purple','cyan','orange','brown'],
       selectedChannel: null,
       optionsChannel: [{ value: null, text: 'Please select a Channel' }],
-      dataSubscribed: false
+      dataSubscribed: false,
+      // slider value to show the instances of reading in chart
+      realData: null,
+      realStreamChartLabels: [],
+      isSliderDragging: false,
+      isSliderDragged: false,
+      slider: {
+        value: [
+          0,
+          100
+        ],
+        eventType: 'auto',
+        width: 'auto',
+        height: 6,
+        dotSize: 16,
+        dotHeight: null,
+        dotWidth: null,
+        min: 0,
+        max: 100,
+        interval: 1,
+        show: true,
+        speed: 0.5,
+        disabled: false,
+        piecewise: false,
+        piecewiseStyle: false,
+        piecewiseLabel: false,
+        tooltip: "always",
+        tooltipDir: ["bottom","bottom"],
+        reverse: true,
+        style: {
+          "marginBottom": "30px"
+        },
+        data: null,
+        clickable: true,
+        realTime: true,
+        lazy: false,
+        formatter: "{value}",
+        bgStyle: {
+          "backgroundColor": "#fff",
+          "boxShadow": "inset 0.5px 0.5px 3px 1px rgba(0,0,0,.36)"
+        },
+        sliderStyle: [
+          {
+            "backgroundColor": "#f05b72"
+          },
+          {
+            "backgroundColor": "#3498db"
+          }
+        ],
+        processStyle: null,
+        piecewiseActiveStyle: null,
+        piecewiseStyle: null,
+        tooltipStyle: [
+          {
+            "backgroundColor": "#f05b72",
+            "borderColor": "#f05b72"
+          },
+          {
+            "backgroundColor": "#3498db",
+            "borderColor": "#3498db"
+          }
+        ],
+        labelStyle: null,
+        labelActiveStyle: null
+      },
     }
   },
   mounted () {
@@ -90,6 +167,7 @@ export default {
       this.$log.debug('Load %s ', this.$route.params.deviceId)
       this.load(this.$route.params.deviceId)
     }
+    this.$nextTick(() => this.$refs.slider.refresh())
   },
   methods: {
     formatDate (d) {
@@ -104,7 +182,7 @@ export default {
         this.selectedDeviceDetails = '<ul>';
         this.selectedDeviceDetails += '<li><strong>Name:</strong>     ' + device.name + '</li>';
         this.selectedDeviceDetails += '<li><strong>id:</strong>       ' + device.id + '</li>';
-        this.selectedDeviceDetails += '<li><strong>Created:</strong>  ' + this.formatDate(device.createdAt*1000) + '</li>';
+        this.selectedDeviceDetails += '<li><strong>Created:</strong>  ' + this.formatDate(device.json.createdAt*1000) + '</li>';
         this.selectedDeviceDetails += '</ul>';
         this.fetchData(device)
       })
@@ -127,6 +205,7 @@ export default {
     },
     extractChartDataDeviceStreamOneChannel (d, val, channel, pushData) {
       this.dictDevice = [];
+      // d.sort(function(a, b){return a.timestamp < b.timestamp});
       this.streamChartLabels = []
       for (var i = 0; i < d.length; i++) {
         let s = d[i];
@@ -134,16 +213,13 @@ export default {
           this.deviceDataTime = this.formatDate(s.timestamp * 1000);
         }
         this.streamChartLabels.push((new Date(s.timestamp * 1000)).toUTCString());
-        let sDate = this.getDate(s, val)
-        if((typeof s.channels[channel]) === 'number' || (typeof s.channels[channel]) === 'boolean') {
-          if(!this.dictDevice[sDate]) {
-            this.dictDevice[sDate] = [];
-          }
-          if(this.dictDevice[sDate]) {
-            this.dictDevice[sDate].push(s.channels[channel]);
-          }
-        }
+        this.dictDevice.push(s.channels[channel]);
       }
+      // let context = this
+      this.realStreamChartLabels = this.streamChartLabels
+      // .filter(function(item, pos) {
+      //     return context.streamChartLabels.indexOf(item) == pos;
+      // })
     },
     getDate(s, val) {
       let sDate = (new Date(s.timestamp * 1000)).getMinutes();
@@ -161,7 +237,7 @@ export default {
       var ts = Math.round((new Date()).getTime() / 1000);
       let stream = this.selectedDev.getStream(str);
       if(stream){
-        this.$raptor.Stream().list(stream, 0, ts)
+        this.$raptor.Stream().list(stream, 0, 100, 'timestamp,desc')
         .then((streams) => {
           context.selectedStreamData = streams;
         })
@@ -203,6 +279,8 @@ export default {
           arr.push(this.dictDevice[s]);
         }
         this.dataChartDevice = arr;
+        // console.log(this.dataChartDevice.length)
+        this.realData = this.dataChartDevice
       },
       getNode () {
         let name = "memosa-nodes"
@@ -252,6 +330,7 @@ export default {
         let val = evt.target.value;
         console.log(val)
         if(this.selectedStreamData && this.selectedChannel) {
+          this.selectedStreamData.reverse()
           this.extractChartDataDeviceStreamOneChannel(this.selectedStreamData, val, this.selectedChannel);
           this.changeStreamData();
         }
@@ -260,6 +339,7 @@ export default {
         let val = evt.target.value;
         this.dictDevice = [];
         if(this.selectedStreamData) {
+          this.selectedStreamData.reverse()
           this.extractChartDataDeviceStreamOneChannel(this.selectedStreamData,'minutes',val);
           this.changeStreamData();
         }
@@ -269,7 +349,11 @@ export default {
         this.$raptor.Stream().subscribe(stream, function(msg) {
           console.log(msg)
           context.selectedStreamData.push(msg.record);
+          context.selectedStreamData.shift()
           context.extractChartDataDeviceStreamOneChannel(context.selectedStreamData,'minutes',context.selectedChannel);
+          if(context.isSliderDragged) {
+            context.sliderDragEnd()
+          }
           context.changeStreamData();
           // if(!(msg.type === 'stream' && msg.op === 'data' && msg.streamId === this.$raptor.stream)) {
           //   return
@@ -282,6 +366,52 @@ export default {
         this.$raptor.Stream().unsubscribe(stream, function(msg) {
           console.log(msg)
         });
+      },
+      // slider events
+      sliderDragEnd () {
+        // console.log("drag end")
+        if(this.realData && this.realStreamChartLabels) {
+          this.isSliderDragging = false
+          console.log(this.slider.value)
+          let valuesToShowMin = (this.slider.value[0] / 100) * this.realData.length
+          let valuesToShowMax = (this.slider.value[1] / 100) * this.realData.length
+          valuesToShowMin = (valuesToShowMin != 0) ? valuesToShowMin : 0
+          valuesToShowMax = (valuesToShowMax != this.realData.length) ? valuesToShowMax : this.realData.length
+
+          let labelsToShowMin = (this.slider.value[0] / 100) * this.realStreamChartLabels.length
+          let labelsToShowMax = (this.slider.value[1] / 100) * this.realStreamChartLabels.length
+          labelsToShowMin = (labelsToShowMin != 0) ? labelsToShowMin : 0
+          labelsToShowMax = (labelsToShowMax != this.realStreamChartLabels.length) ? labelsToShowMax : this.realStreamChartLabels.length
+
+          console.log("length: %s, min: `%s`, max: `%s`", this.realData.length, valuesToShowMin, valuesToShowMax)
+          console.log("length: %s, min: `%s`, max: `%s`", this.realStreamChartLabels.length, labelsToShowMin, labelsToShowMax)
+
+          this.dataChartDevice = this.realData.slice(valuesToShowMin, valuesToShowMax)
+          this.streamChartLabels = this.realStreamChartLabels.slice(labelsToShowMin, labelsToShowMax)
+
+          if(this.slider.value[0] >= 0 || this.slider.value[1] <= 100) {
+            this.isSliderDragged = true
+          } else {
+            this.isSliderDragged = false
+          }
+        }
+        // console.log(this.dataChartDevice)
+        // console.log(this.streamChartLabels)
+      },
+      sliderDragStart () {
+        this.isSliderDragging = true
+        console.log("drag start")
+      },
+      sliderValueChanged () {
+        if(!this.isSliderDragging) {
+          console.log("slider value changed")
+          this.sliderDragEnd()
+          if(this.slider.value[0] >= 0 || this.slider.value[1] <= 100) {
+            this.isSliderDragged = true
+          } else {
+            this.isSliderDragged = false
+          }
+        }
       }
     }
   }
