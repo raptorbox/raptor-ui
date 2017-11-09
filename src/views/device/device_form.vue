@@ -61,13 +61,13 @@
   import Stream from './../components/editStream'
   import Raptor from 'raptor-sdk'
   const defaultData = () => {
-    console.log("***************************************")
-    console.log("Device Model")
+    // console.log("***************************************")
+    // console.log("Device Model")
     let d1 = new Raptor.models.Device()
-    console.log(d1)
+    // console.log(d1)
     let d = d1.defaultFields()
 
-    console.log("defaultFields: " + d)
+    // console.log("defaultFields: " + d)
 
     // d.streams = new Raptor.models.Stream().defaultFields()
     // d.actions = new Raptor.models.Action().defaultFields()
@@ -106,6 +106,7 @@
         saveIt: 0,
         deviceUserId: "",
         propertiesTextArea: "",
+        clone: false,
         ...defaultData()
       }
     },
@@ -113,6 +114,10 @@
       if (this.$route.params.deviceId) {
         this.$log.debug('Load %s ', this.$route.params.deviceId)
         this.load(this.$route.params.deviceId)
+      }
+      console.log(this.$route)
+      if(this.$route.path.indexOf('clone') != -1) {
+        this.clone = true
       }
     },
     methods: {
@@ -129,7 +134,7 @@
           this.$data.device = device
           this.$data.deviceUserId = device.id
           let prop = JSON.stringify(device.properties)
-          if(device.properties && prop != "{}") {
+          if(device.properties && prop != "{}" && !this.clone) {
             this.propertiesTextArea = prop
           }
           Object.assign(this.$data, device)
@@ -155,7 +160,7 @@
         if(this.properties != null) {
           u.properties = propertiesTextArea
         }
-        if (this.$route.params.deviceId) {
+        if (this.$route.params.deviceId && !this.clone) {
           // this.$raptor.Inventory().update(u)
           // .then((device) => {
           //   this.$log.debug('device %s saved', device.id)

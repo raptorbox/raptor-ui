@@ -36,6 +36,7 @@
               <click-confirm>
                 <b-button class="btn btn-outline-danger btn-sm" @click="remove(row.item.id)">Delete</b-button>
               </click-confirm>
+              <b-button class="btn btn-outline-info btn-sm" :to="{ name: 'Clone', params: { deviceId: row.item.id }}">Clone</b-button>
             </div>
           </template>
         </b-table>
@@ -72,6 +73,7 @@
       }
     },
     mounted () {
+      // this.remove("c70a21ae-c8b9-4904-b1c1-573dbb96e248")
       this.fetchData()
     },
     methods: {

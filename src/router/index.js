@@ -325,6 +325,15 @@ const router = new Router({
                 props: true
               },
               {
+                path: ':deviceId/clone',
+                component: DeviceForm,
+                name: 'Clone',
+                meta: {
+                  label: 'Create device'
+                },
+                props: true
+              },
+              {
                 path: ':deviceId/streams',
                 component: StreamList,
                 name: 'Streams',

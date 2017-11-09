@@ -308,6 +308,21 @@ export default {
       if(stream){
         this.$raptor.Stream().list(stream, 0, 100, 'timestamp,desc')
         .then((streams) => {
+          let stream = this.selectedDev.json.streams[this.selectedStream]
+          console.log(streams[0].channels)
+          if(stream.dynamic) {
+            let chs = streams[0].channels
+            let keys = Object.keys(chs);
+            this.optionsChannel = [];
+            for (var i = 0; i < keys.length; i++) {
+              if(chs[keys[i]] * 1) {
+                if(this.optionsChannel == 0) {
+                  this.optionsChannel.push({ value: null,text: 'Please select a Channel' });
+                }
+                this.optionsChannel.push({ value: keys[i],text: keys[i] });
+              }
+            }
+          }
           context.selectedStreamData = streams;
         })
         .catch(function(e) {
