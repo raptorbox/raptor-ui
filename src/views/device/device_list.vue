@@ -27,8 +27,8 @@
             <b-button class="btn btn-link" :to="{ name: 'DeviceUpdate', params: { deviceId: row.item.id }}">{{row.item.name}}</b-button>
           </template>
           <template slot="description" scope="row">{{row.item.description}}</template>
-          <template slot="created" scope="row">{{formatDate(row.item.createdAt * 1000)}}</template>
-          <template slot="updated" scope="row">{{formatDate(row.item.updatedAt * 1000)}}</template>
+          <template slot="created" scope="row">{{formatDate(row.item.json.createdAt * 1000)}}</template>
+          <template slot="updated" scope="row">{{formatDate(row.item.json.updatedAt * 1000)}}</template>
           <template slot="actions" scope="row">
             <div class="row">
               <b-button class="btn btn-sm" :to="{ name: 'Streams', params: { deviceId: row.item.id }}">Streams</b-button>
@@ -73,7 +73,12 @@
       }
     },
     mounted () {
-      // this.remove("c70a21ae-c8b9-4904-b1c1-573dbb96e248")
+      // this.remove("36a1e930-83de-4b97-a967-0f5ed649d532")
+      // this.remove("70c3ab16-1303-4f05-9ba2-2ecfaca5b918")
+      // this.remove("603d2474-aeb4-4b26-9417-e939cc6f55bb")
+      // this.remove("b3de3e28-d84b-4584-8420-bf3f95cda6b6")
+      // this.remove("cb6bc1ef-b4aa-4f0f-a24d-a9d97a44506a")
+      // this.remove("477158e2-b544-4622-9dab-caddcefd69b0")
       this.fetchData()
     },
     methods: {

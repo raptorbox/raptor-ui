@@ -19,53 +19,61 @@
       <div v-for="stream in tableDataStreams" id="stream">
         <b-card>
           <div class="clearfix" style="background-color: #f0f3f5; padding:10px;">
-            <div>
-              <div class="text-left text-center" style="float: left;">
-                <!-- <p style="text-align: center; font-weight:bold; margin:0;">{{stream.title}}</p> -->
-                <b-form-input v-model="stream.title"
-                type="text" style="border: none !important; border-color: transparent !important; background-color: transparent !important; border-bottom: 1px solid black; font-weight: bold;"
-                placeholder="Enter Stream Name"></b-form-input>
+            <div class="row">
+              <div class="col-md-4">
+                <div class="text-left text-center" style="float: left;">
+                  <b-form-fieldset description="Stream name" :horizontal="true" class="text-left">
+                    <b-form-input v-model="stream.title" type="text" style="border: none !important; border-color: transparent !important; background-color: transparent !important; border-bottom: 1px solid black; font-weight: bold;" placeholder="Enter Stream Name"></b-form-input>
+                  </b-form-fieldset>
+                </div>
               </div>
-              <div class="col-md-2" style="float: right;">
+              <div class="col-md-4">  
+                <b-form-fieldset label="Check if stream is dynamic" :horizontal="false">
+                  <b-form-checkbox v-model="stream.dynamic">Dynamic</b-form-checkbox>
+                </b-form-fieldset>
+              </div>
+              <div class="col-md-4">
                 <div style="float: right;" right>
                   <b-button class="btn btn-danger" data="stream" @click="(event) => { onDeleteStream(event, stream) }">Delete Stream</b-button>
                 </div>
                 <div style="float: right;" right>
-                  <b-button class="btn btn-primary" data="stream" @click="(event) => { onCreateChannelButton(event, stream) }">Add Channel</b-button>
+                  <b-button class="btn btn-primary" data="stream" @click="(event) => { onCreateChannelButton(event, stream) }" :disabled="stream.dynamic">Add Channel</b-button>
                 </div>
               </div>
             </div>
           </div>
           <!-- style="background-color:#f0f0f0" -->
-          <div id="channelDiv" data="stream" style="padding: 10px">
-            <div id="channelDivHeader" class="row row-fluid">
-              <div class="col-md-3 text-left" style="padding: 10px">
-                <label><strong>Channel Name</strong></label>
+          <div v-if="!stream.dynamic">
+            <div id="channelDiv" data="stream" style="padding: 10px">
+              <div id="channelDivHeader" class="row row-fluid">
+                <div class="col-md-3 text-left" style="padding: 10px">
+                  <label><strong>Channel Name</strong></label>
+                </div>
+                <div class="col-md-3 text-left" style="padding: 10px">
+                  <label><strong>Channel Type</strong></label>
+                </div>
+                <!-- <div class="col-md-3 text-left" style="padding: 10px">
+                  <label><strong>Channel Unit</strong></label>
+                </div> -->
               </div>
-              <div class="col-md-3 text-left" style="padding: 10px">
-                <label><strong>Channel Type</strong></label>
-              </div>
-              <!-- <div class="col-md-3 text-left" style="padding: 10px">
-                <label><strong>Channel Unit</strong></label>
-              </div> -->
-            </div>
-            <div id="channelDivDetail" class="row row-fluid" v-for="channel in stream.channels">
-              <div class="col-md-3 text-left" id="divChannelName" v-bind:data="stream" :data-ch="channel" style="padding: 10px">
-                <b-form-input v-model="channel.name"
-                type="text"
-                placeholder="Enter Channel Name"></b-form-input>
-                <!-- style="border: none !important; border-color: transparent !important;" -->
-              </div>
-              <div class="col-md-3 text-left" id="divChannelType" data="stream" data-ch="channel" style="padding: 10px">
-                <b-form-select variant="outline-secondary" class="mr-3" @change.native="(event) => { onChangeOptionChannelType(event, stream, channel) }" v-model="channel.type" :options="channelTypes"> </b-form-select>
-              </div>
-              <!-- <div class="col-md-3 text-left" id="divChannelUnit" data="stream" data-ch="channel" style="padding: 10px">
-                <b-form-input v-model="channel.unit"
-                type="text"
-                placeholder="Enter Channel Unit"></b-form-input>
-              </div> -->
-              <div class="col-md-3 text-center" data="stream" data-ch="channel" right style="padding: 10px">
-                <button class="btn btn-danger" type="button" @click="(event) => { onDeleteChannelButton(event, stream, channel) }">Delete</button>
+              <div id="channelDivDetail" class="row row-fluid" v-for="channel in stream.channels">
+                <div class="col-md-3 text-left" id="divChannelName" v-bind:data="stream" :data-ch="channel" style="padding: 10px">
+                  <b-form-input v-model="channel.name"
+                  type="text"
+                  placeholder="Enter Channel Name"></b-form-input>
+                  <!-- style="border: none !important; border-color: transparent !important;" -->
+                </div>
+                <div class="col-md-3 text-left" id="divChannelType" data="stream" data-ch="channel" style="padding: 10px">
+                  <b-form-select variant="outline-secondary" class="mr-3" @change.native="(event) => { onChangeOptionChannelType(event, stream, channel) }" v-model="channel.type" :options="channelTypes"> </b-form-select>
+                </div>
+                <!-- <div class="col-md-3 text-left" id="divChannelUnit" data="stream" data-ch="channel" style="padding: 10px">
+                  <b-form-input v-model="channel.unit"
+                  type="text"
+                  placeholder="Enter Channel Unit"></b-form-input>
+                </div> -->
+                <div class="col-md-3 text-center" data="stream" data-ch="channel" right style="padding: 10px">
+                  <button class="btn btn-danger" type="button" @click="(event) => { onDeleteChannelButton(event, stream, channel) }">Delete</button>
+                </div>
               </div>
             </div>
           </div>
@@ -81,7 +89,7 @@
   import moment from 'moment'
   export default {
     name: 'stream_list',
-    props: ['SaveData','deviceData'],
+    props: ['SaveData','deviceData','dataLoad'],
     data() {
       return {
         loading: false,
@@ -105,47 +113,61 @@
         device: null,
         selectedStream: null,
         optionsStreams: [],
-        tableDataStreams: []
+        tableDataStreams: [],
+
       }
     },
-    mounted () {
-      if (this.$route.params.deviceId) {
-        this.$log.debug('Load %s ', this.$route.params.deviceId)
-        this.load(this.$route.params.deviceId)
-      }
-    },
+    // mounted () {
+    //   if (this.$route.params.deviceId) {
+    //     this.$log.debug('Load %s ', this.$route.params.deviceId)
+    //     // this.load(this.$route.params.deviceId)
+    //   }
+    // },
     watch: {
       SaveData () {
         console.log("in stream component")
         if(this.deviceData != null) {
           this.device = this.deviceData
+          console.log("=========================dev data ===========================")
           console.log(this.device)
         }
         this.onSaveStreamButton()
+      },
+      dataLoad() {
+        console.log("in stream component")
+        if(this.deviceData != null) {
+          this.device = this.deviceData
+          console.log("=========================dev data ===========================")
+          this.streams = this.device.json.streams
+          // console.log(device)
+          console.log(JSON.stringify(this.device))
+          this.loading = false
+          this.getStreams();
+        }
       }
     },
     methods: {
       formatDate (d) {
         return moment(new Date(d)).format('MMMM Do YYYY')
       },
-      load(deviceId) {
-        this.loading = true
-        this.$raptor.Inventory().read(deviceId)
-        .then((device) => {
-          this.$log.debug('device %s loaded', device)
-          this.streams = device.json.streams
-          // console.log(device)
-          console.log(JSON.stringify(device))
-          this.loading = false
-          this.device = device;
-          this.getStreams();
-        })
-        .catch((e) => {
-          this.$log.debug('Failed to load device')
-          this.$log.error(e)
-          this.loading = false
-        })
-      },
+      // load(deviceId) {
+      //   this.loading = true
+      //   this.$raptor.Inventory().read(deviceId)
+      //   .then((device) => {
+      //     this.$log.debug('device %s loaded', device)
+      //     this.streams = device.json.streams
+      //     // console.log(device)
+      //     console.log(JSON.stringify(device))
+      //     this.loading = false
+      //     this.device = device;
+      //     this.getStreams();
+      //   })
+      //   .catch((e) => {
+      //     this.$log.debug('Failed to load device')
+      //     this.$log.error(e)
+      //     this.loading = false
+      //   })
+      // },
       getStreams() {
         var context = this;
         let streamObjects = Object.keys(this.streams);
@@ -162,6 +184,7 @@
           }
           obj.channels = channels
           obj.title = key
+          obj.dynamic = this.streams[key].dynamic
           this.tableDataStreams.push(obj)
         }
         // console.log(this.tableDataStreams)
@@ -234,7 +257,6 @@
         }
       },
       onSaveStreamButton () {
-        let json = this.device.toJSON()
         // console.log(stream)
         let updatedStream = {}
         // let keys = Object.keys(this.streams)
@@ -264,23 +286,34 @@
         for (var i = 0; i < this.tableDataStreams.length; i++) {
           let st = this.tableDataStreams[i]
           let obj = {}
-          for (var j = 0; j < st.channels.length; j++) {
-            obj[st.channels[j].name] = st.channels[j].type
+          if(!st.dynamic) {
+            for (var j = 0; j < st.channels.length; j++) {
+              obj[st.channels[j].name] = st.channels[j].type
+            }
           }
           updatedStream[st.title] = obj
         }
-        console.log("=============================updated stream=============================")
+        // console.log("=============================updated stream=============================")
         // console.log(updatedStream)
-        console.log(JSON.stringify(updatedStream))
-        json = Object.assign({}, json, {
+        // console.log(JSON.stringify(updatedStream))
+        let json = Object.assign({}, this.device, {
           streams: updatedStream,
-          actions: json.actions,
-          name: json.name,
-          description: json.description
+          actions: this.device.actions,
+          name: this.device.name,
+          description: this.device.description,
+          properties: this.device.properties
         })
-        console.log(json)
-        console.log("=============================final stored stream=============================")
-        return this.$raptor.Inventory().update(json)
+        // console.log(json)
+        // console.log("=============================final stored stream=============================")
+        if(json.id != null) {
+          return this.$raptor.Inventory().update(json).then(()=> {
+            this.$router.push("/inventory/list")
+          })
+        } else {
+          return this.$raptor.Inventory().create(json).then(()=> {
+            this.$router.push("/inventory/list")
+          })
+        }
       },
       onDeleteStream (evt, stream) {
         for (var i = 0; i < this.tableDataStreams.length; i++) {
@@ -292,6 +325,7 @@
       },
       onAddStreamButton (evt) {
         var st = {
+          dynamic: false,
           channels: [{
             name: "",
             type: this.channelTypes,

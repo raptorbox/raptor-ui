@@ -409,27 +409,32 @@ export default {
         // endDate = endDate+':00'
         endDate = moment(endDate).format('x');
       }
-      let query = {timestamp: {between:[startDate, endDate]}}
-      console.log(query)
       // "timestamp":{"between":[1510152092358,1510152094358]}
-      this.$raptor.Stream().search(stream, query)
-      .then((stream) => {
-        // console.log(stream)
-        this.selectedStreamData = stream;
-        let temp = this.selectedChannel
-        // console.log(temp)
-        this.selectedChannel = null;
-        this.selectedChannel = temp
-        this.onChangeOptionChannel({target: {value: this.selectedChannel}})
-        // let dateArray = this.getDateList(this.selectedDev.json.createdAt*1000,moment().unix()*1000, 'hour')
-        // dateArray.reverse()
-        // this.slider.data = dateArray
-      })
-      .catch((e) => {
-        this.$log.debug('Failed to load device')
-        this.$log.error(e)
-        this.loading = false
-      })
+      let i = 0
+      let pageNumber = 1
+      while(i < pageNumber) {
+        let query = {timestamp: {between:[startDate, endDate]}, page:pageNumber-1, size:500,sort:"createdAt,DESC"}
+        console.log(query)
+        this.$raptor.Stream().search(stream, query)
+        .then((stream) => {
+          console.log(stream.length)
+          this.selectedStreamData = stream;
+          let temp = this.selectedChannel
+          // console.log(temp)
+          this.selectedChannel = null;
+          this.selectedChannel = temp
+          this.onChangeOptionChannel({target: {value: this.selectedChannel}})
+          // let dateArray = this.getDateList(this.selectedDev.json.createdAt*1000,moment().unix()*1000, 'hour')
+          // dateArray.reverse()
+          // this.slider.data = dateArray
+        })
+        .catch((e) => {
+          this.$log.debug('Failed to load device')
+          this.$log.error(e)
+          this.loading = false
+        })
+        i = i + 1
+      }
     },
 
     // subscription and unsubscription

@@ -37,7 +37,7 @@
     <!--/.col-->
   </div>
   <!--/.row-->
-  <stream class="chart-wrapper" id="streams" :SaveData="SaveData" :deviceData="device" />
+  <stream class="chart-wrapper" id="streams" :SaveData="SaveData" :dataLoad="dataLoad" :deviceData="device" />
 
   <div class="row">
     <div class="col-md-12">
@@ -88,7 +88,7 @@
         u.actions[p] = null
       }
     }*/
-    console.warn("final object: " + JSON.stringify(u));
+    // console.warn("final object: " + JSON.stringify(u));
     return u
   }
 
@@ -102,6 +102,7 @@
         loading: false,
         error: false,
         SaveData: false,
+        dataLoad: false,
         device: null,
         saveIt: 0,
         deviceUserId: "",
@@ -118,6 +119,7 @@
       console.log(this.$route)
       if(this.$route.path.indexOf('clone') != -1) {
         this.clone = true
+        // this.data.id = null
       }
     },
     methods: {
@@ -134,10 +136,15 @@
           this.$data.device = device
           this.$data.deviceUserId = device.id
           let prop = JSON.stringify(device.properties)
-          if(device.properties && prop != "{}" && !this.clone) {
+          if(device.properties && prop != "{}") {
             this.propertiesTextArea = prop
           }
           Object.assign(this.$data, device)
+          if(this.clone) {
+            this.device.id = null
+          }
+          this.deviceData = device
+          this.dataLoad = true
         })
         .catch((e) => {
           this.$log.debug('Failed to load device')
@@ -151,24 +158,31 @@
       save() {
         var context = this
         const d = defaultData()
+        d.id = null
         const u = {}
         for(let p in d) {
           u[p] = this[p]
         }
         this.loading = true
         this.$log.debug('Saving device', u)
-        if(this.properties != null) {
-          u.properties = propertiesTextArea
+        if(this.propertiesTextArea != null) {
+          try {
+            u.properties = JSON.parse(this.propertiesTextArea)
+          } catch (e) {
+            u.properties = {}
+          }
         }
+        u.name = this.$data.name
+        u.description = this.$data.description
+        u.userId = this.$data.userId
         if (this.$route.params.deviceId && !this.clone) {
           // this.$raptor.Inventory().update(u)
           // .then((device) => {
           //   this.$log.debug('device %s saved', device.id)
-          this.device.name = this.$data.name
-          this.device.description = this.$data.description
-          this.device.userId = this.$data.userId
           console.log(this.saveIt++ + " stupid " + context.SaveData)
+          context.device = u
           context.SaveData = this.saveIt++;
+          // update happened in stream page
             // this.loading = false
             // context.$router.push("/inventory/list")
           // })
@@ -177,23 +191,29 @@
           //   this.$log.error(e)
           //   this.loading = false
           // })
-          context.$router.push("/inventory/list")
+          // context.$router.push("/inventory/list")
         } else {
+          if(this.clone) {
+            u.id = null
+          }
           u.userId = this.$raptor.Auth().getUser().uuid
           this.$log.debug('creating device', u)
-          this.$raptor.Inventory().create(u)
-          .then((device) => {
-            this.$log.debug('device %s created', device.id)
-            this.device = device
-            context.SaveData = context.saveIt++
-            this.loading = false
-            context.$router.push("/inventory/list")
-          })
-          .catch((e) => {
-            this.$log.debug('Failed to create device')
-            this.$log.error(e)
-            this.loading = false
-          })
+          console.log(u)
+          context.device = u
+          context.SaveData = this.saveIt++;
+          // this.$raptor.Inventory().create(u)
+          // .then((device) => {
+          //   this.$log.debug('device %s created', device.id)
+          //   this.device = device
+          //   context.SaveData = context.saveIt++
+          //   this.loading = false
+          //   // context.$router.push("/inventory/list")
+          // })
+          // .catch((e) => {
+          //   this.$log.debug('Failed to create device')
+          //   this.$log.error(e)
+          //   this.loading = false
+          // })
         }
       }
     }
