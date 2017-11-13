@@ -48,6 +48,9 @@ export default Line.extend({
           this.unsubscribeStream ({name: this.stream, deviceId: this.device});
         }
       },
+      formatDate (d) {
+        return moment(new Date(d)).format('MMMM Do YYYY');
+      },
       renderLineChart () {
         this.renderChart(
         {

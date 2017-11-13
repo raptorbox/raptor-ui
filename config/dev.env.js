@@ -4,8 +4,8 @@ var prodEnv = require('./prod.env')
 module.exports = merge(prodEnv, {
   NODE_ENV: '"development"',
   RAPTOR: `{
-      "url": "http://raptor.local",
-      "username": "",
-      "password": "",
+      "url": "http://raptorbox.ddns.net",
+      "username": "memosa",
+      "password": "memosa.EIT2017",
   }`
 })

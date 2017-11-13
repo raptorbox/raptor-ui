@@ -1,16 +1,55 @@
 <template>
   <div class="animated fadeIn">
     <div class="row">
-      <div>
-        <b-card class="bg-danger" :no-block="true" style="min-height:160px; max-height:160px; height:160px">
-          <div class="card-body pb-0">
-            <h4 class="mb-0">Device Details</h4>
-          </div>
-          <div class="card-body pb-0">
-            <span v-html="selectedDeviceDetails"></span>
-          </div>
-        </b-card>
-      </div><!--/.col-->
+      <div class="container">
+        <div v-if="!inventorychart">
+          <div class="row">
+            <div class="col-sm-6 col-lg-4">
+              <b-card class="bg-success" :no-block="true" style="min-height:160px; max-height:160px; height:160px">
+                <div class="card-body pb-0">
+                  <h4 class="mb-0">{{totalNoOfDevices}}</h4>
+                  <p>Total Devices</p>
+                </div>
+                <div class="chart-wrapper">
+                  <line-chart-total-devices style="height:70px;" :data="dataChartDevices" :labels="labelChartDevices" height="70"/>
+                </div>
+              </b-card>
+            </div><!--/.col-->
+            <div class="col-sm-6 col-lg-4">
+              <b-card class="bg-info" :no-block="true" style="min-height:160px; max-height:160px; height:160px">
+                <div class="card-body pb-0">
+                  <h4 class="mb-0">Select a Device</h4>
+                  <div class="float-right">
+                    <select class="mb-3 form-control" @change="onChangeDevice">
+                      <option v-for="dev in listOfDevicesForSelectOptions" v-bind:value="dev.value">{{dev.text}}</option>
+                    </select>
+                  </div>
+                </div>
+              </b-card>
+            </div><!--/.col-->
+            <div class="col-sm-6 col-lg-4">
+              <b-card class="bg-danger" :no-block="true" style="min-height:160px; max-height:160px; height:160px">
+                <div class="card-body pb-0">
+                  <h4 class="mb-0">Device Details</h4>
+                </div>
+                <div class="card-body pb-0">
+                  <span v-html="selectedDeviceDetails"></span>
+                </div>
+              </b-card>
+            </div><!--/.col-->
+          </div><!--/.row-->
+        </div>
+        <div v-if="inventorychart">
+          <b-card class="bg-danger" :no-block="true" style="min-height:160px; max-height:160px; height:160px">
+            <div class="card-body pb-0">
+              <h4 class="mb-0">Device Details</h4>
+            </div>
+            <div class="card-body pb-0">
+              <span v-html="selectedDeviceDetails"></span>
+            </div>
+          </b-card>
+        </div><!--/.col-->
+      </div>
     </div><!--/.row-->
 
     <b-card>
@@ -27,7 +66,7 @@
               <b-button variant="outline-secondary" value="day" @click="onChangeDisplayDataTime">Day</b-button>
               <!-- <b-button variant="outline-secondary" value="week" @click="onChangeDisplayDataTime">Week</b-button> -->
               <b-button variant="outline-secondary" value="month" @click="onChangeDisplayDataTime">Month</b-button>
-              <b-button variant="outline-secondary" value="hour" @click="onChangeDisplayDataTime">Real time</b-button>
+              <b-button variant="outline-secondary" value="realhour" @click="onChangeDisplayDataTime">Real time</b-button>
             </b-button-group>
           </b-button-toolbar>
           <div class="float-right">
@@ -70,13 +109,17 @@ import moment from 'moment'
 // range slider for chartjs
 import vueSlider from 'vue-slider-component'
 
+// dashboard realted
+import LineChartTotalDevices from './../../stats/LineChartTotalDevices'
+
 var currentDate = moment();
 
 export default {
   name: 'realtimechart',
   components: {
     ChartStreams,
-    vueSlider
+    vueSlider,
+    LineChartTotalDevices
   },
   data () {
     return {
@@ -107,6 +150,12 @@ export default {
       selectedChannel: null,
       optionsChannel: [{ value: null, text: 'Please select a Channel' }],
       dataSubscribed: false,
+      // for checking whether page is investory chart or dashboard
+      inventorychart: false,
+      devices: [],
+      dataChartDevices: [],
+      labelChartDevices: [],
+      dictChartDevices: {},
       // slider value to show the instances of reading in chart
       selectedDisplayParam: null,
       realData: null,
@@ -189,6 +238,12 @@ export default {
       this.load(this.$route.params.deviceId)
     }
     this.$nextTick(() => this.$refs.slider.refresh())
+    if(this.$route.path.indexOf('inventory') != -1 && this.$route.path.indexOf('chart') != -1) {
+      this.inventorychart = true
+      // this.data.id = null
+    } else {
+      this.fetchData()
+    }
   },
   methods: {
     formatDate (d) {
@@ -396,7 +451,7 @@ export default {
     },
 
     // search stream data for device
-    searchData (stream, startDate, endDate) {
+    searchDataOld (stream, startDate, endDate) {
       if(startDate == undefined || startDate == null ) {
         startDate = 0
       } else {
@@ -437,6 +492,71 @@ export default {
       }
     },
 
+    // search stream data for device
+    searchData (stream, startDate, endDate) {
+      if(startDate == undefined || startDate == null ) {
+        startDate = 0
+      } else {
+        // startDate = startDate+':00'
+        startDate = moment(startDate).format('x');
+      }
+      if(endDate == undefined || endDate == null) {
+        endDate = currentDate.format('x')
+      } else {
+        // endDate = endDate+':00'
+        endDate = moment(endDate).format('x');
+      }
+      // "timestamp":{"between":[1510152092358,1510152094358]}
+      let pageNumber = 0
+      this.selectedStreamData = []
+        let query = {timestamp: {between:[startDate, endDate]}, page:pageNumber, size:500,sort:"createdAt,DESC"}
+        console.log(query)
+        console.log(stream)
+        this.loopOverStreamPagination (stream, query, pageNumber, startDate, endDate)
+    },
+    searchDataApi(stream, query, callback) {
+      console.log(query)
+      this.$raptor.Stream().search(stream, query)
+      .then((stream) => {
+        console.log(stream.length)
+        callback(stream)
+      })
+      .catch((e) => {
+        this.$log.debug('Failed to load device')
+        this.$log.error(e)
+        this.loading = false
+      })
+    },
+    loopOverStreamPagination (stream, query, pageNumber, startDate, endDate) {
+      let context = this
+      this.searchDataApi(stream, query, function (streams) {
+        // console.log(streams[0])
+        // console.log(streams[0].timestamp * 1000)
+        // console.log(endDate)
+        // console.log((streams[0].timestamp * 1000) > endDate)
+        if(streams.length > 0 && (streams[0].timestamp * 1000) < endDate) {
+          for (var i = 0; i < streams.length; i++) {
+            context.selectedStreamData.push(streams[i])
+          }
+          pageNumber = pageNumber + 1
+          let query = {timestamp: {between:[startDate, endDate]}, page:pageNumber, size:500,sort:"createdAt,DESC"}
+          context.loopOverStreamPagination(stream, query, pageNumber, startDate, endDate)
+        } else {
+          for (var i = 0; i < streams.length; i++) {
+            context.selectedStreamData.push(streams[i])
+          }
+          let temp = context.selectedChannel
+          // console.log(temp)
+          context.selectedChannel = null;
+          context.selectedChannel = temp
+          context.onChangeOptionChannel({target: {value: context.selectedChannel}})
+          // let dateArray = this.getDateList(this.selectedDev.json.createdAt*1000,moment().unix()*1000, 'hour')
+          // dateArray.reverse()
+          // this.slider.data = dateArray
+        }
+      })
+    },
+
     // subscription and unsubscription
     subscribeStream (stream) {
       var context = this;
@@ -468,6 +588,9 @@ export default {
       dateEnd = moment(dateEnd);
       let months = []
       let format = 'YYYY-MM-DD'
+      if(type == 'realhour') {
+        type = 'hour'
+      }
       while (dateStart.isBefore(dateEnd)) {
         if(type == 'month') {
           format = 'YYYY-MM'
@@ -533,7 +656,78 @@ export default {
           this.isSliderDragged = false
         }
       }
-    }
+    },
+
+    // dashboard related methods
+    extractChartDataDev (d) {
+      for (var i = 0, len = d.length; i < len; i++) {
+        let s = d[i]
+        let sDate = this.formatDate(s.json.createdAt * 1000).split(' ')[0]
+        this.$data.dictChartDevices[sDate] = this.$data.dictChartDevices[sDate] ? this.$data.dictChartDevices[sDate] + 1 : 1;
+      }
+    },
+    fetchData () {
+      this.$raptor.Inventory().list()
+      .then((list) => {
+        // this.$log.debug('Loaded %s device list', list.length);
+          console.log(list);
+          this.extractChartDataDev(list);
+          this.$data.labelChartDevices = Object.keys(this.$data.dictChartDevices); // getting labels
+          this.$data.devices = list;
+          this.totalNoOfDevices = list.length;
+          list.forEach( (e) => this.listOfDevicesForSelectOptions.push({value: e.id, text: e.name+' - '+e.id}));
+          this.changeDataDevicesChart();
+        })
+      .catch(function(e) {
+        console.log(e)
+        console.log(JSON.stringify(e))
+        if(e.toString().indexOf("Unauthorized") !== -1) {
+          this.$raptor.Auth().logout();
+          this.$router.push("/pages/login");
+        }
+      });
+      // this.fetchDevices(this.selectedDevice);
+    },
+    changeDataDevicesChart: function() {
+      let arr = Array();
+      for (var i = 0; i < this.labelChartDevices.length; i++) {
+        let s = this.labelChartDevices[i];
+        arr.push(this.dictChartDevices[s]);
+      }
+      this.dataChartDevices = arr;
+    },
+    onChangeDevice (evt) {
+      let val = evt.target.value;
+      // if(this.selectedStream != null && this.selectedDev != null) {
+      //   this.unsubscribeStream(this.selectedDev.json.streams[this.selectedStream]);
+      // }
+      for (var i = 0; i < this.devices.length; i++) {
+        if(this.devices[i].id == val){
+          let details = this.devices[i];
+          this.selectedDev = details;
+          this.deviceName = details.name;
+          this.getSingleDevice(details);
+          this.selectedDeviceDetails = '<ul>';
+          this.selectedDeviceDetails += '<li><strong>Name:</strong>     ' + details.name + '</li>';
+          this.selectedDeviceDetails += '<li><strong>id:</strong>       ' + details.id + '</li>';
+          this.selectedDeviceDetails += '<li><strong>Created:</strong>  ' + this.formatDate(details.createdAt*1000) + '</li>';
+          this.selectedDeviceDetails += '</ul>';
+        }
+      }
+    },
+    getSingleDevice (device) {
+      if(device) {
+        let keys = Object.keys(device.json.streams);
+        console.log(keys);
+        this.optionsStreams = [];
+        this.optionsStreams.push({ value: null,text: 'Please select a stream' });
+        for (var i = 0; i < keys.length; i++) {
+          this.optionsStreams.push({ value: keys[i],text: keys[i] });
+        }
+        this.selectedStream = keys[0];
+        this.dataSubscribed = false;
+      }
+    },
   }
 }
 </script>

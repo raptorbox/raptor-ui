@@ -18,7 +18,7 @@ import TokensForm from '@/views/token/token_form'
 import DeviceList from '@/views/device/device_list'
 import DeviceForm from '@/views/device/device_form'
 import DeviceSearch from '@/views/device/search'
-import DeviceDataChart from '@/views/device/realtimechart'
+import DeviceDataChart from '@/views/components/realtimechart/realtimechart'
 
 // Streams
 import StreamList from '@/views/device/streams/stream_list'
@@ -27,7 +27,7 @@ import StreamList from '@/views/device/streams/stream_list'
 import DeviceRecordSet from '@/views/device/records/records'
 
 // Project
-import Dashboard from '@/views/stats/dashboard'
+// import Dashboard from '@/views/stats/dashboard'
 
 // Admin
 import AdminDashboard from '@/views/admin/dashboard'
@@ -72,7 +72,7 @@ const router = new Router({
         {
           path: 'dashboard',
           name: 'Dashboard',
-          component: Dashboard
+          component: DeviceDataChart
         },
         {
           path: 'drag',

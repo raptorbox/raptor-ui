@@ -50,6 +50,50 @@
       </div>
     </div>
 
+    <!-- <grid-layout :layout="widgets" :col-num="12" :row-height="30" :is-draggable="true" :is-resizable="true" :vertical-compact="true" :margin="[10, 10]" :use-css-transforms="true" >
+
+        <grid-item v-for="wid in widgets"
+                   :x="wid.x"
+                   :y="wid.y"
+                   :w="wid.w"
+                   :h="wid.h"
+                   :i="wid.i" :key="wid.i" @resize="resizeEvent" @move="moveEvent" @resized="resizedEvent" @moved="movedEvent" >
+            <b-card show-header>
+              <div slot="header">
+                <div class="float-right">
+                  <button type="button" i="wid.i" class="btn btn-link" @click="(ev) => { onRemoveWidgetButtonClick(ev, wid) }">
+                    <icon name="remove" scale="2" color="red"></icon>
+                  </button>
+                </div>
+                <div class="pb-0" v-on:click.capture="(ev) => { showDetails(ev, wid.data) }">
+                  <h5>{{wid.title}}</h5>
+                </div>
+              </div>
+              <div class="chart-wrapper" v-if="wid.chart == 'bar'">
+                <bar-chart :chartData="wid.data"/>
+              </div>
+              <div class="chart-wrapper" v-else-if="wid.chart == 'polar'">
+                <polar-area-chart :chartData="wid.data"/>
+              </div>
+              <div class="chart-wrapper" style="position: relative; height: 25vh;" v-else-if="wid.chart == 'line' && wid.data">
+                <line-chart :chartData="wid.data"/>
+              </div>
+              <div class="chart-wrapper" v-else-if="wid.chart == 'pie'">
+                <pie-chart :chartData="wid.data"/>
+              </div>
+              <div class="chart-wrapper" v-else-if="wid.chart == 'radar'">
+                <radar-chart :chartData="wid.data"/>
+              </div>
+              <div class="chart-wrapper" v-else-if="wid.chart == 'doughnut'">
+                <doughnut-chart :chartData="wid.data"/>
+              </div>
+              <div class="chart-wrapper" v-if="wid.data == null">
+                <line-chart-report />
+              </div>
+            </b-card>
+        </grid-item>
+    </grid-layout> -->
+
     <!-- single data source widget -->
     <b-modal title="Add Widget" class="modal-info" v-model="singleDataModal" @ok="onAddChartButtonClick">
       <b-form-fieldset description="Please enter a widget title" label="Title" :horizontal="false">
@@ -137,11 +181,17 @@ import PolarAreaChart from './charts/PolarAreaChart'
 import LineChartReport from './charts/LineChartReport'
 import moment from 'moment'
 
-// import VueGridLayout from 'vue-grid-layout'
 import Vue from 'vue'
 import Icon from 'vue-awesome/components/Icon'
 import 'vue-awesome/icons/remove'
 import { Vue2Dragula } from 'vue2-dragula'
+
+//resize div
+import VueGridLayout from 'vue-grid-layout'
+Vue.config.debug = true;
+Vue.config.devtools = true;
+var GridLayout = VueGridLayout.GridLayout;
+var GridItem = VueGridLayout.GridItem;
 
 Vue.use(Vue2Dragula, {
   logging: {
@@ -150,9 +200,6 @@ Vue.use(Vue2Dragula, {
 });
 
 Vue.component('icon', Icon)
-
-// var GridLayout = VueGridLayout.GridLayout;
-// var GridItem = VueGridLayout.GridItem;
 
 export default {
   name: 'dashboard',
@@ -165,8 +212,8 @@ export default {
     PieChart,
     PolarAreaChart,
     LineChartReport,
-    // GridLayout,
-    // GridItem,
+    GridLayout,
+    GridItem,
     Icon,
   },
   data () {
@@ -204,6 +251,9 @@ export default {
       tableDataSource: [],
     }
   },
+  ready: function() {
+    var vm = this;
+  },
   mounted () {
     this.fetchData();
     this.fetchDevicesData();
@@ -211,8 +261,29 @@ export default {
     this.populateMultipleDataSourceFields();
   },
   methods: {
+    moveEvent: function(i, newX, newY){
+        console.log("MOVE i=" + i + ", X=" + newX + ", Y=" + newY);
+    },
+    resizeEvent: function(i, newH, newW){
+        console.log("RESIZE i=" + i + ", H=" + newH + ", W=" + newW);
+    },
+    movedEvent: function(i, newX, newY){
+        console.log("MOVED i=" + i + ", X=" + newX + ", Y=" + newY);
+    },
     formatDate (d) {
       return moment(new Date(d)).format('MMMM Do YYYY');
+    },
+    /**
+     *
+     * @param i the item id/index
+     * @param newH new height in grid rows
+     * @param newW new width in grid columns
+     * @param newHPx new height in pixels
+     * @param newWPx new width in pixels
+     *
+     */
+    resizedEvent: function(i, newH, newW, newHPx, newWPx){
+        console.log("RESIZED i=" + i + ", H=" + newH + ", W=" + newW + ", H(px)=" + newHPx + ", W(px)=" + newWPx);
     },
     fetchData () {
       let userId = this.$raptor.Auth().getUser().uuid
