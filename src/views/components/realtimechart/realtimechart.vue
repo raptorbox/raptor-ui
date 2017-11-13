@@ -238,8 +238,10 @@ export default {
       this.load(this.$route.params.deviceId)
     }
     this.$nextTick(() => this.$refs.slider.refresh())
+    console.log(this.$route.path.indexOf('inventory') != -1 && this.$route.path.indexOf('chart') != -1)
     if(this.$route.path.indexOf('inventory') != -1 && this.$route.path.indexOf('chart') != -1) {
       this.inventorychart = true
+      console.log("not here")
       // this.data.id = null
     } else {
       this.fetchData()
@@ -260,7 +262,7 @@ export default {
         this.selectedDeviceDetails += '<li><strong>id:</strong>       ' + device.id + '</li>';
         this.selectedDeviceDetails += '<li><strong>Created:</strong>  ' + this.formatDate(device.json.createdAt*1000) + '</li>';
         this.selectedDeviceDetails += '</ul>';
-        this.fetchData(device)
+        this.fetchDataDevice(device)
 
         let dateArray = this.getDateList(device.json.createdAt*1000,moment().unix()*1000, 'hour')
         dateArray.reverse()
@@ -274,7 +276,7 @@ export default {
         this.loading = false
       })
     },
-    fetchData (device) {
+    fetchDataDevice (device) {
       let keys = Object.keys(device.json.streams);
       // console.log(keys);
       this.optionsStreams = [];
@@ -321,9 +323,27 @@ export default {
       if(stream){
         this.$raptor.Stream().list(stream, 0, 100, 'timestamp,desc')
         .then((streams) => {
-          streams.reverse()
-          context.selectedStreamData = streams;
-          context.realtimeDataLabels = streams;
+          if(streams.length > 0) {
+            let stream = this.selectedDev.json.streams[this.selectedStream]
+            // console.log(streams[0].channels)
+            console.log(streams)
+            if(stream.dynamic) {
+              let chs = streams[0].channels
+              let keys = Object.keys(chs);
+              this.optionsChannel = [];
+              for (var i = 0; i < keys.length; i++) {
+                if(chs[keys[i]] * 1) {
+                  if(this.optionsChannel == 0) {
+                    this.optionsChannel.push({ value: null,text: 'Please select a Channel' });
+                  }
+                  this.optionsChannel.push({ value: keys[i],text: keys[i] });
+                }
+              }
+            }
+            streams.reverse()
+            context.selectedStreamData = streams;
+            context.realtimeDataLabels = streams;
+          }
         })
         .catch(function(e) {
           console.log(e)
@@ -563,7 +583,10 @@ export default {
       this.$raptor.Stream().subscribe(stream, function(msg) {
         console.log(msg)
         context.selectedStreamData.push(msg.record);
-        context.selectedStreamData.shift()
+        console.log(context.selectedStreamData)
+        if(context.selectedStreamData.length > 101) {
+          context.selectedStreamData.shift()
+        }
         context.extractChartDataDeviceStreamOneChannel(context.selectedStreamData,'minutes',context.selectedChannel);
         if(context.isSliderDragged) {
           context.sliderDragEnd()
@@ -572,6 +595,8 @@ export default {
         // if(!(msg.type === 'stream' && msg.op === 'data' && msg.streamId === this.$raptor.stream)) {
         //   return
         // }
+        console.log(context.selectedStreamData)
+        console.log(context.selectedStreamData.length)
         context.loading = false;
       });
     },
