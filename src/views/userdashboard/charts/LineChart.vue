@@ -105,8 +105,8 @@ export default Line.extend({
       // subscription / unsunscription of the data for the selected charts
       subscribeStream (stream) {
         var context = this;
-        var ts = Math.round((new Date()).getTime() / 1000);
-        this.$raptor.Stream().list(stream, 0, ts)
+        // var ts = Math.round((new Date()).getTime() / 1000);
+        this.$raptor.Stream().list(stream, 0, 100, 'timestamp,desc')//list(stream, 0, ts)
         .then((streams) => {
           // console.log(streams)
           context.selectedStreamData = streams
@@ -126,13 +126,16 @@ export default Line.extend({
           this.$raptor.Stream().subscribe(stream, function(msg) {
             console.log(msg)
             context.selectedStreamData.push(msg.record);
-            this.dataForChart = [];
-            this.streamChartLabels = []
+            if(context.selectedStreamData.length > 100) {
+              context.selectedStreamData.shift()
+            }
+            context.dataForChart = [];
+            context.streamChartLabels = []
             let obj = context.extractChartDataDeviceStreamOneChannel(context.selectedStreamData,context.channel);
-            this.dataForChart = obj.data
-            this.streamChartLabels = obj.labels
-            context.populateChart(this.streamChartLabels, this.channel, this.dataForChart)
-            // if(!(msg.type === 'stream' && msg.op === 'data' && msg.streamId === this.$raptor.stream)) {
+            context.dataForChart = obj.data
+            context.streamChartLabels = obj.labels
+            context.populateChart(context.streamChartLabels, context.channel, context.dataForChart)
+            // if(!(msg.type === 'stream' && msg.op === 'data' && msg.streamId === context.$raptor.stream)) {
             //   return
             // }
           });
@@ -211,8 +214,8 @@ export default Line.extend({
       },
       subscribeDatasetStreams (stream) {
         // console.log(stream)
-        var ts = Math.round((new Date()).getTime() / 1000);
-        this.$raptor.Stream().list(stream, 0, ts)
+        // var ts = Math.round((new Date()).getTime() / 1000);
+        this.$raptor.Stream().list(stream, 0, 100, 'timestamp,desc')//list(stream, 0, ts)
         .then((streams) => {
           console.log(streams)
           if(streams.length > 0) {
@@ -263,6 +266,9 @@ export default Line.extend({
               console.log(context.datasets[j])
               if(context.datasets[j].device.id == msg.device.id) {
                 context.datasets[j].selectedStreamData.push(msg.record)
+                if(context.datasets[j].selectedStreamData.length > 100) {
+                  context.datasets[j].selectedStreamData.shift()
+                }
                 let obj = context.extractChartDataDeviceStreamOneChannel(context.datasets[j].selectedStreamData,context.datasets[j].channel);
                 context.datasets[j].dataForChart = [];
                 context.datasets[j].streamChartLabels = []

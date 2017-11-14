@@ -7,57 +7,10 @@
         <b-button type="button" variant="success" @click="singleDataModal = true">Add Widget</b-button>
         <b-button type="button" variant="success" @click="multipleDataModal = true">Add Mix Chart Widget</b-button>
       </p>
+<!-- 
       <div class="card-columns cols-3">
-        <div class="container" v-dragula="widgets" drake="first">
-          <div v-for="wid in widgets">
-            <!-- <div class="bg-primary"> -->
-              <b-card show-header>
-                <div slot="header">
-                  <div class="float-right">
-                    <button type="button" i="wid.i" class="btn btn-link" @click="(ev) => { onRemoveWidgetButtonClick(ev, wid) }">
-                      <icon name="remove" scale="2" color="red"></icon>
-                    </button>
-                  </div>
-                  <div class="pb-0" v-on:click.capture="(ev) => { showDetails(ev, wid.data) }">
-                    <h5>{{wid.title}}</h5>
-                  </div>
-                </div>
-                <div class="chart-wrapper" v-if="wid.chart == 'bar'">
-                  <bar-chart :chartData="wid.data"/>
-                </div>
-                <div class="chart-wrapper" v-else-if="wid.chart == 'polar'">
-                  <polar-area-chart :chartData="wid.data"/>
-                </div>
-                <div class="chart-wrapper" style="position: relative; height: 25vh;" v-else-if="wid.chart == 'line' && wid.data">
-                  <line-chart :chartData="wid.data"/>
-                </div>
-                <div class="chart-wrapper" v-else-if="wid.chart == 'pie'">
-                  <pie-chart :chartData="wid.data"/>
-                </div>
-                <div class="chart-wrapper" v-else-if="wid.chart == 'radar'">
-                  <radar-chart :chartData="wid.data"/>
-                </div>
-                <div class="chart-wrapper" v-else-if="wid.chart == 'doughnut'">
-                  <doughnut-chart :chartData="wid.data"/>
-                </div>
-                <div class="chart-wrapper" v-if="wid.data == null">
-                  <line-chart-report />
-                </div>
-              </b-card>
-            <!-- </div> -->
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- <grid-layout :layout="widgets" :col-num="12" :row-height="30" :is-draggable="true" :is-resizable="true" :vertical-compact="true" :margin="[10, 10]" :use-css-transforms="true" >
-
-        <grid-item v-for="wid in widgets"
-                   :x="wid.x"
-                   :y="wid.y"
-                   :w="wid.w"
-                   :h="wid.h"
-                   :i="wid.i" :key="wid.i" @resize="resizeEvent" @move="moveEvent" @resized="resizedEvent" @moved="movedEvent" >
+        <div class="container" v-dragula="widgets" drake="first"> 
+          <div v-for="wid in widgets" style="resize: both; overflow: auto;">
             <b-card show-header>
               <div slot="header">
                 <div class="float-right">
@@ -91,8 +44,61 @@
                 <line-chart-report />
               </div>
             </b-card>
+          </div>
+        </div>
+      </div> -->
+    </div>
+
+    <grid-layout :layout="widgets" :col-num="12" :row-height="30" :is-draggable="true" :is-resizable="true" :vertical-compact="true" :margin="[10, 10]" :use-css-transforms="true" >
+
+        <grid-item v-for="wid in widgets"
+                   :x="wid.x"
+                   :y="wid.y"
+                   :w="wid.w"
+                   :h="wid.h"
+                   :i="wid.i" :key="wid.i" @resize="resizeEvent" @move="moveEvent" @resized="resizedEvent" @moved="movedEvent" >
+            <b-card show-header>
+              <div slot="header">
+                <div class="float-right">
+                  <button type="button" i="wid.i" class="btn btn-link btn-sm" @click="(ev) => { onRemoveWidgetButtonClick(ev, wid) }">
+                    <i class="icon-close icons font-2xl d-block" />
+                    <!-- <icon name="remove" scale="2" color="red"></icon> -->
+                  </button>
+                </div>
+                <div class="pb-0 float-left" v-on:click.capture="(ev) => { showDetails(ev, wid.data) }">
+                  <h5>{{wid.title}}</h5>
+                </div>
+              </div>
+              <div :id="'widget'+wid.i" v-if="wid.chart == 'bar'">
+                <!-- :style="{height: wid.h + 'px', width: wid.w + 'px'}" -->
+                <bar-chart :chartData="wid.data"/>
+              </div>
+              <div :id="'widget'+wid.i" v-else-if="wid.chart == 'polar'">
+                 <!-- :style="{height:wid.h+'px', width:wid.w+'px'}" -->
+                <polar-area-chart :chartData="wid.data"/>
+              </div>
+              <!-- class="chart-wrapper" -->
+              <div :id="'widget'+wid.i" v-else-if="wid.chart == 'line' && wid.data" :style="{'max-height': wid.h-50, 'max-width': wid.w}">
+                <line-chart :chartData="wid.data"/>
+              </div>
+              <div :id="'widget'+wid.i" v-else-if="wid.chart == 'pie'">
+                 <!-- :style="{height:wid.h+'px', width:wid.w+'px'}" -->
+                <pie-chart :chartData="wid.data"/>
+              </div>
+              <div :id="'widget'+wid.i" v-else-if="wid.chart == 'radar'">
+                 <!-- :style="{height:wid.h+'px', width:wid.w+'px'}" -->
+                <radar-chart :chartData="wid.data"/>
+              </div>
+              <div :id="'widget'+wid.i" v-else-if="wid.chart == 'doughnut'">
+                 <!-- :style="{height:wid.h+'px', width:wid.w+'px'}" -->
+                <doughnut-chart :chartData="wid.data"/>
+              </div>
+              <div :id="'widget'+wid.i" v-if="wid.data == null">
+                <line-chart-report />
+              </div>
+            </b-card>
         </grid-item>
-    </grid-layout> -->
+    </grid-layout>
 
     <!-- single data source widget -->
     <b-modal title="Add Widget" class="modal-info" v-model="singleDataModal" @ok="onAddChartButtonClick">
@@ -249,45 +255,11 @@ export default {
       widgetDetailModal: false,
       // for multiple data sources in charts
       tableDataSource: [],
-    }
-  },
-  ready: function() {
-    var vm = this;
-  },
-  mounted () {
-    this.fetchData();
-    this.fetchDevicesData();
-    // for default values
-    this.populateMultipleDataSourceFields();
-  },
-  methods: {
-    moveEvent: function(i, newX, newY){
-        console.log("MOVE i=" + i + ", X=" + newX + ", Y=" + newY);
-    },
-    resizeEvent: function(i, newH, newW){
-        console.log("RESIZE i=" + i + ", H=" + newH + ", W=" + newW);
-    },
-    movedEvent: function(i, newX, newY){
-        console.log("MOVED i=" + i + ", X=" + newX + ", Y=" + newY);
-    },
-    formatDate (d) {
-      return moment(new Date(d)).format('MMMM Do YYYY');
-    },
-    /**
-     *
-     * @param i the item id/index
-     * @param newH new height in grid rows
-     * @param newW new width in grid columns
-     * @param newHPx new height in pixels
-     * @param newWPx new width in pixels
-     *
-     */
-    resizedEvent: function(i, newH, newW, newHPx, newWPx){
-        console.log("RESIZED i=" + i + ", H=" + newH + ", W=" + newW + ", H(px)=" + newHPx + ", W(px)=" + newWPx);
-    },
-    fetchData () {
-      let userId = this.$raptor.Auth().getUser().uuid
-      let json = { dashboard: [
+      // user id for saving dashboard
+      userId: null,
+      // default dashboard
+      dashboard: null,
+      defaultDashboard: [
           {
             x:0,
             y:0,
@@ -296,70 +268,73 @@ export default {
             i:0,
             title:"Report",
             chart: "line"
-          },
-          {
-            x:6,
-            y:0,
-            w:6,
-            h:11,
-            i:1,
-            title:"Line",
-            chart: "line",
-            data:{
-              device: "0a3614c5-9762-4751-ad08-c77354a86e57",
-              stream: "obd",
-              channel: "speed"
-            }
-          },
-          {
-            x:0,
-            y:11,
-            w:6,
-            h:11,
-            i:2,
-            title:"Line",
-            chart: "Line",
-            data:{
-              device: "0a3614c5-9762-4751-ad08-c77354a86e57",
-              stream: "obd",
-              channel: "speed"
-            }
-          },
-          {
-            x:6,
-            y:11,
-            w:4,
-            h:11,
-            i:3,
-            title:"Bar",
-            chart: "bar",
-            data:{
-              device: "ab9bed83-629a-4d64-91e9-c5c816f353d5",
-              stream: "wearable",
-              channel: "hr"
-            }
-          },
-          ]}
-        // { users: [
-        // {
-        //   user: "ac8b3312-0648-432b-8d9d-faacb7b2875d",
-        // },
-        // ]}
-        let context = this
-        let pathDashboard = '/users/'+userId+'/dashboard'
-        this.readDataFirebase('/users/', function(snapshot) {
-          if(snapshot.hasChild(userId)) {
-            console.log(snapshot.val())
-            if(snapshot.child(userId).hasChild('dashboard')) {
-              let arr = snapshot.child(userId).child('dashboard').val()
-              context.loadDefaultCharts(arr)
-            }
-          } else {
-            context.$dbFirebase.ref('users/' + userId).set(json);
-            context.loadDefaultCharts(json.dashboard)
-          }
-        })
+          }],
+    }
+  },
+  ready: function() {
+    var vm = this;
+  },
+  mounted () {
+    this.userId = this.$raptor.Auth().getUser().uuid
+    this.getUserDashboardPreferences('dashboard',this.userId);
+    // this.fetchData();
+    this.fetchDevicesData();
+    // for default values
+    this.populateMultipleDataSourceFields();
+  },
+  methods: {
+    // grid stack events
+    moveEvent: function(i, newX, newY){
+        console.log("MOVE i=" + i + ", X=" + newX + ", Y=" + newY);
     },
+    resizeEvent: function(i, newH, newW, newHPx, newWPx){
+        console.log("RESIZE i=" + i + ", H=" + newH + ", W=" + newW);
+        // $.('#i').width(100).height(200);
+    },
+    movedEvent: function(i, newX, newY){
+        console.log("MOVED i=" + i + ", X=" + newX + ", Y=" + newY);
+        console.log(this.widgets)
+        for (var j = 0; j < this.widgets.length; j++) {
+          if(this.widgets[j].i == i) {
+            this.widgets[j].x = newX
+            this.widgets[j].y = newY
+          }
+        }
+        this.setUserDashboardPreferences('dashboard', this.widgets, this.userId);
+    },
+    resizedEvent: function(i, newH, newW, newHPx, newWPx){
+        console.log("RESIZED i=" + i + ", H=" + newH + ", W=" + newW + ", H(px)=" + newHPx + ", W(px)=" + newWPx);
+        console.log(this.widgets)
+        for (var j = 0; j < this.widgets.length; j++) {
+          if(this.widgets[j].i == i) {
+            this.widgets[j].h = newH
+            this.widgets[j].w = newW
+          }
+        }
+        this.setUserDashboardPreferences('dashboard', this.widgets, this.userId);
+    },
+    // page functionality
+    formatDate (d) {
+      return moment(new Date(d)).format('MMMM Do YYYY');
+    },
+    /*fetchData () {
+      let userId = this.$raptor.Auth().getUser().uuid
+      let context = this
+      let pathDashboard = '/users/'+userId+'/dashboard'
+      this.readDataFirebase('/users/', function(snapshot) {
+        if(snapshot.hasChild(userId)) {
+          console.log(snapshot.val())
+          if(snapshot.child(userId).hasChild('dashboard')) {
+            let arr = snapshot.child(userId).child('dashboard').val()
+            context.loadDefaultCharts(arr)
+            // context.setUserDashboardPreferences('dashboard', arr, userId);
+          }
+        } else {
+          context.$dbFirebase.ref('users/' + userId).set({dashboard: defaultDashboard});
+          context.loadDefaultCharts(defaultDashboard)
+        }
+      })
+    },*/
     populateMultipleDataSourceFields() {
       let obj = {
         number: 0,
@@ -400,7 +375,7 @@ export default {
       console.log(widgetsData)
       this.$raptor.Inventory().read(widgetsData.device)
         .then((device) => {
-          console.log(device)
+          // console.log(device)
           this.widgetDetails = null
           let widgetDetails = null;
           if(device.id == widgetsData.device) {
@@ -448,7 +423,9 @@ export default {
       this.selectedChannel = null
       this.selectedChart = null
       this.selectedTitle = null
-      this.writeToFirebase(widget)
+      this.widgets.push(widget)
+      this.setUserDashboardPreferences('dashboard', this.widgets, this.userId);
+      // this.writeToFirebase(widget)
     },
     onChangeDevice (evt, source) {
       let val = evt.target.value;
@@ -523,7 +500,9 @@ export default {
         chart: 'line'
       }
       this.widgets.push(widget)
-      this.writeToFirebase(widget)
+      this.widgets.push(widget)
+      this.setUserDashboardPreferences('dashboard', this.widgets, this.userId);
+      // this.writeToFirebase(widget)
     },
     // button click for modals
     onAddChartButtonClick (evt) {
@@ -543,17 +522,16 @@ export default {
     onRemoveWidgetButtonClick (widget) {
       let index = this.widgets.indexOf(widget)
       this.widgets.splice(index, 1)
-      let userId = this.$raptor.Auth().getUser().uuid
-      var context = this
-      this.readDataFirebase('/users/'+userId, function(snapshot) {
-        if(snapshot.hasChild('dashboard')) {
-          let arr = snapshot.child('dashboard').val()
-          let index = arr.indexOf(widget)
-          arr.splice(index, 1)
-          console.log(arr)
-          context.$dbFirebase.ref('users/' + userId).set({dashboard: arr});
-        }
-      })
+      this.setUserDashboardPreferences('dashboard', this.widgets, this.userId);
+      // this.readDataFirebase('/users/'+userId, function(snapshot) {
+      //   if(snapshot.hasChild('dashboard')) {
+      //     let arr = snapshot.child('dashboard').val()
+      //     let index = arr.indexOf(widget)
+      //     arr.splice(index, 1)
+      //     console.log(arr)
+      //     context.$dbFirebase.ref('users/' + userId).set({dashboard: arr});
+      //   }
+      // })
     },
     onCreateChannelButton () {
       if(this.tableDataSource.length < 5) {
@@ -592,10 +570,12 @@ export default {
       this.selectedTitle = null
       this.tableDataSource = []
       this.populateMultipleDataSourceFields();
-      this.writeToFirebase(widget)
+      this.widgets.push(widget)
+      this.setUserDashboardPreferences('dashboard', this.widgets, this.userId);
+      // this.writeToFirebase(widget)
     },
     // firebase functions
-    readDataFirebase(path, fun) {
+    /*readDataFirebase(path, fun) {
       return this.$dbFirebase.ref(path).once('value').then(fun);
     },
     writeToFirebase(widget) {
@@ -612,6 +592,43 @@ export default {
           context.$dbFirebase.ref(pathDashboard).set(widgets);
         }
       })
+    },*/
+    // user profile
+    getUserDashboardPreferences(key, userId) {
+      this.$raptor.Profile().get(key, userId)
+      .then((dashboard) => {
+        // console.log(dashboard);
+        if(dashboard.length > 0) {
+          this.loadDefaultCharts(dashboard)
+        } else {
+          this.setUserDashboardPreferences('dashboard', this.defaultDashboard, this.userId);
+          this.loadDefaultCharts(this.defaultDashboard)
+        }
+      })
+      .catch(function(e) {
+        // console.log(e)
+        // console.log(JSON.stringify(e))
+        if(e.toString().indexOf("Unauthorized") !== -1) {
+          context.$raptor.Auth().logout();
+          context.$router.push("/pages/login");
+        }
+      });
+    },
+    setUserDashboardPreferences(key, value, userId) {
+      console.log(value)
+      this.$raptor.Profile().set(key, value, userId)
+      .then((dashboard) => {
+        this.$log.debug('Loaded %s device list', list.length);
+        // console.log(dashboard);
+      })
+      .catch(function(e) {
+        // console.log(e)
+        // console.log(JSON.stringify(e))
+        if(e.toString().indexOf("Unauthorized") !== -1) {
+          context.$raptor.Auth().logout();
+          context.$router.push("/pages/login");
+        }
+      });
     }
   }
 }

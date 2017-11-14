@@ -89,10 +89,10 @@ export default PolarArea.extend({
       // subscription / unsunscription of the data for the selected charts
       subscribeStream (stream) {
         var context = this;
-        var ts = Math.round((new Date()).getTime() / 1000);
-        this.$raptor.Stream().list(stream, 0, ts)
+        // var ts = Math.round((new Date()).getTime() / 1000);
+        this.$raptor.Stream().list(stream, 0, 100, 'timestamp,desc')//list(stream, 0, ts)
         .then((streams) => {
-          console.log(streams)
+          // console.log(streams)
           // context.selectedStreamData = streams
           // context.extractChartDataDeviceStreamOneChannel(context.selectedStreamData,context.channel);
           context.selectedStreamData = streams
@@ -191,18 +191,18 @@ export default PolarArea.extend({
         }
       },
       subscribeDatasetStreams (stream) {
-        console.log(stream)
-        var ts = Math.round((new Date()).getTime() / 1000);
-        this.$raptor.Stream().list(stream, 0, ts)
+        // console.log(stream)
+        // var ts = Math.round((new Date()).getTime() / 1000);
+        this.$raptor.Stream().list(stream, 0, 100, 'timestamp,desc')//list(stream, 0, ts)
         .then((streams) => {
-          console.log(streams)
+          // console.log(streams)
           if(streams.length > 0) {
             for (var j = 0; j < this.datasets.length; j++) {
               console.log(streams[0].json.deviceId + " " + this.datasets[j].device.id)
               if(this.datasets[j].device.id == streams[0].json.deviceId) {
                 this.datasets[j].selectedStreamData = streams
                 let obj = this.extractChartDataDeviceStreamOneChannel(streams,this.datasets[j].channel);
-                console.log(obj)
+                // console.log(obj)
                 this.datasets[j].dataForChart = obj.data
                 this.datasets[j].streamChartLabels = obj.labels
                 this.streamChartLabels = this.streamChartLabels.concat(obj.labels)

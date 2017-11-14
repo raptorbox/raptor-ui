@@ -97,8 +97,8 @@ export default Bar.extend({
       // subscription / unsunscription of the data for the selected charts
       subscribeStream (stream) {
         var context = this;
-        var ts = Math.round((new Date()).getTime() / 1000);
-        this.$raptor.Stream().list(stream, 0, ts)
+        // var ts = Math.round((new Date()).getTime() / 1000);
+        this.$raptor.Stream().list(stream, 0, 100, 'timestamp,desc')//list(stream, 0, ts)
         .then((streams) => {
           // console.log(streams)
           // context.selectedStreamData = streams
@@ -186,8 +186,8 @@ export default Bar.extend({
       },
       subscribeDatasetStreams (stream) {
         console.log(stream)
-        var ts = Math.round((new Date()).getTime() / 1000);
-        this.$raptor.Stream().list(stream, 0, ts)
+        // var ts = Math.round((new Date()).getTime() / 1000);
+        this.$raptor.Stream().list(stream, 0, 100, 'timestamp,desc')//list(stream, 0, ts)
         .then((streams) => {
           console.log(streams)
           if(streams.length > 0) {

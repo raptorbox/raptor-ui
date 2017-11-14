@@ -86,7 +86,7 @@ export default Line.extend({
         let lbls = []
         for (var i = 0; i < records.length; i++) {
           let dev = records[i]
-          let sDate = this.formatDate(dev.createdAt * 1000)
+          let sDate = this.formatDate(dev.json.createdAt * 1000)
           lbls.push(sDate)
           if(!arr[dev.json.name]) {
             let name = dev.json.name
@@ -109,7 +109,7 @@ export default Line.extend({
           let countArray = {}
           for (var j = 0; j < arr[keys[i]].length; j++) {
             let dev = arr[keys[i]][j]
-            let sDate = this.formatDate(dev.createdAt * 1000)
+            let sDate = this.formatDate(dev.json.createdAt * 1000)
             countArray[sDate] = countArray[sDate] ? countArray[sDate] + 1 : 1;
           }
           dataset.data = Object.values(countArray)
@@ -130,8 +130,6 @@ export default Line.extend({
             // this.changeData();
           })
         .catch(function(e) {
-          console.log(e)
-          console.log(JSON.stringify(e))
           if(e.toString().indexOf("Unauthorized") !== -1) {
             context.$raptor.Auth().logout();
             context.$router.push("/pages/login");
