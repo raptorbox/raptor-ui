@@ -584,7 +584,7 @@ export default {
         console.log(msg)
         context.selectedStreamData.push(msg.record);
         console.log(context.selectedStreamData)
-        if(context.selectedStreamData.length > 101) {
+        if(context.selectedStreamData.length > 100) {
           context.selectedStreamData.shift()
         }
         context.extractChartDataDeviceStreamOneChannel(context.selectedStreamData,'minutes',context.selectedChannel);
