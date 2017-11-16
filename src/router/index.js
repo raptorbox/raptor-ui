@@ -20,6 +20,7 @@ import DeviceForm from '@/views/device/device_form'
 import DeviceSearch from '@/views/device/search'
 import DeviceDataChart from '@/views/components/realtimechart/realtimechart'
 
+import ChartDetail from '@/views/components/chartDetailPage'
 // Streams
 import StreamList from '@/views/device/streams/stream_list'
 
@@ -93,6 +94,15 @@ const router = new Router({
           path: 'charts',
           name: 'Charts',
           component: Charts
+        },
+        {
+          path: 'chartDetail',
+          name: 'ChartDetail',
+          meta: {
+            label: 'Chart Detail View'
+          },
+          component: ChartDetail,
+          props: true
         },
         // {
         //   path: 'inventory/search',

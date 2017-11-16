@@ -97,10 +97,10 @@
 </template>
 
 <style>
-.slider {
-  /* overwrite slider styles */
+/*.slider {
+   overwrite slider styles 
   width: 200px;
-}
+}*/
 </style>
 
 <script>
@@ -234,14 +234,14 @@ export default {
   },
   mounted () {
     if (this.$route.params.deviceId) {
-      this.$log.debug('Load %s ', this.$route.params.deviceId)
+      // this.$log.debug('Load %s ', this.$route.params.deviceId)
       this.load(this.$route.params.deviceId)
     }
     this.$nextTick(() => this.$refs.slider.refresh())
-    console.log(this.$route.path.indexOf('inventory') != -1 && this.$route.path.indexOf('chart') != -1)
+    // console.log(this.$route.path.indexOf('inventory') != -1 && this.$route.path.indexOf('chart') != -1)
     if(this.$route.path.indexOf('inventory') != -1 && this.$route.path.indexOf('chart') != -1) {
       this.inventorychart = true
-      console.log("not here")
+      // console.log("not here")
       // this.data.id = null
     } else {
       this.fetchData()
@@ -326,7 +326,7 @@ export default {
           if(streams.length > 0) {
             let stream = this.selectedDev.json.streams[this.selectedStream]
             // console.log(streams[0].channels)
-            console.log(streams)
+            // console.log(streams)
             if(stream.dynamic) {
               let chs = streams[0].channels
               let keys = Object.keys(chs);
@@ -346,8 +346,8 @@ export default {
           }
         })
         .catch(function(e) {
-          console.log(e)
-          console.log(JSON.stringify(e))
+          // console.log(e)
+          // console.log(JSON.stringify(e))
           if(e.toString().indexOf("Unauthorized") !== -1) {
             context.$raptor.Auth().logout();
             context.$router.push("/pages/login");
@@ -391,15 +391,15 @@ export default {
       return this.$raptor.Tree().list().then((list) => {
         const res = list.filter((n) => n.name === name)
         if (res.length === 0) {
-          console.log("Creating new `%s` node", name)
+          // console.log("Creating new `%s` node", name)
           return this.$raptor.Tree().create({name})
         }
-        console.log("Found `%s` node", name)
+        // console.log("Found `%s` node", name)
         return Promise.resolve(res[0])
       })
     },
     addDeviceNode (parentNode, device) {
-      console.log("Adding to group %s device %s (id:%s)", parentNode.name, device.name, device.id)
+      // console.log("Adding to group %s device %s (id:%s)", parentNode.name, device.name, device.id)
       return this.$raptor.Tree().add(parentNode, new Raptor.models.Tree({
         userId: parentNode.userId,
         name: device.name,
@@ -445,9 +445,9 @@ export default {
         dateArray.reverse()
         let slider = this.$refs['slider']
         this.slider.data = dateArray
-        console.log(this.slider.data)
+        // console.log(this.slider.data)
         slider.setIndex([0,1])
-        console.log(this.slider.data)
+        // console.log(this.slider.data)
         this.searchData(this.selectedDev.json.streams[this.selectedStream], this.slider.data[1], this.slider.data[0])
         // this.extractChartDataDeviceStreamOneChannel(this.selectedStreamData, val, this.selectedChannel);
         // this.changeStreamData();
@@ -489,10 +489,10 @@ export default {
       let pageNumber = 1
       while(i < pageNumber) {
         let query = {timestamp: {between:[startDate, endDate]}, page:pageNumber-1, size:500,sort:"createdAt,DESC"}
-        console.log(query)
+        // console.log(query)
         this.$raptor.Stream().search(stream, query)
         .then((stream) => {
-          console.log(stream.length)
+          // console.log(stream.length)
           this.selectedStreamData = stream;
           let temp = this.selectedChannel
           // console.log(temp)
@@ -530,15 +530,16 @@ export default {
       let pageNumber = 0
       this.selectedStreamData = []
         let query = {timestamp: {between:[startDate, endDate]}, page:pageNumber, size:500,sort:"createdAt,DESC"}
-        console.log(query)
-        console.log(stream)
+        // console.log(query)
+        // console.log(stream)
         this.loopOverStreamPagination (stream, query, pageNumber, startDate, endDate)
     },
     searchDataApi(stream, query, callback) {
       console.log(query)
+      console.log(stream)
       this.$raptor.Stream().search(stream, query)
       .then((stream) => {
-        console.log(stream.length)
+        // console.log(stream.length)
         callback(stream)
       })
       .catch((e) => {
@@ -583,7 +584,7 @@ export default {
       this.$raptor.Stream().subscribe(stream, function(msg) {
         console.log(msg)
         context.selectedStreamData.push(msg.record);
-        console.log(context.selectedStreamData)
+        // console.log(context.selectedStreamData)
         if(context.selectedStreamData.length > 100) {
           context.selectedStreamData.shift()
         }
@@ -595,8 +596,8 @@ export default {
         // if(!(msg.type === 'stream' && msg.op === 'data' && msg.streamId === this.$raptor.stream)) {
         //   return
         // }
-        console.log(context.selectedStreamData)
-        console.log(context.selectedStreamData.length)
+        // console.log(context.selectedStreamData)
+        // console.log(context.selectedStreamData.length)
         context.loading = false;
       });
     },
@@ -735,7 +736,7 @@ export default {
           this.selectedDeviceDetails = '<ul>';
           this.selectedDeviceDetails += '<li><strong>Name:</strong>     ' + details.name + '</li>';
           this.selectedDeviceDetails += '<li><strong>id:</strong>       ' + details.id + '</li>';
-          this.selectedDeviceDetails += '<li><strong>Created:</strong>  ' + this.formatDate(details.createdAt*1000) + '</li>';
+          this.selectedDeviceDetails += '<li><strong>Created:</strong>  ' + this.formatDate(details.json.createdAt*1000) + '</li>';
           this.selectedDeviceDetails += '</ul>';
         }
       }
