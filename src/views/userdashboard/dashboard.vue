@@ -59,7 +59,7 @@
                    :i="wid.i" :key="wid.i" @resize="resizeEvent" @move="moveEvent" @resized="resizedEvent" @moved="movedEvent" 
                    drag-allow-from=".vue-draggable-handle"
                    drag-ignore-from=".no-drag" class="bg-white">
-            <div class="vue-draggable-handle container">
+            <div class="vue-draggable-handle col-md-12">
               <div class="row">
                 <div class="col-md-12 bg-light" style="padding:2px; padding-top:4px">
                 <div class="float-right">
@@ -443,8 +443,8 @@ export default {
         // console.log(e)
         // console.log(JSON.stringify(e))
         if(e.toString().indexOf("Unauthorized") !== -1) {
-          context.$raptor.Auth().logout();
-          context.$router.push("/pages/login");
+          this.$raptor.Auth().logout();
+          this.$router.push("/pages/login");
         }
       });
     },
@@ -508,7 +508,6 @@ export default {
       this.selectedChannel = null
       this.selectedChart = null
       this.selectedTitle = null
-      this.widgets.push(widget)
       this.setUserDashboardPreferences('dashboard', this.widgets, this.userId);
       // this.writeToFirebase(widget)
     },

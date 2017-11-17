@@ -32,6 +32,8 @@ export default Line.extend({
         selectedDisplayParam: null,
         fromDate: null,
         toDate: null,
+        // records devices
+        devices: [],
       }
     },
     mounted () {
@@ -52,6 +54,7 @@ export default Line.extend({
     },
     watch: {
       searchData: function(data) {
+        this._chart.destroy()
         console.log(data)
         this.selectedDisplayParam = this.dataPassed.display
         this.fromDate = this.dataPassed.fromDate
@@ -126,6 +129,7 @@ export default Line.extend({
         this.$raptor.Stream().list(stream, 0, 100, 'timestamp,desc')//list(stream, 0, ts)
         .then((streams) => {
           // console.log(streams)
+          streams.reverse()
           context.selectedStreamData = streams
           this.dataForChart = [];
           this.streamChartLabels = []
@@ -188,18 +192,21 @@ export default Line.extend({
           backgroundColor: '#f87979',
           data: dataForChart
         }]
+        console.log("======================data chart")
         this.renderLineChart(dataset, labels);
       },
       // multiple sources
       loadDatasets() {
+        this.devices = []
         for (var i = 0; i < this.chartData.length; i++) {
           this.$raptor.Inventory().read(this.chartData[i].device)
           .then((device) => {
             // console.log(device)
             for (var j = 0; j < this.chartData.length; j++) {
-              // console.log(this.chartData[j])
-              let str = device.getStream(this.chartData[j].stream)
-              if(this.chartData[j].device == device.id) {
+              // console.log(this.chartData[j].device)
+              // console.log(device.id)
+              if(this.chartData[j].device.id == device.id) {
+                let str = device.getStream(this.chartData[j].stream)
                 let dev = {
                   device: device,
                   stream: str,
@@ -207,12 +214,19 @@ export default Line.extend({
                 }
                 if(!this.checkDatasetExist(dev)) {
                   this.datasets.push(dev)
-                  this.subscribeDatasetStreams(this.datasets[j].stream);
+                  this.devices.push(device)
+                  if(this.datasets[j].stream) {
+                    this.subscribeDatasetStreams(this.datasets[j].stream);
+                  }
                 }
               }
             }
+            console.log(this.devices)
+            if(this.devices.length == this.chartData.length) {
+              this.$emit('devicedata', this.devices);
+            }
             // this.getStream("obd");
-            console.log(this.datasets)
+            // console.log(this.datasets)
           })
           .catch((e) => {
             this.$log.debug('Failed to load device')
@@ -242,6 +256,7 @@ export default Line.extend({
             for (var j = 0; j < this.datasets.length; j++) {
               // console.log(streams[0].json.deviceId + " " + this.datasets[j].device.id)
               if(this.datasets[j].device.id == streams[0].json.deviceId) {
+                streams.reverse()
                 this.datasets[j].selectedStreamData = streams
                 let obj = this.extractChartDataDeviceStream(streams,this.datasets[j].channel, this.selectedDisplayParam);
                 // console.log(obj)
@@ -260,6 +275,8 @@ export default Line.extend({
         .then(() => {
           let dsets = []
           console.log(this.datasets)
+          // ab9bed83-629a-4d64-91e9-c5c816f353d5
+          // 0a3614c5-9762-4751-ad08-c77354a86e57
           for (var i = 0; i < this.datasets.length; i++) {
             dsets.push({
               label: this.datasets[i].channel,

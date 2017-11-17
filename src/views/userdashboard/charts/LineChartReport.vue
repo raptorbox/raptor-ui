@@ -2,6 +2,8 @@
 import { Line } from 'vue-chartjs'
 import moment from 'moment'
 
+var currentDate = moment();
+
 var colors = [
               '#41B883',
               '#E46651',
@@ -10,7 +12,7 @@ var colors = [
             ]
 
 export default Line.extend({
-  props: ['height', 'width'],
+  props: ['height', 'width', 'searchData', 'dataPassed'],
     data() {
       return {
         dictUser: {},
@@ -27,6 +29,21 @@ export default Line.extend({
         deviceDataTime: null,
         datasets: [],
         chartDatasets: [],
+        // for slider
+        selectedDisplayParam: null,
+        fromDate: null,
+        toDate: null,
+      }
+    },
+    watch: {
+      searchData: function(data) {
+        this._chart.destroy()
+        console.log(data)
+        this.selectedDisplayParam = this.dataPassed.display
+        this.fromDate = this.dataPassed.fromDate
+        this.toDate = this.dataPassed.toDate
+        console.log(this.fromDate + "    " + this.toDate)
+        this.searchDataForDates(this.fromDate, this.toDate)
       }
     },
     mounted () {
@@ -116,6 +133,7 @@ export default Line.extend({
           this.chartDatasets.push(dataset)
         }
         // console.log(this.streamChartLabels)
+        this._chart.destroy();
         this.renderLineChart();
       },
       load() {
@@ -135,6 +153,69 @@ export default Line.extend({
             context.$router.push("/pages/login");
           }
         });
+      },
+
+      // search data based on timestamp for device
+      searchDataForDates (startDate, endDate) {
+        if(startDate == undefined || startDate == null ) {
+          startDate = 0
+        } else {
+          // startDate = startDate+':00'
+          startDate = moment(startDate).format('x');
+        }
+        if(endDate == undefined || endDate == null) {
+          endDate = currentDate.format('x')
+        } else {
+          // endDate = endDate+':00'
+          endDate = moment(endDate).format('x');
+        }
+        // "timestamp":{"between":[1510152092358,1510152094358]}
+        let pageNumber = 0
+        this.selectedStreamData = []
+          let query = {timestamp: {between:[startDate, endDate]}, page:pageNumber, size:500,sort:"createdAt,DESC"}
+          // console.log(query)
+          // console.log(stream)
+          this.loopOverStreamPagination (this.stream, query, pageNumber, startDate, endDate)
+      },
+      searchDataApi(stream, query, callback) {
+        console.log(query)
+        console.log(stream)
+        this.$raptor.Stream().search(stream, query)
+        .then((stream) => {
+          // console.log(stream.length)
+          callback(stream)
+        })
+        .catch((e) => {
+          this.$log.debug('Failed to load device')
+        })
+      },
+      loopOverStreamPagination (stream, query, pageNumber, startDate, endDate) {
+        let context = this
+        this.searchDataApi(stream, query, function (streams) {
+          // console.log(streams[0])
+          // console.log(streams[0].timestamp * 1000)
+          // console.log(endDate)
+          // console.log((streams[0].timestamp * 1000) > endDate)
+          if(streams.length > 0 && (streams[0].timestamp * 1000) < endDate) {
+            for (var i = 0; i < streams.length; i++) {
+              context.selectedStreamData.push(streams[i])
+            }
+            pageNumber = pageNumber + 1
+            let query = {timestamp: {between:[startDate, endDate]}, page:pageNumber, size:500,sort:"createdAt,DESC"}
+            context.loopOverStreamPagination(stream, query, pageNumber, startDate, endDate)
+          } else {
+            for (var i = 0; i < streams.length; i++) {
+              context.selectedStreamData.push(streams[i])
+            }
+            console.log(context.selectedStreamData)
+            context.dataForChart = [];
+            context.streamChartLabels = []
+            let obj = context.extractChartDataDeviceStream(context.selectedStreamData,context.channel, context.selectedDisplayParam);
+            context.dataForChart = obj.data
+            context.streamChartLabels = obj.labels
+            context.populateChart(context.streamChartLabels, context.channel, context.dataForChart)
+          }
+        })
       },
     },
 })

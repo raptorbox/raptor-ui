@@ -1,13 +1,13 @@
 <template>
   <div class="animated fadeIn">
     <div class="row">
-      <div class="container">
+      <div class="col-md-12">
         <b-card class="bg-danger" :no-block="true" style="min-height:160px; max-height:160px; height:160px">
           <div class="card-body pb-0">
             <h4 class="mb-0">Device Details</h4>
           </div>
           <div class="card-body pb-0">
-            <span v-html="selectedDeviceDetails"></span>
+            <div class="row" v-html="selectedDeviceDetails"></div>
           </div>
         </b-card>
       </div>
@@ -26,31 +26,31 @@
           </b-button-toolbar>
         </div><!--/.col-->
       </div><!--/.row-->
-      <div class="chart-wrapper">
+      <div>
         <div v-if="widgetData.chart == 'bar'">
-          <bar-chart :chartData="widgetData.data"/>
+          <bar-chart :chartData="widgetData.data" @devicedata="setDeviceData" :dataPassed="dataToPass" :searchData="searchDataObj"/>
         </div>
         <div v-else-if="widgetData.chart == 'polar'">
-          <polar-area-chart :chartData="widgetData.data"/>
+          <polar-area-chart :chartData="widgetData.data" @devicedata="setDeviceData" :dataPassed="dataToPass" :searchData="searchDataObj"/>
         </div>
         <!-- class="chart-wrapper" -->
-        <div v-else-if="widgetData.chart == 'line' && widgetData.data">
+        <div class="chart-wrapper" v-else-if="widgetData.chart == 'line' && widgetData.data">
           <line-chart :chartData="widgetData.data" @devicedata="setDeviceData" :dataPassed="dataToPass" :searchData="searchDataObj"/>
         </div>
-        <div class="chart-wrapper" v-else-if="widgetData.chart == 'pie'">
-          <pie-chart :chartData="widgetData.data"/>
+        <div v-else-if="widgetData.chart == 'pie'">
+          <pie-chart :chartData="widgetData.data" @devicedata="setDeviceData" :dataPassed="dataToPass" :searchData="searchDataObj"/>
         </div>
         <div v-else-if="widgetData.chart == 'radar'">
-          <radar-chart :chartData="widgetData.data"/>
+          <radar-chart :chartData="widgetData.data" @devicedata="setDeviceData" :dataPassed="dataToPass" :searchData="searchDataObj"/>
         </div>
         <div v-else-if="widgetData.chart == 'doughnut'">
-          <doughnut-chart :chartData="widgetData.data"/>
+          <doughnut-chart :chartData="widgetData.data" @devicedata="setDeviceData" :dataPassed="dataToPass" :searchData="searchDataObj"/>
         </div>
-        <div v-if="widgetData.data == null">
+        <div v-if="widgetData.data == null" @devicedata="setDeviceData" :dataPassed="dataToPass" :searchData="searchDataObj">
           <line-chart-report />
         </div>
       </div>
-      <div class="container">
+      <div class="col-md-12">
         <vue-slider ref="slider" v-bind="slider" v-model="slider.value" @callback="sliderValueChanged" @drag-start="sliderDragStart" @drag-end="sliderDragEnd"></vue-slider>
       </div>
     </b-card>
@@ -190,12 +190,11 @@ export default {
         this.selectedDisplayParam = 'hour';
       }
       this.selectedDisplayParam = val;
-      if(this.selectedStreamData && this.selectedChannel) {
-        let dateArray = this.getDateList(this.selectedDev.json.createdAt*1000,moment().unix()*1000, this.selectedDisplayParam)
+      if(this.widgetData.data.stream && this.widgetData.data.channel && this.device) {
+        let dateArray = this.getDateList(this.device.json.createdAt*1000,moment().unix()*1000, this.selectedDisplayParam)
         dateArray.reverse()
         let slider = this.$refs['slider']
         this.slider.data = dateArray
-        // console.log(this.slider.data)
         slider.setIndex([0,1])
         // console.log(this.slider.data)
         this.dataToPass = {display: this.selectedDisplayParam, fromDate: this.slider.value[1], toDate: this.slider.value[0]}
@@ -263,21 +262,38 @@ export default {
       this.device = data
       console.log("============================data is here=======================")
       console.log(this.device)
-      let dateArray = this.getDateList(this.device.json.createdAt*1000,moment().unix()*1000, 'hour')
-      dateArray.reverse()
-      this.slider.data = dateArray
-      let slider = this.$refs['slider']
-      slider.setIndex([0,1])
-      this.showDeviceDetails()
+      if(this.device.constructor === Array && this.device.length > 0) {
+        this.selectedDeviceDetails = this.showMultipleDevicesDetails(this.device)
+        this.chartLoaded = true
+      } else {
+        this.selectedDeviceDetails = this.showDeviceDetails(this.device)
+        let dateArray = this.getDateList(this.device.json.createdAt*1000,moment().unix()*1000, 'hour')
+        dateArray.reverse()
+        this.slider.data = dateArray
+        let slider = this.$refs['slider']
+        slider.setIndex([0,1])
+        this.chartLoaded = true
+      }
     },
     // for device details
-    showDeviceDetails () {
-      this.selectedDeviceDetails = '<ul>';
-      this.selectedDeviceDetails += '<li><strong>Name:</strong>     ' + this.device.name + '</li>';
-      this.selectedDeviceDetails += '<li><strong>id:</strong>       ' + this.device.id + '</li>';
-      this.selectedDeviceDetails += '<li><strong>Created:</strong>  ' + this.formatDate(this.device.json.createdAt*1000) + '</li>';
-      this.selectedDeviceDetails += '</ul>';
+    showDeviceDetails (device) {
+      let selectedDeviceDetails = '<ul>';
+      selectedDeviceDetails += '<li><strong>Name:</strong>     ' + device.name + '</li>';
+      selectedDeviceDetails += '<li><strong>id:</strong>       ' + device.id + '</li>';
+      selectedDeviceDetails += '<li><strong>Created:</strong>  ' + this.formatDate(device.json.createdAt*1000) + '</li>';
+      selectedDeviceDetails += '</ul>';
+      return selectedDeviceDetails
+    },
+    showMultipleDevicesDetails (deviceArray) {
       this.chartLoaded = true
+      let devices = deviceArray.length
+      let selectedDeviceDetails = ''
+      for (var i = 0; i < devices; i++) {
+        selectedDeviceDetails += '<div class="col-md-' + (12/devices) + '">';
+        selectedDeviceDetails += this.showDeviceDetails(deviceArray[i])
+        selectedDeviceDetails += '</div>'
+      }
+      return selectedDeviceDetails
     },
   }
 }

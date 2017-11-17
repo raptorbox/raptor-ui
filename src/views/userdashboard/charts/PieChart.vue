@@ -2,6 +2,8 @@
 import { Pie } from 'vue-chartjs'
 import moment from 'moment'
 
+var currentDate = moment();
+
 var colors = [
               '#41B883',
               '#E46651',
@@ -11,7 +13,7 @@ var colors = [
             ]
 
 export default Pie.extend({
-  props: ['height', 'chartData', 'width'],
+  props: ['height', 'chartData', 'width', 'searchData', 'dataPassed'],
     data() {
       return {
         dictUser: {},
@@ -27,6 +29,21 @@ export default Pie.extend({
         deviceDataTime: null,
         datasets: [],
         chartDatasets: [],
+        // for slider
+        selectedDisplayParam: null,
+        fromDate: null,
+        toDate: null,
+      }
+    },
+    watch: {
+      searchData: function(data) {
+        this._chart.destroy()
+        console.log(data)
+        this.selectedDisplayParam = this.dataPassed.display
+        this.fromDate = this.dataPassed.fromDate
+        this.toDate = this.dataPassed.toDate
+        console.log(this.fromDate + "    " + this.toDate)
+        this.searchDataForDates(this.fromDate, this.toDate)
       }
     },
     mounted () {
@@ -76,6 +93,7 @@ export default Pie.extend({
           // console.log(device)
           this.stream = device.getStream(this.stream)
           this.subscribeStream(this.stream);
+          this.$emit('devicedata', device);
           // this.getStream("obd");
         })
         .catch((e) => {
@@ -91,11 +109,12 @@ export default Pie.extend({
         .then((streams) => {
           // console.log(streams)
           // context.selectedStreamData = streams
-          // context.extractChartDataDeviceStreamOneChannel(context.selectedStreamData,context.channel);
+          // context.extractChartDataDeviceStream(context.selectedStreamData,context.channel);
+          streams.reverse()
           context.selectedStreamData = streams
           this.dataForChart = [];
           this.streamChartLabels = []
-          let obj = context.extractChartDataDeviceStreamOneChannel(context.selectedStreamData,context.channel);
+          let obj = context.extractChartDataDeviceStream(context.selectedStreamData,context.channel);
           this.dataForChart = obj.data
           this.streamChartLabels = obj.labels
           this.populateChart(this.streamChartLabels, this.channel, this.dataForChart)
@@ -104,15 +123,23 @@ export default Pie.extend({
           this.$log.debug('Failed to load streams')
           this.$log.error(e)
         })
-        // this.$raptor.Stream().subscribe(stream, function(msg) {
-        //   console.log(msg)
-        //   context.selectedStreamData.push(msg.record);
-        //   context.extractChartDataDeviceStreamOneChannel(context.selectedStreamData,'minutes',context.channel);
-        //   context.changeStreamData();
-        //   // if(!(msg.type === 'stream' && msg.op === 'data' && msg.streamId === this.$raptor.stream)) {
-        //   //   return
-        //   // }
-        // });
+        this.$raptor.Stream().subscribe(stream, function(msg) {
+          console.log(msg)
+          context.selectedStreamData.push(msg.record);
+          if(context.selectedStreamData.length > 100) {
+            context.selectedStreamData.shift()
+          }
+          context.dataForChart = [];
+          context.streamChartLabels = []
+          context.selectedStreamData.push(msg.record);
+          let obj = context.extractChartDataDeviceStream(context.selectedStreamData,context.channel);
+          context.dataForChart = obj.data
+          context.streamChartLabels = obj.labels
+          context.populateChart(context.streamChartLabels, context.channel, context.dataForChart)
+          // if(!(msg.type === 'stream' && msg.op === 'data' && msg.streamId === this.$raptor.stream)) {
+          //   return
+          // }
+        });
         // context.unsubscribeStream(stream)
       },
       unsubscribeStream (stream) {
@@ -121,7 +148,7 @@ export default Pie.extend({
           console.log(msg)
         });
       },
-      extractChartDataDeviceStreamOneChannel (d, channel, pushData) {
+      extractChartDataDeviceStream (d, channel, pushData) {
         let dataForChart = [];
         let streamChartLabels = []
         for (var i = 0; i < d.length; i++) {
@@ -141,6 +168,7 @@ export default Pie.extend({
           data: [10, 39, 10, 40, 39, 0, 0]
         }]
         // console.log(dataForChart)
+        this._chart.destroy();
         this.renderPieChart(dataset, labels);
       },
       // for multiple datasets
@@ -179,8 +207,9 @@ export default Pie.extend({
             for (var j = 0; j < this.datasets.length; j++) {
               console.log(streams[0].json.deviceId + " " + this.datasets[j].device.id)
               if(this.datasets[j].device.id == streams[0].json.deviceId) {
+                streams.reverse()
                 this.datasets[j].selectedStreamData = streams
-                let obj = this.extractChartDataDeviceStreamOneChannel(streams,this.datasets[j].channel);
+                let obj = this.extractChartDataDeviceStream(streams,this.datasets[j].channel);
                 console.log(obj)
                 this.datasets[j].dataForChart = obj.data
                 this.datasets[j].streamChartLabels = obj.labels
@@ -228,7 +257,70 @@ export default Pie.extend({
           })
           this.renderLineChart(this.chartDatasets, this.streamChartLabels);
         })
-      }
+      },
+
+      // search data based on timestamp for device
+      searchDataForDates (startDate, endDate) {
+        if(startDate == undefined || startDate == null ) {
+          startDate = 0
+        } else {
+          // startDate = startDate+':00'
+          startDate = moment(startDate).format('x');
+        }
+        if(endDate == undefined || endDate == null) {
+          endDate = currentDate.format('x')
+        } else {
+          // endDate = endDate+':00'
+          endDate = moment(endDate).format('x');
+        }
+        // "timestamp":{"between":[1510152092358,1510152094358]}
+        let pageNumber = 0
+        this.selectedStreamData = []
+          let query = {timestamp: {between:[startDate, endDate]}, page:pageNumber, size:500,sort:"createdAt,DESC"}
+          // console.log(query)
+          // console.log(stream)
+          this.loopOverStreamPagination (this.stream, query, pageNumber, startDate, endDate)
+      },
+      searchDataApi(stream, query, callback) {
+        console.log(query)
+        console.log(stream)
+        this.$raptor.Stream().search(stream, query)
+        .then((stream) => {
+          // console.log(stream.length)
+          callback(stream)
+        })
+        .catch((e) => {
+          this.$log.debug('Failed to load device')
+        })
+      },
+      loopOverStreamPagination (stream, query, pageNumber, startDate, endDate) {
+        let context = this
+        this.searchDataApi(stream, query, function (streams) {
+          // console.log(streams[0])
+          // console.log(streams[0].timestamp * 1000)
+          // console.log(endDate)
+          // console.log((streams[0].timestamp * 1000) > endDate)
+          if(streams.length > 0 && (streams[0].timestamp * 1000) < endDate) {
+            for (var i = 0; i < streams.length; i++) {
+              context.selectedStreamData.push(streams[i])
+            }
+            pageNumber = pageNumber + 1
+            let query = {timestamp: {between:[startDate, endDate]}, page:pageNumber, size:500,sort:"createdAt,DESC"}
+            context.loopOverStreamPagination(stream, query, pageNumber, startDate, endDate)
+          } else {
+            for (var i = 0; i < streams.length; i++) {
+              context.selectedStreamData.push(streams[i])
+            }
+            console.log(context.selectedStreamData)
+            context.dataForChart = [];
+            context.streamChartLabels = []
+            let obj = context.extractChartDataDeviceStream(context.selectedStreamData,context.channel, context.selectedDisplayParam);
+            context.dataForChart = obj.data
+            context.streamChartLabels = obj.labels
+            context.populateChart(context.streamChartLabels, context.channel, context.dataForChart)
+          }
+        })
+      },
     },
 })
 </script>
