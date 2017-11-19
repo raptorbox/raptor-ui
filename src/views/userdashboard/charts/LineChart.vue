@@ -118,8 +118,12 @@ export default Line.extend({
         })
         .catch((e) => {
           this.$log.debug('Failed to load device')
-          this.$log.error(e)
-          this.loading = false
+          // this.$log.error(e)
+          // this.loading = false
+          if(e.toString().indexOf("Unauthorized") !== -1) {
+            this.$raptor.Auth().logout();
+            this.$router.push("/pages/login");
+          }
         })
       },
       // subscription / unsunscription of the data for the selected charts
@@ -140,27 +144,38 @@ export default Line.extend({
         })
         .catch((e) => {
           this.$log.debug('Failed to load streams')
-          this.$log.error(e)
-          this.loading = false
+          // this.$log.error(e)
+          // this.loading = false
+          if(e.toString().indexOf("Unauthorized") !== -1) {
+            this.$raptor.Auth().logout();
+            this.$router.push("/pages/login");
+          }
         })
         .then(() => {
+          // console.log("before")
+          // console.log(this._chart)
           this.$raptor.Stream().subscribe(stream, function(msg) {
-            console.log(msg)
-            context.selectedStreamData.push(msg.record);
-            if(context.selectedStreamData.length > 100) {
-              context.selectedStreamData.shift()
+            console.log(context._chart)
+            // console.log("after")
+            // console.log(msg)
+            if((context._chart || context._chart != undefined || context._chart != null) && context._chart.ctx != null) {
+              context.selectedStreamData.push(msg.record);
+              if(context.selectedStreamData.length > 100) {
+                context.selectedStreamData.shift()
+              }
+              context.dataForChart = [];
+              context.streamChartLabels = []
+              let obj = context.extractChartDataDeviceStream(context.selectedStreamData,context.channel,context.selectedDisplayParam);
+              context.dataForChart = obj.data
+              context.streamChartLabels = obj.labels
+              context.populateChart(context.streamChartLabels, context.channel, context.dataForChart)
+
+              // if(!(msg.type === 'stream' && msg.op === 'data' && msg.streamId === context.$raptor.stream)) {
+              //   return
+              // }
             }
-            context.dataForChart = [];
-            context.streamChartLabels = []
-            let obj = context.extractChartDataDeviceStream(context.selectedStreamData,context.channel,context.selectedDisplayParam);
-            context.dataForChart = obj.data
-            context.streamChartLabels = obj.labels
-            context.populateChart(context.streamChartLabels, context.channel, context.dataForChart)
-            // if(!(msg.type === 'stream' && msg.op === 'data' && msg.streamId === context.$raptor.stream)) {
-            //   return
-            // }
           });
-          context.unsubscribeStream({name: this.stream, deviceId: this.device})
+          // context.unsubscribeStream({name: this.stream, deviceId: this.device})
         })
       },
       unsubscribeStream (stream) {
@@ -192,7 +207,7 @@ export default Line.extend({
           backgroundColor: '#f87979',
           data: dataForChart
         }]
-        console.log("======================data chart")
+        console.log(this._chart)
         this.renderLineChart(dataset, labels);
       },
       // multiple sources
@@ -215,7 +230,7 @@ export default Line.extend({
                 if(!this.checkDatasetExist(dev)) {
                   this.datasets.push(dev)
                   this.devices.push(device)
-                  if(this.datasets[j].stream) {
+                  if(this.datasets[j] && this.datasets[j].stream) {
                     this.subscribeDatasetStreams(this.datasets[j].stream);
                   }
                 }
@@ -230,8 +245,12 @@ export default Line.extend({
           })
           .catch((e) => {
             this.$log.debug('Failed to load device')
-            this.$log.error(e)
-            this.loading = false
+            // this.$log.error(e)
+            // this.loading = false
+            if(e.toString().indexOf("Unauthorized") !== -1) {
+              this.$raptor.Auth().logout();
+              this.$router.push("/pages/login");
+            }
           })
         }
       },
@@ -269,12 +288,16 @@ export default Line.extend({
         })
         .catch((e) => {
           this.$log.debug('Failed to load streams')
-          this.$log.error(e)
-          this.loading = false
+          // this.$log.error(e)
+          // this.loading = false
+          if(e.toString().indexOf("Unauthorized") !== -1) {
+            this.$raptor.Auth().logout();
+            this.$router.push("/pages/login");
+          }
         })
         .then(() => {
           let dsets = []
-          console.log(this.datasets)
+          // console.log(this.datasets)
           // ab9bed83-629a-4d64-91e9-c5c816f353d5
           // 0a3614c5-9762-4751-ad08-c77354a86e57
           for (var i = 0; i < this.datasets.length; i++) {
@@ -298,33 +321,35 @@ export default Line.extend({
           var context = this;
           this.$raptor.Stream().subscribe(stream, function(msg) {
             console.log(msg)
-            for (var j = 0; j < context.datasets.length; j++) {
-              // console.log(msg.device + " " + context.datasets[j].device)
-              console.log(context.datasets[j])
-              if(context.datasets[j].device.id == msg.device.id) {
-                context.datasets[j].selectedStreamData.push(msg.record)
-                if(context.datasets[j].selectedStreamData.length > 100) {
-                  context.datasets[j].selectedStreamData.shift()
+            if((context._chart || context._chart != undefined || context._chart != null) && context._chart.ctx != null) {
+              for (var j = 0; j < context.datasets.length; j++) {
+                // console.log(msg.device + " " + context.datasets[j].device)
+                // console.log(context.datasets[j])
+                if(context.datasets[j].device.id == msg.device.id) {
+                  context.datasets[j].selectedStreamData.push(msg.record)
+                  if(context.datasets[j].selectedStreamData.length > 100) {
+                    context.datasets[j].selectedStreamData.shift()
+                  }
+                  let obj = context.extractChartDataDeviceStream(context.datasets[j].selectedStreamData,context.datasets[j].channel,context.selectedDisplayParam);
+                  context.datasets[j].dataForChart = [];
+                  context.datasets[j].streamChartLabels = []
+                  context.datasets[j].dataForChart = obj.data
+                  context.datasets[j].streamChartLabels = obj.labels
+                  context.streamChartLabels = context.streamChartLabels.concat(obj.labels)
+                  context._chart.data.datasets[j] = {
+                    label: context.datasets[j].channel,
+                    backgroundColor: colors[j],
+                    data: context.datasets[j].dataForChart
+                  }
+                  // console.log("data changed")
+                  // this.populateChart(this.streamChartLabels, this.channel, this.dataForChart)
                 }
-                let obj = context.extractChartDataDeviceStream(context.datasets[j].selectedStreamData,context.datasets[j].channel,context.selectedDisplayParam);
-                context.datasets[j].dataForChart = [];
-                context.datasets[j].streamChartLabels = []
-                context.datasets[j].dataForChart = obj.data
-                context.datasets[j].streamChartLabels = obj.labels
-                context.streamChartLabels = context.streamChartLabels.concat(obj.labels)
-                context._chart.data.datasets[j] = {
-                  label: context.datasets[j].channel,
-                  backgroundColor: colors[j],
-                  data: context.datasets[j].dataForChart
-                }
-                console.log("data changed")
-                // this.populateChart(this.streamChartLabels, this.channel, this.dataForChart)
+                // context.unsubscribeStream(context.datasets[j].stream)
               }
-              // context.unsubscribeStream(context.datasets[j].stream)
+              // if(!(msg.type === 'stream' && msg.op === 'data' && msg.streamId === this.$raptor.stream)) {
+              //   return
+              // }
             }
-            // if(!(msg.type === 'stream' && msg.op === 'data' && msg.streamId === this.$raptor.stream)) {
-            //   return
-            // }
           });
         })
       },
@@ -352,8 +377,8 @@ export default Line.extend({
           this.loopOverStreamPagination (this.stream, query, pageNumber, startDate, endDate)
       },
       searchDataApi(stream, query, callback) {
-        console.log(query)
-        console.log(stream)
+        // console.log(query)
+        // console.log(stream)
         this.$raptor.Stream().search(stream, query)
         .then((stream) => {
           // console.log(stream.length)
@@ -361,6 +386,10 @@ export default Line.extend({
         })
         .catch((e) => {
           this.$log.debug('Failed to load device')
+          if(e.toString().indexOf("Unauthorized") !== -1) {
+            this.$raptor.Auth().logout();
+            this.$router.push("/pages/login");
+          }
         })
       },
       loopOverStreamPagination (stream, query, pageNumber, startDate, endDate) {
@@ -381,7 +410,7 @@ export default Line.extend({
             for (var i = 0; i < streams.length; i++) {
               context.selectedStreamData.push(streams[i])
             }
-            console.log(context.selectedStreamData)
+            // console.log(context.selectedStreamData)
             context.dataForChart = [];
             context.streamChartLabels = []
             let obj = context.extractChartDataDeviceStream(context.selectedStreamData,context.channel, context.selectedDisplayParam);

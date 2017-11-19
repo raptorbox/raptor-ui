@@ -323,6 +323,8 @@ export default {
       // auto-complete item template
       itemAutoTemplate: ItemTemplate,
       itemAutoComplete: null,
+      //unsubscribed all devices
+      unsub: false,
     }
   },
   ready: function() {
@@ -457,7 +459,7 @@ export default {
       this.widgets = dasboardWidgets
     },
     showDetails(event, widgetsData) {
-      console.log(widgetsData)
+      // console.log(widgetsData)
       this.$raptor.Inventory().read(widgetsData.device)
         .then((device) => {
           // console.log(device)
@@ -484,7 +486,11 @@ export default {
         })
         .catch((e) => {
           this.$log.debug('Failed to load device')
-          this.$log.error(e)
+          // this.$log.error(e)
+          if(e.toString().indexOf("Unauthorized") !== -1) {
+            this.$raptor.Auth().logout();
+            this.$router.push("/pages/login");
+          }
         })
     },
     addWidget(widData) {
@@ -562,11 +568,11 @@ export default {
     onChangeOptionStream (evt, source) {
       let val = evt.target.value;
       if(val) {
-        console.log(val)
+        // console.log(val)
         this.selectedStream = val;
         let stream = this.selectedDeviceDetail.json.streams[val];
         if(stream) {
-          console.log(stream)
+          // console.log(stream)
           this.selectedStreamDetail = stream
           let keys = Object.keys(stream.channels);
           this.optionsChannel = [];
@@ -603,14 +609,21 @@ export default {
         title: 'Report',
         chart: 'line'
       }
-      this.widgets.push(widget)
-      this.widgets.push(widget)
-      this.setUserDashboardPreferences('dashboard', this.widgets, this.userId);
+      let alreadyAdded = false
+      for (var i = 0; i < this.widgets.length; i++) {
+        if(this.widgets[i].title == 'Report') {
+          alreadyAdded = true
+        }
+      }
+      if(!alreadyAdded) {
+        this.widgets.push(widget)
+        this.setUserDashboardPreferences('dashboard', this.widgets, this.userId);
+      }
       // this.writeToFirebase(widget)
     },
     // button click for modals
     onAddChartButtonClick (evt) {
-      console.log("device: " + this.selectedDevice + " stream: " + this.selectedStream + " channel: " + this.selectedChannel + " chart: " + this.selectedChart)
+      // console.log("device: " + this.selectedDevice + " stream: " + this.selectedStream + " channel: " + this.selectedChannel + " chart: " + this.selectedChart)
       this.singleDataModal = false
       let widData = {
         chart: this.selectedChart,
@@ -738,7 +751,7 @@ export default {
     setUserDashboardPreferences(key, value, userId) {
       this.$raptor.Profile().set(key, value, userId)
       .then((dashboard) => {
-        this.$log.debug('Loaded %s device list', list.length);
+        // this.$log.debug('Loaded %s device list', list.length);
         // console.log(dashboard);
       })
       .catch(function(e) {
@@ -830,7 +843,7 @@ export default {
       return item.name + " - " + item.id
     },
     updateItems (text, source) {
-      console.log(text)
+      // console.log(text)
       let listOfDevicesForSelectOptions = []
       for (var i = 0; i < this.devices.length; i++) {
         if(this.devices[i].id.indexOf(text) !== -1 || this.devices[i].name.indexOf(text) !== -1) {
@@ -852,12 +865,45 @@ export default {
     },
     // to show the full screen chart with detailed data on new page
     onFullChartButtonClick(ev, wid) {
-      this.$router.push({
-          name: 'ChartDetail',
-          params: {
-              widgetData: wid
-          }
-      });
+      // this.unsubscribeAllCharts(wid)
+      this.$raptor.Stream().unsubscribe({name: wid.data.stream, deviceId: wid.data.device}, function(msg) {
+        console.log(msg)
+      }).then(() => {
+        this.$router.push({
+            name: 'ChartDetail',
+            params: {
+                widgetData: wid
+            }
+        });
+      })
+      // this.$router.push({
+      //     name: 'ChartDetail',
+      //     params: {
+      //         widgetData: wid
+      //     }
+      // });
+    },
+    // unsubscribe charts
+    unsubscribeAllCharts(wid) {
+      var context = this
+      let widgetsThatHaveStream = 0
+      for (var i = 0; i < this.widgets.length; i++) {
+        if(this.widgets[i].data) {
+          widgetsThatHaveStream ++
+          this.$raptor.Stream().unsubscribe({name: this.widgets[i].data.stream, deviceId: this.widgets[i].data.device}, function(msg) {
+            console.log(msg)
+            unsub++
+            if(unsub == widgetsThatHaveStream) {
+              context.$router.push({
+                  name: 'ChartDetail',
+                  params: {
+                      widgetData: wid
+                  }
+              });
+            }
+          });
+        }
+      }
     },
   }
 }

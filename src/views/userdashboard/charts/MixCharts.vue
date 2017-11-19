@@ -137,19 +137,21 @@ export default Line.extend({
         })
         this.$raptor.Stream().subscribe(stream, function(msg) {
           console.log(msg)
-          context.selectedStreamData.push(msg.record);
-          if(context.selectedStreamData.length > 100) {
-            context.selectedStreamData.shift()
+          if((context._chart || context._chart != undefined || context._chart != null) && context._chart.ctx != null) {
+            context.selectedStreamData.push(msg.record);
+            if(context.selectedStreamData.length > 100) {
+              context.selectedStreamData.shift()
+            }
+            context.dataForChart = [];
+            context.streamChartLabels = []
+            context.selectedStreamData.push(msg.record);
+            let obj = context.extractChartDataDeviceStream(context.selectedStreamData,context.channel);
+            context.dataForChart = obj.data
+            context.streamChartLabels = obj.labels
+            context.populateChart(context.streamChartLabels, context.channel, context.dataForChart)// if(!(msg.type === 'stream' && msg.op === 'data' && msg.streamId === this.$raptor.stream)) {
+            //   return
+            // }
           }
-          context.dataForChart = [];
-          context.streamChartLabels = []
-          context.selectedStreamData.push(msg.record);
-          let obj = context.extractChartDataDeviceStream(context.selectedStreamData,context.channel);
-          context.dataForChart = obj.data
-          context.streamChartLabels = obj.labels
-          context.populateChart(context.streamChartLabels, context.channel, context.dataForChart)// if(!(msg.type === 'stream' && msg.op === 'data' && msg.streamId === this.$raptor.stream)) {
-          //   return
-          // }
         });
         // context.unsubscribeStream({name: this.stream, deviceId: this.device})
       },

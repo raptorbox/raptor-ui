@@ -28,26 +28,39 @@
       </div><!--/.row-->
       <div>
         <div v-if="widgetData.chart == 'bar'">
-          <bar-chart :chartData="widgetData.data" @devicedata="setDeviceData" :dataPassed="dataToPass" :searchData="searchDataObj"/>
+          <div class="chart-wrapper">
+            <bar-chart :chartData="widgetData.data" @devicedata="setDeviceData" :dataPassed="dataToPass" :searchData="searchDataObj"/>
+          </div>
         </div>
         <div v-else-if="widgetData.chart == 'polar'">
-          <polar-area-chart :chartData="widgetData.data" @devicedata="setDeviceData" :dataPassed="dataToPass" :searchData="searchDataObj"/>
+          <div class="chart-wrapper">
+            <polar-area-chart :chartData="widgetData.data" @devicedata="setDeviceData" :dataPassed="dataToPass" :searchData="searchDataObj"/>
+          </div>
         </div>
-        <!-- class="chart-wrapper" -->
-        <div class="chart-wrapper" v-else-if="widgetData.chart == 'line' && widgetData.data">
-          <line-chart :chartData="widgetData.data" @devicedata="setDeviceData" :dataPassed="dataToPass" :searchData="searchDataObj"/>
+        <div v-else-if="widgetData.chart == 'line' && widgetData.data">
+          <div class="chart-wrapper">
+            <line-chart :chartData="widgetData.data" @devicedata="setDeviceData" :dataPassed="dataToPass" :searchData="searchDataObj"/>
+          </div>
         </div>
         <div v-else-if="widgetData.chart == 'pie'">
-          <pie-chart :chartData="widgetData.data" @devicedata="setDeviceData" :dataPassed="dataToPass" :searchData="searchDataObj"/>
+          <div class="chart-wrapper">
+            <pie-chart :chartData="widgetData.data" @devicedata="setDeviceData" :dataPassed="dataToPass" :searchData="searchDataObj"/>
+          </div>
         </div>
         <div v-else-if="widgetData.chart == 'radar'">
-          <radar-chart :chartData="widgetData.data" @devicedata="setDeviceData" :dataPassed="dataToPass" :searchData="searchDataObj"/>
+          <div class="chart-wrapper">
+            <radar-chart :chartData="widgetData.data" @devicedata="setDeviceData" :dataPassed="dataToPass" :searchData="searchDataObj"/>
+          </div>
         </div>
         <div v-else-if="widgetData.chart == 'doughnut'">
-          <doughnut-chart :chartData="widgetData.data" @devicedata="setDeviceData" :dataPassed="dataToPass" :searchData="searchDataObj"/>
+          <div class="chart-wrapper">
+            <doughnut-chart :chartData="widgetData.data" @devicedata="setDeviceData" :dataPassed="dataToPass" :searchData="searchDataObj"/>
+          </div>
         </div>
         <div v-if="widgetData.data == null" @devicedata="setDeviceData" :dataPassed="dataToPass" :searchData="searchDataObj">
-          <line-chart-report />
+          <div class="chart-wrapper">
+            <line-chart-report />
+          </div>
         </div>
       </div>
       <div class="col-md-12">
@@ -197,9 +210,11 @@ export default {
         this.slider.data = dateArray
         slider.setIndex([0,1])
         // console.log(this.slider.data)
-        this.dataToPass = {display: this.selectedDisplayParam, fromDate: this.slider.value[1], toDate: this.slider.value[0]}
+        // console.log(this.slider.value)
+        this.dataToPass = {display: this.selectedDisplayParam, fromDate: this.slider.data[1], toDate: this.slider.data[0]}
         this.searchDataObj = null
         this.searchDataObj = this.dataToPass
+        // console.log(this.dataToPass)
         // this.searchDataObj(this.selectedDev.json.streams[this.selectedStream], this.slider.data[1], this.slider.data[0])
       }
     },
@@ -260,8 +275,6 @@ export default {
     //setting device data coming from child component
     setDeviceData (data) {
       this.device = data
-      console.log("============================data is here=======================")
-      console.log(this.device)
       if(this.device.constructor === Array && this.device.length > 0) {
         this.selectedDeviceDetails = this.showMultipleDevicesDetails(this.device)
         this.chartLoaded = true

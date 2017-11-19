@@ -119,12 +119,12 @@
         })
       },
       getStream(streamName) {
-        var ts = Math.round((new Date()).getTime() / 1000);
+        // var ts = Math.round((new Date()).getTime() / 1000);
         let stream = this.device.getStream(streamName);
         console.log(stream)
         if(stream){
           this.loading = true
-          this.$raptor.Stream().list(stream, 0, ts)
+          this.$raptor.Stream().list(stream, 0, 100, 'timestamp,desc')
           .then((streams) => {
             console.log(streams)
             this.deviceStreams = [];
