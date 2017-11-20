@@ -31,6 +31,8 @@ export default Bar.extend({
         selectedDisplayParam: null,
         fromDate: null,
         toDate: null,
+        // records devices
+        devices: [],
       }
     },
     watch: {
@@ -82,12 +84,13 @@ export default Bar.extend({
           labels: lbls,
           datasets: datasets
         }, {
-          responsive: false,
-          maintainAspectRatio: true,
           scales: {
             xAxes: [{
-              display: false,
-              barPercentage: 2
+              display: true,
+              ticks: {
+                  display: false
+              },
+              barPercentage: 1
             }],
             yAxes: [{
               display: true
@@ -106,9 +109,12 @@ export default Bar.extend({
           // this.getStream("obd");
         })
         .catch((e) => {
-          this.$log.debug('Failed to load device')
-          this.$log.error(e)
-          this.loading = false
+          // this.$log.debug('Failed to load device')
+          // this.$log.error(e)
+          if(e.toString().indexOf("Unauthorized") !== -1) {
+            this.$raptor.Auth().logout();
+            this.$router.push("/pages/login");
+          }
         })
       },
       // subscription / unsunscription of the data for the selected charts
@@ -130,8 +136,12 @@ export default Bar.extend({
           this.populateChart(this.streamChartLabels, this.channel, this.dataForChart)
         })
         .catch((e) => {
-          this.$log.debug('Failed to load streams')
-          this.$log.error(e)
+          // this.$log.debug('Failed to load streams')
+          // this.$log.error(e)
+          if(e.toString().indexOf("Unauthorized") !== -1) {
+            this.$raptor.Auth().logout();
+            this.$router.push("/pages/login");
+          }
         })
         this.$raptor.Stream().subscribe(stream, function(msg) {
           console.log(msg)
@@ -181,8 +191,6 @@ export default Bar.extend({
         let dataset = [{
           label: lbl,
           backgroundColor: '#f87979',
-          borderColor: '#f87979',
-          borderWidth: 2,
           data: dataForChart
         }]
         this._chart.destroy();
@@ -190,44 +198,68 @@ export default Bar.extend({
       },
       // for multiple datasets
       loadDatasets() {
+        this.devices = []
         for (var i = 0; i < this.chartData.length; i++) {
           this.$raptor.Inventory().read(this.chartData[i].device)
           .then((device) => {
-            // console.log(device)
             for (var j = 0; j < this.chartData.length; j++) {
-              if(this.chartData[j].device == device.id) {
+              if(this.chartData[j].device.id == device.id) {
                 let dev = {
                   device: device,
                   stream: device.getStream(this.chartData[j].stream),
                   channel: this.chartData[j].channel
                 }
-                this.datasets.push(dev)
-                this.subscribeDatasetStreams(dev.stream);
+                if(!this.checkDatasetExist(dev)) {
+                  this.datasets.push(dev)
+                  this.devices.push(device)
+                  if(this.datasets[j] && this.datasets[j].stream) {
+                    this.subscribeDatasetStreams(this.datasets[j].stream);
+                  }
+                  // console.log("=============================datasets")
+                  // console.log(this.datasets)
+                }
               }
+            }
+            console.log(this.devices)
+            if(this.devices.length == this.chartData.length) {
+              this.$emit('devicedata', this.devices);
             }
             // this.getStream("obd");
           })
           .catch((e) => {
             this.$log.debug('Failed to load device')
             this.$log.error(e)
-            this.loading = false
+            // this.loading = false
+            if(e.toString().indexOf("Unauthorized") !== -1) {
+              this.$raptor.Auth().logout();
+              this.$router.push("/pages/login");
+            }
           })
         }
       },
+      checkDatasetExist(dev) {
+        let exist = false
+        // console.log(dev)
+        for (var k = 0; k < this.datasets.length; k++) {
+          // console.log(this.datasets[k])
+          if(this.datasets[k].device.id == dev.device.id && this.datasets[k].stream.name == dev.stream.name && dev.channel == this.datasets[k].channel) {
+            exist = true
+          }
+        }
+        return exist
+      },
       subscribeDatasetStreams (stream) {
-        console.log(stream)
+        // console.log(stream)
         // var ts = Math.round((new Date()).getTime() / 1000);
         this.$raptor.Stream().list(stream, 0, 100, 'timestamp,desc')//list(stream, 0, ts)
         .then((streams) => {
-          console.log(streams)
+          // console.log(streams)
           if(streams.length > 0) {
             for (var j = 0; j < this.datasets.length; j++) {
-              console.log(streams[0].json.deviceId + " " + this.datasets[j].device.id)
               if(this.datasets[j].device.id == streams[0].json.deviceId) {
                 streams.reverse()
                 this.datasets[j].selectedStreamData = streams
                 let obj = this.extractChartDataDeviceStream(streams,this.datasets[j].channel);
-                console.log(obj)
                 this.datasets[j].dataForChart = obj.data
                 this.datasets[j].streamChartLabels = obj.labels
                 this.streamChartLabels = this.streamChartLabels.concat(obj.labels)
@@ -254,7 +286,11 @@ export default Bar.extend({
         .catch((e) => {
           this.$log.debug('Failed to load streams')
           this.$log.error(e)
-          this.loading = false
+          // this.loading = false
+          if(e.toString().indexOf("Unauthorized") !== -1) {
+            this.$raptor.Auth().logout();
+            this.$router.push("/pages/login");
+          }
         })
         .then(() => {
           let dsets = []
@@ -275,6 +311,42 @@ export default Bar.extend({
           })
           this._chart.destroy();
           this.renderBarChart(this.chartDatasets, this.streamChartLabels);
+        })
+        .then(()=> {
+          //subscription
+          var context = this;
+          this.$raptor.Stream().subscribe(stream, function(msg) {
+            console.log(msg)
+            if((context._chart || context._chart != undefined || context._chart != null) && context._chart.ctx != null) {
+              for (var j = 0; j < context.datasets.length; j++) {
+                // console.log(msg.device + " " + context.datasets[j].device)
+                // console.log(context.datasets[j])
+                if(context.datasets[j].device.id == msg.device.id) {
+                  context.datasets[j].selectedStreamData.push(msg.record)
+                  if(context.datasets[j].selectedStreamData.length > 100) {
+                    context.datasets[j].selectedStreamData.shift()
+                  }
+                  let obj = context.extractChartDataDeviceStream(context.datasets[j].selectedStreamData,context.datasets[j].channel,context.selectedDisplayParam);
+                  context.datasets[j].dataForChart = [];
+                  context.datasets[j].streamChartLabels = []
+                  context.datasets[j].dataForChart = obj.data
+                  context.datasets[j].streamChartLabels = obj.labels
+                  context.streamChartLabels = context.streamChartLabels.concat(obj.labels)
+                  context._chart.data.datasets[j] = {
+                    label: context.datasets[j].channel,
+                    backgroundColor: colors[j],
+                    data: context.datasets[j].dataForChart
+                  }
+                  // console.log("data changed")
+                  // this.populateChart(this.streamChartLabels, this.channel, this.dataForChart)
+                }
+                // context.unsubscribeStream(context.datasets[j].stream)
+              }
+              // if(!(msg.type === 'stream' && msg.op === 'data' && msg.streamId === this.$raptor.stream)) {
+              //   return
+              // }
+            }
+          });
         })
       },
 
@@ -301,8 +373,8 @@ export default Bar.extend({
           this.loopOverStreamPagination (this.stream, query, pageNumber, startDate, endDate)
       },
       searchDataApi(stream, query, callback) {
-        console.log(query)
-        console.log(stream)
+        // console.log(query)
+        // console.log(stream)
         this.$raptor.Stream().search(stream, query)
         .then((stream) => {
           // console.log(stream.length)
@@ -310,6 +382,10 @@ export default Bar.extend({
         })
         .catch((e) => {
           this.$log.debug('Failed to load device')
+          if(e.toString().indexOf("Unauthorized") !== -1) {
+            this.$raptor.Auth().logout();
+            this.$router.push("/pages/login");
+          }
         })
       },
       loopOverStreamPagination (stream, query, pageNumber, startDate, endDate) {
@@ -330,13 +406,13 @@ export default Bar.extend({
             for (var i = 0; i < streams.length; i++) {
               context.selectedStreamData.push(streams[i])
             }
-            console.log(context.selectedStreamData)
+            // console.log(context.selectedStreamData)
             context.dataForChart = [];
             context.streamChartLabels = []
             let obj = context.extractChartDataDeviceStream(context.selectedStreamData,context.channel, context.selectedDisplayParam);
             context.dataForChart = obj.data
             context.streamChartLabels = obj.labels
-            console.log(obj)
+            // console.log(obj)
             context.populateChart(context.streamChartLabels, context.channel, context.dataForChart)
           }
         })

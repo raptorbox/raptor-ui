@@ -36,6 +36,8 @@ export default PolarArea.extend({
         selectedDisplayParam: null,
         fromDate: null,
         toDate: null,
+        // records devices
+        devices: [],
       }
     },
     watch: {
@@ -86,8 +88,8 @@ export default PolarArea.extend({
           labels: lbls,
           datasets: datasets
         }, {
-          responsive: false,
-          maintainAspectRatio: true
+          responsive: true,
+          maintainAspectRatio: false
         })
       },
       load() {
@@ -102,6 +104,10 @@ export default PolarArea.extend({
         .catch((e) => {
           this.$log.debug('Failed to load device')
           this.$log.error(e)
+          if(e.toString().indexOf("Unauthorized") !== -1) {
+            this.$raptor.Auth().logout();
+            this.$router.push("/pages/login");
+          }
         })
       },
       // subscription / unsunscription of the data for the selected charts
@@ -125,6 +131,10 @@ export default PolarArea.extend({
         .catch((e) => {
           this.$log.debug('Failed to load streams')
           this.$log.error(e)
+          if(e.toString().indexOf("Unauthorized") !== -1) {
+            this.$raptor.Auth().logout();
+            this.$router.push("/pages/login");
+          }
         })
         this.$raptor.Stream().subscribe(stream, function(msg) {
           console.log(msg)
@@ -179,15 +189,19 @@ export default PolarArea.extend({
         return { labels: labels, data: dataForChart }
       },
       populateChart(labels, lbl, dataForChart) {
-        let dataset = [{
-          label: lbl,
-          backgroundColor: '#f87979',
-          pointBackgroundColor: 'rgba(255,99,132,1)',
-          pointBorderColor: '#fff',
-          pointHoverBackgroundColor: '#fff',
-          pointHoverBorderColor: 'rgba(255,99,132,1)',
-          data: dataForChart
-        }]
+        let dataset = []
+        for (var i = 0; i < lbl.length; i++) {
+          lbl[i]
+          dataset.push({
+            label: lbl,
+            backgroundColor: colors[i],
+            pointBackgroundColor: monthNames,
+            pointBorderColor: '#fff',
+            pointHoverBackgroundColor: '#fff',
+            pointHoverBorderColor: monthNames,
+            data: dataForChart
+          })
+        }
         this._chart.destroy();
         this.renderPolarAreaChart(dataset, labels);
       },
@@ -198,22 +212,37 @@ export default PolarArea.extend({
           .then((device) => {
             // console.log(device)
             for (var j = 0; j < this.chartData.length; j++) {
-              if(this.chartData[j].device == device.id) {
+              if(this.chartData[j].device.id == device.id) {
                 let dev = {
                   device: device,
                   stream: device.getStream(this.chartData[j].stream),
                   channel: this.chartData[j].channel
                 }
-                this.datasets.push(dev)
-                this.subscribeDatasetStreams(dev.stream);
+                if(!this.checkDatasetExist(dev)) {
+                  this.datasets.push(dev)
+                  this.devices.push(device)
+                  if(this.datasets[j] && this.datasets[j].stream) {
+                    this.subscribeDatasetStreams(this.datasets[j].stream);
+                  }
+                  // console.log("=============================datasets")
+                  // console.log(this.datasets)
+                }
               }
+            }
+            console.log(this.devices)
+            if(this.devices.length == this.chartData.length) {
+              this.$emit('devicedata', this.devices);
             }
             // this.getStream("obd");
           })
           .catch((e) => {
             this.$log.debug('Failed to load device')
             this.$log.error(e)
-            this.loading = false
+            // this.loading = false
+            if(e.toString().indexOf("Unauthorized") !== -1) {
+              this.$raptor.Auth().logout();
+              this.$router.push("/pages/login");
+            }
           })
         }
       },
@@ -257,7 +286,11 @@ export default PolarArea.extend({
         .catch((e) => {
           this.$log.debug('Failed to load streams')
           this.$log.error(e)
-          this.loading = false
+          // this.loading = false
+          if(e.toString().indexOf("Unauthorized") !== -1) {
+            this.$raptor.Auth().logout();
+            this.$router.push("/pages/login");
+          }
         })
         .then(() => {
           let dsets = []
@@ -311,6 +344,10 @@ export default PolarArea.extend({
         })
         .catch((e) => {
           this.$log.debug('Failed to load device')
+          if(e.toString().indexOf("Unauthorized") !== -1) {
+            this.$raptor.Auth().logout();
+            this.$router.push("/pages/login");
+          }
         })
       },
       loopOverStreamPagination (stream, query, pageNumber, startDate, endDate) {

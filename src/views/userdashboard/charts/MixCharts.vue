@@ -32,6 +32,8 @@ export default Line.extend({
         selectedDisplayParam: null,
         fromDate: null,
         toDate: null,
+        // records devices
+        devices: [],
       }
     },
     watch: {
@@ -111,7 +113,11 @@ export default Line.extend({
         .catch((e) => {
           this.$log.debug('Failed to load device')
           this.$log.error(e)
-          this.loading = false
+          // this.loading = false
+          if(e.toString().indexOf("Unauthorized") !== -1) {
+            this.$raptor.Auth().logout();
+            this.$router.push("/pages/login");
+          }
         })
       },
       // subscription / unsunscription of the data for the selected charts
@@ -133,7 +139,11 @@ export default Line.extend({
         .catch((e) => {
           this.$log.debug('Failed to load streams')
           this.$log.error(e)
-          this.loading = false
+          // this.loading = false
+          if(e.toString().indexOf("Unauthorized") !== -1) {
+            this.$raptor.Auth().logout();
+            this.$router.push("/pages/login");
+          }
         })
         this.$raptor.Stream().subscribe(stream, function(msg) {
           console.log(msg)
@@ -191,22 +201,37 @@ export default Line.extend({
           .then((device) => {
             // console.log(device)
             for (var j = 0; j < this.chartData.length; j++) {
-              if(this.chartData[j].device == device.id) {
+              if(this.chartData[j].device.id == device.id) {
                 let dev = {
                   device: device,
                   stream: device.getStream(this.chartData[j].stream),
                   channel: this.chartData[j].channel
                 }
-                this.datasets.push(dev)
-                this.subscribeDatasetStreams(dev.stream);
+                if(!this.checkDatasetExist(dev)) {
+                  this.datasets.push(dev)
+                  this.devices.push(device)
+                  if(this.datasets[j] && this.datasets[j].stream) {
+                    this.subscribeDatasetStreams(this.datasets[j].stream);
+                  }
+                  // console.log("=============================datasets")
+                  // console.log(this.datasets)
+                }
               }
+            }
+            console.log(this.devices)
+            if(this.devices.length == this.chartData.length) {
+              this.$emit('devicedata', this.devices);
             }
             // this.getStream("obd");
           })
           .catch((e) => {
             this.$log.debug('Failed to load device')
             this.$log.error(e)
-            this.loading = false
+            // this.loading = false
+            if(e.toString().indexOf("Unauthorized") !== -1) {
+              this.$raptor.Auth().logout();
+              this.$router.push("/pages/login");
+            }
           })
         }
       },
@@ -250,7 +275,11 @@ export default Line.extend({
         .catch((e) => {
           this.$log.debug('Failed to load streams')
           this.$log.error(e)
-          this.loading = false
+          // this.loading = false
+          if(e.toString().indexOf("Unauthorized") !== -1) {
+            this.$raptor.Auth().logout();
+            this.$router.push("/pages/login");
+          }
         })
         .then(() => {
           let dsets = []
@@ -304,6 +333,10 @@ export default Line.extend({
         })
         .catch((e) => {
           this.$log.debug('Failed to load device')
+          if(e.toString().indexOf("Unauthorized") !== -1) {
+            this.$raptor.Auth().logout();
+            this.$router.push("/pages/login");
+          }
         })
       },
       loopOverStreamPagination (stream, query, pageNumber, startDate, endDate) {

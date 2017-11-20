@@ -33,6 +33,8 @@ export default Line.extend({
         selectedDisplayParam: null,
         fromDate: null,
         toDate: null,
+        // records devices
+        devices: [],
       }
     },
     watch: {
@@ -81,15 +83,16 @@ export default Line.extend({
           },
           scales: {
             xAxes: [{
-              display: false,
+              display: true,
               ticks: {
+                display: false,
                 autoSkip : false,
                 callback: function(value, index, values) {
                     return new moment(value).format('DD MMM');
                 }
               },
               gridLines : {
-                  display : false,
+                  display : true,
               }
             }],
             yAxes: [{
@@ -187,6 +190,10 @@ export default Line.extend({
         })
         .catch((e) => {
           this.$log.debug('Failed to load device')
+          if(e.toString().indexOf("Unauthorized") !== -1) {
+            this.$raptor.Auth().logout();
+            this.$router.push("/pages/login");
+          }
         })
       },
       loopOverStreamPagination (stream, query, pageNumber, startDate, endDate) {

@@ -686,7 +686,6 @@ export default {
       // console.log(widget)
       this.widgets.push(widget)
       this.clearFields()
-      this.widgets.push(widget)
       this.setUserDashboardPreferences('dashboard', this.widgets, this.userId);
       // this.writeToFirebase(widget)
     },

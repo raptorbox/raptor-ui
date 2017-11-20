@@ -91,10 +91,13 @@ export default Line.extend({
           },
           scales: {
             xAxes: [{
-              display: false,
               gridLines: {
                 display: true
-              }
+              },
+              display: true,
+              ticks: {
+                  display: false
+              },
             }],
             yAxes: [{
               display: true

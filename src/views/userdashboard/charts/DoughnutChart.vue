@@ -33,6 +33,8 @@ export default Doughnut.extend({
         selectedDisplayParam: null,
         fromDate: null,
         toDate: null,
+        // records devices
+        devices: [],
       }
     },
     watch: {
@@ -208,15 +210,26 @@ export default Doughnut.extend({
           .then((device) => {
             // console.log(device)
             for (var j = 0; j < this.chartData.length; j++) {
-              if(this.chartData[j].device == device.id) {
+              if(this.chartData[j].device.id == device.id) {
                 let dev = {
                   device: device,
                   stream: device.getStream(this.chartData[j].stream),
                   channel: this.chartData[j].channel
                 }
-                this.datasets.push(dev)
-                this.subscribeDatasetStreams(dev.stream);
+                if(!this.checkDatasetExist(dev)) {
+                  this.datasets.push(dev)
+                  this.devices.push(device)
+                  if(this.datasets[j] && this.datasets[j].stream) {
+                    this.subscribeDatasetStreams(this.datasets[j].stream);
+                  }
+                  // console.log("=============================datasets")
+                  // console.log(this.datasets)
+                }
               }
+            }
+            console.log(this.devices)
+            if(this.devices.length == this.chartData.length) {
+              this.$emit('devicedata', this.devices);
             }
             // this.getStream("obd");
           })

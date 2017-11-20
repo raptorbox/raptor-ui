@@ -30,7 +30,7 @@
       <b-table striped hover show-empty :items="devices" :fields="fields" :current-page="currentPage" :per-page="perPage" >
         <template slot="name" scope="row">{{row.item.name}}</template>
         <template slot="deviceid" scope="row">{{row.item.id}}</template>
-        <template slot="created" scope="row">{{formatDate(row.item.createdAt * 1000)}}</template>
+        <template slot="created" scope="row">{{formatDate(row.item.json.createdAt * 1000)}}</template>
         <template slot="userid" scope="row">{{row.item.properties.userId}}</template>
         <template slot="actions" scope="row">
           <div class="row">

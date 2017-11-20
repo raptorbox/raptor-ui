@@ -2,7 +2,7 @@
   <div class="animated fadeIn">
     <div class="row">
       <div class="col-md-12">
-        <b-card class="bg-danger" :no-block="true" style="min-height:160px; max-height:160px; height:160px">
+        <b-card class="bg-danger" :no-block="true">
           <div class="card-body pb-0">
             <h4 class="mb-0">Device Details</h4>
           </div>
