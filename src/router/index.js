@@ -71,12 +71,12 @@ const router = new Router({
       component: Full,
       children: [
         {
-          path: 'dashboard',
+          path: 'dashboardold',
           name: 'Dashboard',
           component: DeviceDataChart
         },
         {
-          path: 'drag',
+          path: 'dashboard',
           name: 'User Dashboard',
           component: UserDashboard
         },

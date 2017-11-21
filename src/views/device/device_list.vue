@@ -31,8 +31,8 @@
         <!-- v-autocomplete(:items="items" v-model='item', :get-label='getLabel', :min-len='0' @update-items='update', :component-item='tpl', @item-selected="itemSelected", @item-clicked="itemClicked", :input-attrs="{name: 'input-test', id: 'v-my-autocomplete'}")
   p Selected item:
   pre {{ item }} -->
-
-        <b-table striped hover show-empty :items="list" :fields="fields" :current-page="currentPage" :per-page="perPage" >
+        <!-- striped hover -->
+        <b-table small responsive show-empty :items="list" :fields="fields" :current-page="currentPage" :per-page="perPage" >
           <template slot="name" scope="row">
             <b-button class="btn btn-link" :to="{ name: 'DeviceUpdate', params: { deviceId: row.item.id }}">{{row.item.name}}</b-button>
           </template>
@@ -40,14 +40,12 @@
           <template slot="created" scope="row">{{formatDate(row.item.json.createdAt * 1000)}}</template>
           <template slot="updated" scope="row">{{formatDate(row.item.json.updatedAt * 1000)}}</template>
           <template slot="actions" scope="row">
-            <div class="row">
+            <!-- <div class="row"> -->
               <b-button class="btn btn-sm" :to="{ name: 'Streams', params: { deviceId: row.item.id }}">Streams</b-button>
               <b-button class="btn btn-primary btn-sm" :to="{ name: 'RecordSet', params: { deviceId: row.item.id }}">Records</b-button>
-              <click-confirm>
-                <b-button class="btn btn-outline-danger btn-sm" @click="remove(row.item.id)">Delete</b-button>
-              </click-confirm>
+              <b-button class="btn btn-outline-danger btn-sm" @click="remove(row.item.id)">Delete</b-button>
               <b-button class="btn btn-outline-info btn-sm" :to="{ name: 'Clone', params: { deviceId: row.item.id }}">Clone</b-button>
-            </div>
+            <!-- </div> -->
           </template>
         </b-table>
 
@@ -82,13 +80,13 @@
         devices: [],
         error: null,
         currentPage: 1,
-        fields: {
-          name:           { label: 'Name' },
-          description:    { label: 'Description' },
-          created:        { label: 'Created at' },
-          updated:        { label: 'Updated at'},
-          actions:        { }
-        },
+        fields: [
+          { key:'name',           label: 'Name'         },
+          { key:'description',    label: 'Description'  },
+          { key:'created',        label: 'Created'   },
+          { key:'updated',        label: 'Updated'   },
+          { key:'actions',        label: 'Actions'   }
+        ],
         perPage: 10,
         totalRows: 0,
         pageOptions: [{text:10,value:10},{text:25,value:25},{text:50,value:50}],
@@ -134,15 +132,25 @@
         })
       },
       remove (deviceId) {
-        this.$log.debug("Deleting %s", deviceId)
-        this.$raptor.Inventory().delete({ id: deviceId})
-        .then(() => {
-          this.$log.debug("Deleted %s", deviceId)
-          this.fetchData()
+        var context = this
+        this.$dialog.confirm('Are you sure, you want to remove this device?')
+        .then(function () {
+            // This will be triggered when user clicks on proceed
+          console.log('canceled operation')
+          context.$log.debug("Deleting %s", deviceId)
+          context.$raptor.Inventory().delete({ id: deviceId})
+          .then(() => {
+            context.$log.debug("Deleted %s", deviceId)
+            context.fetchData()
+          })
+          .catch((e) => {
+            context.$log.error("Error deleting %s", e)
+          })
         })
-        .catch((e) => {
-          this.$log.error("Error deleting %s", e)
-        })
+        .catch(function () {
+            // This will be triggered when user clicks on cancel
+          console.log('canceled operation')
+        });
       },
       // auto-complete methods
       itemClicked (item) {

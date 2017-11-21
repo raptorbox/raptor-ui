@@ -5,7 +5,8 @@
         <div v-if="!inventorychart">
           <div class="row">
             <div class="col-sm-6 col-lg-4">
-              <b-card class="bg-success" :no-block="true" style="min-height:160px; max-height:160px; height:160px">
+               <!-- style="min-height:160px; max-height:160px; height:160px" -->
+              <b-card class="bg-success" :no-block="true">
                 <div class="card-body pb-0">
                   <h4 class="mb-0">{{totalNoOfDevices}}</h4>
                   <p>Total Devices</p>
@@ -16,7 +17,8 @@
               </b-card>
             </div><!--/.col-->
             <div class="col-sm-6 col-lg-4">
-              <b-card class="bg-info" :no-block="true" style="min-height:160px; max-height:160px; height:160px">
+               <!-- style="min-height:160px; max-height:160px; height:160px" -->
+              <b-card class="bg-info" :no-block="true">
                 <div class="card-body pb-0">
                   <h4 class="mb-0">Select a Device</h4>
                   <div class="float-right">
@@ -28,7 +30,8 @@
               </b-card>
             </div><!--/.col-->
             <div class="col-sm-6 col-lg-4">
-              <b-card class="bg-danger" :no-block="true" style="min-height:160px; max-height:160px; height:160px">
+               <!-- style="min-height:160px; max-height:160px; height:160px" -->
+              <b-card class="bg-danger" :no-block="true">
                 <div class="card-body pb-0">
                   <h4 class="mb-0">Device Details</h4>
                 </div>
@@ -40,7 +43,8 @@
           </div><!--/.row-->
         </div>
         <div v-if="inventorychart">
-          <b-card class="bg-danger" :no-block="true" style="min-height:160px; max-height:160px; height:160px">
+           <!-- style="min-height:160px; max-height:160px; height:160px" -->
+          <b-card class="bg-danger" :no-block="true">
             <div class="card-body pb-0">
               <h4 class="mb-0">Device Details</h4>
             </div>

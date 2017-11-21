@@ -7,19 +7,32 @@
         <b-button type="button" variant="success" @click="singleDataModal = true">Add Widget</b-button>
         <b-button type="button" variant="success" @click="multipleDataModal = true">Add Mix Chart Widget</b-button>
       </p>
-<!-- 
-      <div class="card-columns cols-3">
+
+      <div class="card-columns cols-2">
         <div class="container" v-dragula="widgets" drake="first"> 
-          <div v-for="wid in widgets" style="resize: both; overflow: auto;">
+          <div v-for="wid in widgets">
             <b-card show-header>
               <div slot="header">
+                <div class="row">
+                  <div class="col-md-12 bg-light" style="padding:2px; padding-top:4px">
+                  <div class="float-right">
+                    <b-button type="button" i="wid.i" class="btn btn-link btn-sm" @click="(ev) => { onRemoveWidgetButtonClick(ev, wid) }">
+                      <i class="icon-close icons font-2xl d-block" />
+                    </b-button>
+                  </div>
+                  <div class="float-left" v-on:click.capture="(ev) => { showDetails(ev, wid.data) }">
+                    <h5>{{wid.title}}</h5>
+                  </div>
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-12">
                 <div class="float-right">
-                  <button type="button" i="wid.i" class="btn btn-link" @click="(ev) => { onRemoveWidgetButtonClick(ev, wid) }">
-                    <icon name="remove" scale="2" color="red"></icon>
+                  <button type="button" i="wid.i" class="btn btn-link" @click="(ev) => { onFullChartButtonClick(ev, wid) }" >
+                    <i class="icon-size-fullscreen icons font-2xl d-block" />
                   </button>
                 </div>
-                <div class="pb-0" v-on:click.capture="(ev) => { showDetails(ev, wid.data) }">
-                  <h5>{{wid.title}}</h5>
                 </div>
               </div>
               <div class="chart-wrapper" v-if="wid.chart == 'bar'">
@@ -46,10 +59,10 @@
             </b-card>
           </div>
         </div>
-      </div> -->
+      </div>
     </div>
 
-    <grid-layout :layout="widgets" :col-num="12" :row-height="30" :is-draggable="true" :is-resizable="true" :vertical-compact="true" :margin="[10, 10]" :use-css-transforms="true" >
+   <!--  <grid-layout :layout="widgets" :col-num="12" :row-height="30" :is-draggable="true" :is-resizable="true" :vertical-compact="true" :margin="[10, 10]" :use-css-transforms="true" >
 
         <grid-item v-for="wid in widgets"
                    :x="wid.x"
@@ -65,7 +78,6 @@
                 <div class="float-right">
                   <button type="button" i="wid.i" class="btn btn-link btn-sm" @click="(ev) => { onRemoveWidgetButtonClick(ev, wid) }">
                     <i class="icon-close icons font-2xl d-block" />
-                    <!-- <icon name="remove" scale="2" color="red"></icon> -->
                   </button>
                 </div>
                 <div class="float-left" v-on:click.capture="(ev) => { showDetails(ev, wid.data) }">
@@ -77,33 +89,26 @@
             <div class="no-drag">
               <div class="float-right">
                 <button type="button" i="wid.i" class="btn btn-link" @click="(ev) => { onFullChartButtonClick(ev, wid) }" >
-                  <!-- :to="{ name: 'ChartDetail', params: {widget: wid}}" -->
                   <i class="icon-size-fullscreen icons font-2xl d-block" />
                 </button>
               </div>
               <b-card no-header border-variant="light" class="border-0">
                 <div :id="'widget'+wid.i" v-if="wid.chart == 'bar'">
-                  <!-- :style="{height: wid.h + 'px', width: wid.w + 'px'}" -->
                   <bar-chart :chartData="wid.data"/>
                 </div>
                 <div :id="'widget'+wid.i" v-else-if="wid.chart == 'polar'">
-                   <!-- :style="{height:wid.h+'px', width:wid.w+'px'}" -->
                   <polar-area-chart :chartData="wid.data"/>
                 </div>
-                <!-- class="chart-wrapper" -->
-                <div :id="'widget'+wid.i" v-else-if="wid.chart == 'line' && wid.data" :style="{'max-height': wid.h-50, 'max-width': wid.w}">
+                <div :id="'widget'+wid.i" v-else-if="wid.chart == 'line' && wid.data">
                   <line-chart :chartData="wid.data"/>
                 </div>
-                <div class="chart-wrapper" :id="'widget'+wid.i" v-else-if="wid.chart == 'pie'" :style="{width: ((wid.h*40)-100)+'px'}">
-                   <!-- :style="{height:wid.h+'px', width:wid.w+'px'}" -->
+                <div :id="'widget'+wid.i" v-else-if="wid.chart == 'pie'">
                   <pie-chart :chartData="wid.data"/>
                 </div>
-                <div :id="'widget'+wid.i" v-else-if="wid.chart == 'radar'">
-                   <!-- :style="{height:wid.h+'px', width:wid.w+'px'}" -->
+                <div class="chart-wrapper" :id="'widget'+wid.i" v-else-if="wid.chart == 'radar'">
                   <radar-chart :chartData="wid.data"/>
                 </div>
                 <div :id="'widget'+wid.i" v-else-if="wid.chart == 'doughnut'">
-                   <!-- :style="{height:wid.h+'px', width:wid.w+'px'}" -->
                   <doughnut-chart :chartData="wid.data"/>
                 </div>
                 <div :id="'widget'+wid.i" v-if="wid.data == null">
@@ -112,7 +117,7 @@
               </b-card>
             </div>
         </grid-item>
-    </grid-layout>
+    </grid-layout> -->
 
     <!-- single data source widget -->
     <b-modal title="Add Widget" class="modal-info" v-model="singleDataModal" @ok="onAddChartButtonClick" @cancel="clearFields">
@@ -223,6 +228,8 @@ import PolarAreaChart from './charts/PolarAreaChart'
 import LineChartReport from './charts/LineChartReport'
 import moment from 'moment'
 
+import RadarExample from './../charts/RadarExample'
+
 import Vue from 'vue'
 import Icon from 'vue-awesome/components/Icon'
 import 'vue-awesome/icons/remove'
@@ -255,6 +262,7 @@ export default {
   name: 'dashboard',
   components: {
     // DragableView,
+    RadarExample,
     BarChart,
     LineChart,
     DoughnutChart,
@@ -637,7 +645,8 @@ export default {
       this.addWidget(widData);
       this.clearFields()
     },
-    onRemoveWidgetButtonClick (widget) {
+    onRemoveWidgetButtonClick (ev, widget) {
+      console.log(widget)
       let index = this.widgets.indexOf(widget)
       this.widgets.splice(index, 1)
       this.setUserDashboardPreferences('dashboard', this.widgets, this.userId);
@@ -865,22 +874,32 @@ export default {
     // to show the full screen chart with detailed data on new page
     onFullChartButtonClick(ev, wid) {
       // this.unsubscribeAllCharts(wid)
-      this.$raptor.Stream().unsubscribe({name: wid.data.stream, deviceId: wid.data.device}, function(msg) {
-        console.log(msg)
-      }).then(() => {
-        this.$router.push({
-            name: 'ChartDetail',
-            params: {
-                widgetData: wid
-            }
-        });
-      })
-      // this.$router.push({
-      //     name: 'ChartDetail',
-      //     params: {
-      //         widgetData: wid
-      //     }
-      // });
+      if(wid.data) {
+        this.$raptor.Stream().unsubscribe({name: wid.data.stream, deviceId: wid.data.device}, function(msg) {
+          console.log(msg)
+        }).then(() => {
+          this.$router.push({
+              name: 'ChartDetail',
+              params: {
+                  widgetData: wid
+              }
+          });
+        })
+        .catch(function(e) {
+          // console.log(e)
+          // console.log(JSON.stringify(e))
+          if(e.toString().indexOf("Unauthorized") !== -1) {
+            this.$raptor.Auth().logout();
+            this.$router.push("/pages/login");
+          }
+        })
+        // this.$router.push({
+        //     name: 'ChartDetail',
+        //     params: {
+        //         widgetData: wid
+        //     }
+        // });
+      }
     },
     // unsubscribe charts
     unsubscribeAllCharts(wid) {

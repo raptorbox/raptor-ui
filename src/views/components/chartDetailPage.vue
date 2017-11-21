@@ -14,7 +14,7 @@
     </div><!--/.row-->
 
     <b-card>
-      <div class="row">
+      <div class="row" v-if="!(device != null && device.constructor === Array && device.length > 0)">
         <div class="col-sm-12 hidden-sm-down">
           <b-button-toolbar class="float-right" aria-label="Toolbar with button groups">
             <b-button-group class="mr-3" aria-label="First group">
@@ -63,7 +63,7 @@
           </div>
         </div>
       </div>
-      <div class="col-md-12">
+      <div class="col-md-12" v-if="!(device != null && device.constructor === Array && device.length > 0)">
         <vue-slider ref="slider" v-bind="slider" v-model="slider.value" @callback="sliderValueChanged" @drag-start="sliderDragStart" @drag-end="sliderDragEnd"></vue-slider>
       </div>
     </b-card>
@@ -186,8 +186,10 @@ export default {
     }
   },
   mounted () {
-    this.$nextTick(() => this.$refs.slider.refresh())
-    // console.log(this.widgetData)
+    if(this.$refs.slider) {
+      this.$nextTick(() => this.$refs.slider.refresh())
+      // console.log(this.widgetData)
+    }
   },
   methods: {
     formatDate (d) {
@@ -311,3 +313,18 @@ export default {
   }
 }
 </script>
+
+<style type="text/css">
+#chartjs-tooltip {
+  opacity: 1;
+  position: absolute;
+  background: rgba(0, 0, 0, .7);
+  color: white;
+  border-radius: 3px;
+  -webkit-transition: all .1s ease;
+  transition: all .1s ease;
+  pointer-events: none;
+  -webkit-transform: translate(-50%, 0);
+  transform: translate(-50%, 0);
+}
+</style>

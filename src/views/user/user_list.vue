@@ -67,7 +67,7 @@
         </tbody>
       </table> -->
 
-      <b-table striped hover show-empty :items="list" :fields="fields" :current-page="currentPage" :per-page="perPage" >
+      <b-table small responsive show-empty :items="list" :fields="fields" :current-page="currentPage" :per-page="perPage" >
         <template slot="username" scope="row">
           <b-button class="btn btn-link" :to="{ name: 'UsersUpdate', params: { userId: row.item.uuid }}">
             {{row.item.username}}
@@ -83,9 +83,7 @@
             <b-button class="btn btn-outline-danger btn-sm" disabled>Delete</b-button>
           </span>
           <span v-else>
-            <click-confirm>
               <b-button class="btn btn-outline-danger btn-sm" @click="remove(row.item.uuid)">Delete</b-button>
-            </click-confirm>
           </span>
         </template>
       </b-table>
@@ -170,19 +168,25 @@
       },
       remove (userId) {
         var context = this
-        this.$log.debug("Deleting %s", userId)
-        this.$raptor.Admin().User().delete({ uuid: userId})
-        .then(() => {
-          this.$log.debug("Deleted %s", userId)
-          this.fetchData()
+        this.$dialog.confirm('Are you sure, you want to remove this user?')
+        .then(function () {
+          this.$log.debug("Deleting %s", userId)
+          this.$raptor.Admin().User().delete({ uuid: userId})
+          .then(() => {
+            this.$log.debug("Deleted %s", userId)
+            this.fetchData()
+          })
+          .catch(function(e) {
+            console.log(e)
+            console.log(JSON.stringify(e))
+            if(e.toString().indexOf("Unauthorized") !== -1) {
+              context.$raptor.Auth().logout();
+              context.$router.push("/pages/login");
+            }
+          });
         })
-        .catch(function(e) {
-          console.log(e)
-          console.log(JSON.stringify(e))
-          if(e.toString().indexOf("Unauthorized") !== -1) {
-            context.$raptor.Auth().logout();
-            context.$router.push("/pages/login");
-          }
+        .catch(function () {
+          console.log('Clicked on cancel')
         });
       },
     }

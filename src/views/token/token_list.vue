@@ -72,7 +72,7 @@
         </div>
       </div>  
 
-      <b-table striped hover show-empty :items="list" :fields="fields" :current-page="currentPage" :per-page="perPage" >
+      <b-table small responsive show-empty :items="list" :fields="fields" :current-page="currentPage" :per-page="perPage" >
         <template slot="name" scope="row">
           <b-button class="btn btn-link" :to="{ name: 'TokensUpdate', params: { tokenId: row.item.id }}">
             {{row.item.name}}
@@ -98,9 +98,7 @@
           <span v-bind:class="['badge', { 'badge-success': row.item.valid,'badge-warning': !row.item.valid }]"> {{row.item.valid ? 'Valid' : 'Not Valid'}}</span>
         </template>
         <template slot="actions" scope="row">
-          <click-confirm>
-            <b-button class="btn btn-outline-danger btn-sm" @click="remove(row.item.id)">Delete</b-button>
-          </click-confirm>
+          <b-button class="btn btn-outline-danger btn-sm" @click="remove(row.item.id)">Delete</b-button>
         </template>
       </b-table>
 
@@ -201,16 +199,22 @@
         })
       },
       remove (tokenId) {
-        this.$log.debug("Deleting %s", tokenId)
-        this.$raptor.Admin().Token().delete({ id: tokenId})
-        .then(() => {
-          this.$log.debug("Deleted %s", tokenId)
-          this.fetchData()
+        this.$dialog.confirm('Are you sure, you want to remove this token?')
+        .then(function () {
+          this.$log.debug("Deleting %s", tokenId)
+          this.$raptor.Admin().Token().delete({ id: tokenId})
+          .then(() => {
+            this.$log.debug("Deleted %s", tokenId)
+            this.fetchData()
+          })
+          .catch((e) => {
+            console.log(e)
+            this.$log.error("Error deleting %s", tokenId)
+          })
         })
-        .catch((e) => {
-          console.log(e)
-          this.$log.error("Error deleting %s", tokenId)
-        })
+        .catch(function () {
+          console.log('Clicked on cancel')
+        });
       },
     }
 

@@ -27,7 +27,7 @@
     </b-card>
 
     <b-card>
-      <b-table striped hover show-empty :items="devices" :fields="fields" :current-page="currentPage" :per-page="perPage" >
+      <b-table small responsive show-empty :items="devices" :fields="fields" :current-page="currentPage" :per-page="perPage" >
         <template slot="name" scope="row">{{row.item.name}}</template>
         <template slot="deviceid" scope="row">{{row.item.id}}</template>
         <template slot="created" scope="row">{{formatDate(row.item.json.createdAt * 1000)}}</template>

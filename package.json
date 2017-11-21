@@ -14,9 +14,9 @@
     "lint": "eslint --ext .js,.vue src test/unit/specs test/e2e/specs"
   },
   "dependencies": {
-    "bootstrap-vue": "0.20.1",
+    "bootstrap": "^3.3.7",
+    "bootstrap-vue": "^1.2.0",
     "chart.js": "2.6.0",
-    "click-confirm": "^1.1.0",
     "font-awesome": "^4.7.0",
     "fs": "0.0.1-security",
     "jquery": "^3.2.1",
@@ -38,6 +38,7 @@
     "vue-router": "2.7.0",
     "vue-slider-component": "^2.4.5",
     "vue2-dragula": "^2.5.0",
+    "vuejs-dialog": "^0.4.5",
     "vuex": "^2.3.1"
   },
   "devDependencies": {

@@ -82,7 +82,7 @@ export default Pie.extend({
       renderPieChart (datasets, lbls) {
         this.renderChart(
         {
-          labels: ['Speed'],
+          labels: lbls,
           datasets: datasets
         }, {
           responsive: true,
@@ -175,7 +175,7 @@ export default Pie.extend({
       populateChart(labels, lbl, dataForChart) {
         let dataset = [{
           backgroundColor: '#f87979',
-          data: [10, 39, 10, 40, 39, 0, 0]
+          data: dataForChart
         }]
         // console.log(dataForChart)
         this._chart.destroy();

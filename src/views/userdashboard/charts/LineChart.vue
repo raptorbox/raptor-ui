@@ -306,9 +306,9 @@ export default Line.extend({
           for (var i = 0; i < this.datasets.length; i++) {
             dsets.push({
               label: this.datasets[i].channel,
-              // fill: false,
-              // borderColor: colors[i],
-              backgroundColor: colors[i],
+              fill: false,
+              borderColor: colors[i],
+              // backgroundColor: colors[i],
               data: this.datasets[i].dataForChart
             })
           }
@@ -319,42 +319,44 @@ export default Line.extend({
           })
           this.renderLineChart(this.chartDatasets, this.streamChartLabels);
         })
-        .then(()=> {
-          //subscription
-          var context = this;
-          this.$raptor.Stream().subscribe(stream, function(msg) {
-            console.log(msg)
-            if((context._chart || context._chart != undefined || context._chart != null) && context._chart.ctx != null) {
-              for (var j = 0; j < context.datasets.length; j++) {
-                // console.log(msg.device + " " + context.datasets[j].device)
-                // console.log(context.datasets[j])
-                if(context.datasets[j].device.id == msg.device.id) {
-                  context.datasets[j].selectedStreamData.push(msg.record)
-                  if(context.datasets[j].selectedStreamData.length > 100) {
-                    context.datasets[j].selectedStreamData.shift()
-                  }
-                  let obj = context.extractChartDataDeviceStream(context.datasets[j].selectedStreamData,context.datasets[j].channel,context.selectedDisplayParam);
-                  context.datasets[j].dataForChart = [];
-                  context.datasets[j].streamChartLabels = []
-                  context.datasets[j].dataForChart = obj.data
-                  context.datasets[j].streamChartLabels = obj.labels
-                  context.streamChartLabels = context.streamChartLabels.concat(obj.labels)
-                  context._chart.data.datasets[j] = {
-                    label: context.datasets[j].channel,
-                    backgroundColor: colors[j],
-                    data: context.datasets[j].dataForChart
-                  }
-                  // console.log("data changed")
-                  // this.populateChart(this.streamChartLabels, this.channel, this.dataForChart)
-                }
-                // context.unsubscribeStream(context.datasets[j].stream)
-              }
-              // if(!(msg.type === 'stream' && msg.op === 'data' && msg.streamId === this.$raptor.stream)) {
-              //   return
-              // }
-            }
-          });
-        })
+        // .then(()=> {
+        //   //subscription
+        //   var context = this;
+        //   console.log("before")
+        //   console.log(this._chart)
+        //   this.$raptor.Stream().subscribe(stream, function(msg) {
+        //     console.log(msg)
+        //     if((context._chart || context._chart != undefined || context._chart != null) && context._chart.ctx != null) {
+        //       for (var j = 0; j < context.datasets.length; j++) {
+        //         // console.log(msg.device + " " + context.datasets[j].device)
+        //         // console.log(context.datasets[j])
+        //         if(context.datasets[j].device.id == msg.device.id) {
+        //           context.datasets[j].selectedStreamData.push(msg.record)
+        //           if(context.datasets[j].selectedStreamData.length > 100) {
+        //             context.datasets[j].selectedStreamData.shift()
+        //           }
+        //           let obj = context.extractChartDataDeviceStream(context.datasets[j].selectedStreamData,context.datasets[j].channel,context.selectedDisplayParam);
+        //           context.datasets[j].dataForChart = [];
+        //           context.datasets[j].streamChartLabels = []
+        //           context.datasets[j].dataForChart = obj.data
+        //           context.datasets[j].streamChartLabels = obj.labels
+        //           context.streamChartLabels = context.streamChartLabels.concat(obj.labels)
+        //           context._chart.data.datasets[j] = {
+        //             label: context.datasets[j].channel,
+        //             backgroundColor: colors[j],
+        //             data: context.datasets[j].dataForChart
+        //           }
+        //           console.log("data changed")
+        //           // this.populateChart(this.streamChartLabels, this.channel, this.dataForChart)
+        //         }
+        //         // context.unsubscribeStream(context.datasets[j].stream)
+        //       }
+        //       // if(!(msg.type === 'stream' && msg.op === 'data' && msg.streamId === this.$raptor.stream)) {
+        //       //   return
+        //       // }
+        //     }
+        //   });
+        // })
       },
 
       // search data based on timestamp for device

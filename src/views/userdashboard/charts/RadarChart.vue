@@ -89,7 +89,19 @@ export default Radar.extend({
           datasets: datasets
         }, {
           responsive: true,
-          maintainAspectRatio: false
+          maintainAspectRatio: true,
+          // legend: {
+          //     position: 'top',
+          // },
+          // title: {
+          //     display: true,
+          //     text: 'Chart.js Radar Chart'
+          // },
+          // scale: {
+          //   ticks: {
+          //     beginAtZero: true
+          //   }
+          // }
         })
       },
       load() {
