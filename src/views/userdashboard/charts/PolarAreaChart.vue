@@ -5,15 +5,25 @@ import moment from 'moment'
 var currentDate = moment();
 
 var colors = [
-              '#41B883',
-              '#E46651',
-              '#00D8FF',
-              '#DD1B16',
-              '#FFFF00'
+              'rgb(65,184,131)',
+              'rgb(228,102,81)',
+              'rgb(0,216,255)',
+              'rgb(221,27,22)',
+              'rgb(225,225,0)'
             ]
+var colorsWithOpacity = [
+    'rgba(65,184,131, 0.27)',
+    'rgba(228,102,81, 0.27)',
+    'rgba(0,216,255, 0.27)',
+    'rgba(221,27,22, 0.27)',
+    'rgb(225,225,0, 0.27)'
+]
+
 var monthNames = ["January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December"
 ];
+          //     display: false
+          // },
 
 export default PolarArea.extend({
   props: ['height', 'chartData', 'width', 'searchData', 'dataPassed'],
@@ -83,13 +93,39 @@ export default PolarArea.extend({
         return moment(new Date(d)).format('MMMM Do YYYY');
       },
       renderPolarAreaChart (datasets, lbls) {
+        var context = this
         this.renderChart(
         {
           labels: lbls,
           datasets: datasets
         }, {
           responsive: true,
-          maintainAspectRatio: false
+          maintainAspectRatio: false,
+          legend: {
+              display: false
+          },
+          legend: {
+              display: false
+          },
+          tooltips: {
+            callbacks: {
+              title: function(tooltipItem, data) {
+                return data['labels'][tooltipItem[0]['index']];
+              },
+              label: function(tooltipItem, data) {
+                return context.channel + ': ' + data['datasets'][0]['data'][tooltipItem['index']];
+              },
+              // afterLabel: function(tooltipItem, data) {
+              //   return data['datasets'][0]['data'][tooltipItem['index']];
+              // }
+            },
+            backgroundColor: '#FFF',
+            titleFontSize: 13,
+            titleFontColor: '#0066ff',
+            bodyFontColor: '#000',
+            bodyFontSize: 11,
+            displayColors: false
+          }
         })
       },
       load() {
@@ -176,9 +212,9 @@ export default PolarArea.extend({
         let streamChartLabels = []
         for (var i = 0; i < d.length; i++) {
           let s = d[i];
-          let sDate = (new Date(s.timestamp * 1000)).getMonth();
+          let sDate = (new Date(s.timestamp * 1000)).toUTCString();
           if((typeof s.channels[channel]) === 'number' || (typeof s.channels[channel]) === 'boolean') {
-            streamChartLabels.push(monthNames[sDate])
+            streamChartLabels.push(sDate)
             dataForChart.push(s.channels[channel])
           }
         }
@@ -190,15 +226,16 @@ export default PolarArea.extend({
       },
       populateChart(labels, lbl, dataForChart) {
         let dataset = []
+        // labels = lbl
         for (var i = 0; i < lbl.length; i++) {
-          lbl[i]
+          // lbl[i]
           dataset.push({
-            label: lbl,
+            // label: lbl,
             backgroundColor: colors[i],
-            pointBackgroundColor: monthNames,
+            // pointBackgroundColor: monthNames,
             pointBorderColor: '#fff',
             pointHoverBackgroundColor: '#fff',
-            pointHoverBorderColor: monthNames,
+            // pointHoverBorderColor: monthNames,
             data: dataForChart
           })
         }

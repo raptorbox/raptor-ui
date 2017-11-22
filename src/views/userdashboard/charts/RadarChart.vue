@@ -5,12 +5,20 @@ import moment from 'moment'
 var currentDate = moment();
 
 var colors = [
-              '#41B883',
-              '#E46651',
-              '#00D8FF',
-              '#DD1B16',
-              '#FFFF00'
+              'rgb(65,184,131)',
+              'rgb(228,102,81)',
+              'rgb(0,216,255)',
+              'rgb(221,27,22)',
+              'rgb(225,225,0)'
             ]
+var colorsWithOpacity = [
+    'rgba(65,184,131, 0.27)',
+    'rgba(228,102,81, 0.27)',
+    'rgba(0,216,255, 0.27)',
+    'rgba(221,27,22, 0.27)',
+    'rgb(225,225,0, 0.27)'
+]
+
 var monthNames = ["January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December"
 ];
@@ -43,7 +51,7 @@ export default Radar.extend({
     watch: {
       searchData: function(data) {
         this._chart.destroy()
-        console.log(data)
+        // console.log(data)
         this.selectedDisplayParam = this.dataPassed.display
         this.fromDate = this.dataPassed.fromDate
         this.toDate = this.dataPassed.toDate
@@ -116,6 +124,10 @@ export default Radar.extend({
         .catch((e) => {
           this.$log.debug('Failed to load device')
           this.$log.error(e)
+          if(e.toString().indexOf("Unauthorized") !== -1) {
+            this.$raptor.Auth().logout();
+            this.$router.push("/pages/login");
+          }
         })
       },
       // subscription / unsunscription of the data for the selected charts
@@ -134,7 +146,7 @@ export default Radar.extend({
           let obj = context.extractChartDataDeviceStream(context.selectedStreamData,context.channel);
           this.dataForChart = obj.data
           this.streamChartLabels = obj.labels
-          this.populateChart(this.streamChartLabels, this.channel, this.dataForChart)
+          this.populateChart(this.streamChartLabels, [this.channel], this.dataForChart)
         })
         .catch((e) => {
           this.$log.debug('Failed to load streams')
@@ -157,7 +169,7 @@ export default Radar.extend({
             let obj = context.extractChartDataDeviceStream(context.selectedStreamData,context.channel);
             context.dataForChart = obj.data
             context.streamChartLabels = obj.labels
-            context.populateChart(context.streamChartLabels, context.channel, context.dataForChart)
+            context.populateChart(context.streamChartLabels, [context.channel], context.dataForChart)
           }
         });
         // context.unsubscribeStream(stream)
@@ -199,10 +211,10 @@ export default Radar.extend({
       populateChart(labels, lbl, dataForChart) {
         let dataset = []
         for (var i = 0; i < lbl.length; i++) {
-          lbl[i]
+          // lbl[i]
           dataset.push({
             label: lbl,
-            backgroundColor: colors[i],
+            backgroundColor: colorsWithOpacity[i],
             borderColor: colors[i],
             pointBackgroundColor: colors[i],
             pointBorderColor: '#fff',
@@ -211,6 +223,7 @@ export default Radar.extend({
             data: dataForChart
           })
         }
+        // console.log(dataset)
         this._chart.destroy();
         this.renderRadarChart(dataset, labels);
       },
@@ -238,7 +251,7 @@ export default Radar.extend({
                 }
               }
             }
-            console.log(this.devices)
+            // console.log(this.devices)
             if(this.devices.length == this.chartData.length) {
               this.$emit('devicedata', this.devices);
             }
@@ -256,19 +269,19 @@ export default Radar.extend({
         }
       },
       subscribeDatasetStreams (stream) {
-        console.log(stream)
+        // console.log(stream)
         // var ts = Math.round((new Date()).getTime() / 1000);
         this.$raptor.Stream().list(stream, 0, 100, 'timestamp,desc')//list(stream, 0, ts)
         .then((streams) => {
-          console.log(streams)
+          // console.log(streams)
           if(streams.length > 0) {
             for (var j = 0; j < this.datasets.length; j++) {
-              console.log(streams[0].json.deviceId + " " + this.datasets[j].device.id)
+              // console.log(streams[0].json.deviceId + " " + this.datasets[j].device.id)
               if(this.datasets[j].device.id == streams[0].json.deviceId) {
                 streams.reverse()
                 this.datasets[j].selectedStreamData = streams
                 let obj = this.extractChartDataDeviceStream(streams,this.datasets[j].channel);
-                console.log(obj)
+                // console.log(obj)
                 this.datasets[j].dataForChart = obj.data
                 this.datasets[j].streamChartLabels = obj.labels
                 this.streamChartLabels = this.streamChartLabels.concat(obj.labels)
@@ -344,8 +357,8 @@ export default Radar.extend({
           this.loopOverStreamPagination (this.stream, query, pageNumber, startDate, endDate)
       },
       searchDataApi(stream, query, callback) {
-        console.log(query)
-        console.log(stream)
+        // console.log(query)
+        // console.log(stream)
         this.$raptor.Stream().search(stream, query)
         .then((stream) => {
           // console.log(stream.length)
@@ -377,13 +390,13 @@ export default Radar.extend({
             for (var i = 0; i < streams.length; i++) {
               context.selectedStreamData.push(streams[i])
             }
-            console.log(context.selectedStreamData)
+            // console.log(context.selectedStreamData)
             context.dataForChart = [];
             context.streamChartLabels = []
             let obj = context.extractChartDataDeviceStream(context.selectedStreamData,context.channel, context.selectedDisplayParam);
             context.dataForChart = obj.data
             context.streamChartLabels = obj.labels
-            context.populateChart(context.streamChartLabels, context.channel, context.dataForChart)
+            context.populateChart(context.streamChartLabels, [context.channel], context.dataForChart)
           }
         })
       },

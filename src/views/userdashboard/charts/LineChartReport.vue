@@ -5,11 +5,17 @@ import moment from 'moment'
 var currentDate = moment();
 
 var colors = [
-              '#41B883',
-              '#E46651',
-              '#00D8FF',
-              '#DD1B16'
+              'rgb(65,184,131)',
+              'rgb(228,102,81)',
+              'rgb(0,216,255)',
+              'rgb(221,27,22)'
             ]
+var colorsWithOpacity = [
+    'rgba(65,184,131, 0.27)',
+    'rgba(228,102,81, 0.27)',
+    'rgba(0,216,255, 0.27)',
+    'rgba(221,27,22, 0.27)'
+]
 
 export default Line.extend({
   props: ['height', 'width', 'searchData', 'dataPassed'],
@@ -87,9 +93,9 @@ export default Line.extend({
               ticks: {
                 display: false,
                 autoSkip : false,
-                callback: function(value, index, values) {
-                    return new moment(value).format('DD MMM');
-                }
+                // callback: function(value, index, values) {
+                //     return new moment(value).format('DD MMM');
+                // }
               },
               gridLines : {
                   display : true,
@@ -123,7 +129,8 @@ export default Line.extend({
         for (var i = 0; i < keys.length; i++) {
           let dataset = {
             label: keys[i],
-            backgroundColor: colors[i],
+            borderColor: colors[i],
+            backgroundColor: colorsWithOpacity[i],
             data: []
           }
           let countArray = {}

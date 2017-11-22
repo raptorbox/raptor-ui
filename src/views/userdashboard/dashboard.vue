@@ -1,12 +1,27 @@
 <template>
   <div class="wrapper">
     <div class="animated fadeIn">
-      <p>
+      <div class="col-md-9">
         <!-- <button @click="addWidget">Add Widget</button> -->
         <b-button type="button" variant="success" @click="addChartForDevicesCount">Add Device Count Chart</b-button>
         <b-button type="button" variant="success" @click="singleDataModal = true">Add Widget</b-button>
         <b-button type="button" variant="success" @click="multipleDataModal = true">Add Mix Chart Widget</b-button>
-      </p>
+      </div>
+      <!-- <div class="col-md-3">
+        <b-button type="button" i="wid.i" class="btn btn-link btn-sm" @click="(ev) => { changeDashboardView(ev,'1') }">
+          <i class="icon-menu icons font-2xl d-block" />
+        </b-button>
+        <b-button type="button" i="wid.i" class="btn btn-link btn-sm" @click="(ev) => { changeDashboardView(ev,'2') }">
+          <i class="icon-grid icons font-2xl d-block" />
+        </b-button>
+        <b-button type="button" i="wid.i" class="btn btn-link btn-sm" @click="(ev) => { changeDashboardView(ev,'3') }">
+          <div class='row'>
+            <i class="icon-options-vertical icons font-2xl d-block" />
+            <i class="icon-options-vertical icons font-2xl d-block" />
+            <i class="icon-options-vertical icons font-2xl d-block" />
+          </div>
+        </b-button>
+      </div> -->
 
       <div class="card-columns cols-2">
         <div class="container" v-dragula="widgets" drake="first"> 
@@ -285,13 +300,13 @@ export default {
       optionsStreams: [{ value: null, text: 'Please select a stream' }],
       optionsChannel: [{ value: null, text: 'Please select a channel' }],
       optionsChart: [
-      { value: null,        text: 'Please select a chart' },
-      { value: 'line',      text: 'Line Chart' },
-      { value: 'bar',       text: 'Bar Chart' },
-      { value: 'pie',       text: 'Pie Chart'               , disabled: true },
-      { value: 'polar',     text: 'Polar Chart'             , disabled: true },
-      { value: 'radar',     text: 'Radar Chart'             , disabled: true },
-      { value: 'doughnut',  text: 'Doughnut Chart'          , disabled: true },
+      { value: null,        text: 'Please select a chart'                     },
+      { value: 'line',      text: 'Line Chart'              , disabled: false },
+      { value: 'bar',       text: 'Bar Chart'               , disabled: false },
+      { value: 'pie',       text: 'Pie Chart'               , disabled: false },
+      { value: 'polar',     text: 'Polar Chart'             , disabled: false },
+      { value: 'radar',     text: 'Radar Chart'             , disabled: false },
+      { value: 'doughnut',  text: 'Doughnut Chart'          , disabled: false },
       // { value: 'bubble',    text: 'Bubble Chart' },
       // { value: 'scatter',   text: 'Scatter Chart' },
       ],
@@ -467,13 +482,14 @@ export default {
       this.widgets = dasboardWidgets
     },
     showDetails(event, widgetsData) {
-      // console.log(widgetsData)
+      console.log(widgetsData)
       this.$raptor.Inventory().read(widgetsData.device)
         .then((device) => {
-          // console.log(device)
+          console.log(device)
           this.widgetDetails = null
           let widgetDetails = null;
-          if(device.id == widgetsData.device) {
+          console.log(device.id == widgetsData.device.id)
+          if(device.id == widgetsData.device.id) {
             widgetDetails = '<ul>';
             widgetDetails += '<li><strong>Device Name:</strong>     ' + device.name + '</li>';
             widgetDetails += '<li><strong>Device created at:</strong>     ' + this.formatDate(device.json.createdAt) + '</li>';
@@ -862,6 +878,10 @@ export default {
         for (var j = 0; j < this.tableDataSource.length; j++) {
           if(source.number == this.tableDataSource[j].number) {
             this.tableDataSource[j].listOfDevicesForSelectOptions = listOfDevicesForSelectOptions
+            if(listOfDevicesForSelectOptions.length == 1) {
+              this.tableDataSource[j].device = listOfDevicesForSelectOptions[0]
+              this.itemClicked(listOfDevicesForSelectOptions[0], source)
+            }
           }
         }
         let data = this.tableDataSource
@@ -869,6 +889,10 @@ export default {
         this.tableDataSource = data
       } else {
         this.listOfDevicesForSelectOptions = listOfDevicesForSelectOptions
+        if(listOfDevicesForSelectOptions.length == 1) {
+          this.selectedDevice = listOfDevicesForSelectOptions[0]
+          this.itemClicked(this.selectedDevice, source)
+        }
       }
     },
     // to show the full screen chart with detailed data on new page

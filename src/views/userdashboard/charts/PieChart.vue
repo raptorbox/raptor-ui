@@ -5,12 +5,19 @@ import moment from 'moment'
 var currentDate = moment();
 
 var colors = [
-              '#41B883',
-              '#E46651',
-              '#00D8FF',
-              '#DD1B16',
-              '#FFFF00'
+              'rgb(65,184,131)',
+              'rgb(228,102,81)',
+              'rgb(0,216,255)',
+              'rgb(221,27,22)',
+              'rgb(225,225,0)'
             ]
+var colorsWithOpacity = [
+    'rgba(65,184,131, 0.27)',
+    'rgba(228,102,81, 0.27)',
+    'rgba(0,216,255, 0.27)',
+    'rgba(221,27,22, 0.27)',
+    'rgb(225,225,0, 0.27)'
+]
 
 export default Pie.extend({
   props: ['height', 'chartData', 'width', 'searchData', 'dataPassed'],
@@ -80,6 +87,7 @@ export default Pie.extend({
         return moment(new Date(d)).format('MMMM Do YYYY');
       },
       renderPieChart (datasets, lbls) {
+        var context = this
         this.renderChart(
         {
           labels: lbls,
@@ -87,6 +95,28 @@ export default Pie.extend({
         }, {
           responsive: true,
           maintainAspectRatio: false,
+          legend: {
+              display: false
+          },
+          tooltips: {
+            callbacks: {
+              title: function(tooltipItem, data) {
+                return data['labels'][tooltipItem[0]['index']];
+              },
+              label: function(tooltipItem, data) {
+                return context.channel + ': ' + data['datasets'][0]['data'][tooltipItem['index']];
+              },
+              // afterLabel: function(tooltipItem, data) {
+              //   return data['datasets'][0]['data'][tooltipItem['index']];
+              // }
+            },
+            backgroundColor: '#FFF',
+            titleFontSize: 13,
+            titleFontColor: '#0066ff',
+            bodyFontColor: '#000',
+            bodyFontSize: 11,
+            displayColors: false
+          }
         })
       },
       load() {
@@ -135,20 +165,22 @@ export default Pie.extend({
         })
         this.$raptor.Stream().subscribe(stream, function(msg) {
           console.log(msg)
-          context.selectedStreamData.push(msg.record);
-          if(context.selectedStreamData.length > 100) {
-            context.selectedStreamData.shift()
+          if((context._chart || context._chart != undefined || context._chart != null) && context._chart.ctx != null) {
+            context.selectedStreamData.push(msg.record);
+            if(context.selectedStreamData.length > 100) {
+              context.selectedStreamData.shift()
+            }
+            context.dataForChart = [];
+            context.streamChartLabels = []
+            context.selectedStreamData.push(msg.record);
+            let obj = context.extractChartDataDeviceStream(context.selectedStreamData,context.channel);
+            context.dataForChart = obj.data
+            context.streamChartLabels = obj.labels
+            context.populateChart(context.streamChartLabels, context.channel, context.dataForChart)
+            // if(!(msg.type === 'stream' && msg.op === 'data' && msg.streamId === this.$raptor.stream)) {
+            //   return
+            // }
           }
-          context.dataForChart = [];
-          context.streamChartLabels = []
-          context.selectedStreamData.push(msg.record);
-          let obj = context.extractChartDataDeviceStream(context.selectedStreamData,context.channel);
-          context.dataForChart = obj.data
-          context.streamChartLabels = obj.labels
-          context.populateChart(context.streamChartLabels, context.channel, context.dataForChart)
-          // if(!(msg.type === 'stream' && msg.op === 'data' && msg.streamId === this.$raptor.stream)) {
-          //   return
-          // }
         });
         // context.unsubscribeStream(stream)
       },
@@ -276,8 +308,8 @@ export default Pie.extend({
             dsets.push({
               label: this.datasets[i].channel,
               // fill: false,
-              // borderColor: colors[i],
-              backgroundColor: colors[i],
+              borderColor: colors[i],
+              backgroundColor: colorsWithOpacity[i],
               data: this.datasets[i].dataForChart
             })
           }
