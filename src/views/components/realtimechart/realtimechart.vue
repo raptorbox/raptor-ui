@@ -387,7 +387,7 @@ export default {
         arr.push(this.dictDevice[s]);
       }
       this.dataChartDevice = arr;
-      // console.log(this.dataChartDevice.length)
+      console.log(this.dataChartDevice.length)
       this.realData = this.dataChartDevice
     },
     getNode () {
@@ -588,7 +588,7 @@ export default {
       this.$raptor.Stream().subscribe(stream, function(msg) {
         console.log(msg)
         context.selectedStreamData.push(msg.record);
-        // console.log(context.selectedStreamData)
+        console.log(context.selectedStreamData)
         if(context.selectedStreamData.length > 100) {
           context.selectedStreamData.shift()
         }

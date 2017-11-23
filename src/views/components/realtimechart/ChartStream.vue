@@ -29,8 +29,21 @@ export default Line.extend({
   },
   watch: {
     data: function() {
-      this._chart.destroy();
-      this.renderLineChart();
+      if(this._chart != null && this._chart.ctx != null) {
+        this._chart.data.datasets = [{
+            label: this.chartLabel,
+            backgroundColor: convertHex(brandInfo, 10),
+            borderColor: brandInfo,
+            pointHoverBackgroundColor: '#fff',
+            borderWidth: 2,
+            data: this.data
+          }]
+        this._chart.data.labels = this.labels
+        this._chart.update()
+      } else {
+        this._chart.destroy();
+        this.renderLineChart();
+      }
     }
   },
   methods: {

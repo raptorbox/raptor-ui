@@ -7,21 +7,6 @@
         <b-button type="button" variant="success" @click="singleDataModal = true">Add Widget</b-button>
         <b-button type="button" variant="success" @click="multipleDataModal = true">Add Mix Chart Widget</b-button>
       </div>
-      <!-- <div class="col-md-3">
-        <b-button type="button" i="wid.i" class="btn btn-link btn-sm" @click="(ev) => { changeDashboardView(ev,'1') }">
-          <i class="icon-menu icons font-2xl d-block" />
-        </b-button>
-        <b-button type="button" i="wid.i" class="btn btn-link btn-sm" @click="(ev) => { changeDashboardView(ev,'2') }">
-          <i class="icon-grid icons font-2xl d-block" />
-        </b-button>
-        <b-button type="button" i="wid.i" class="btn btn-link btn-sm" @click="(ev) => { changeDashboardView(ev,'3') }">
-          <div class='row'>
-            <i class="icon-options-vertical icons font-2xl d-block" />
-            <i class="icon-options-vertical icons font-2xl d-block" />
-            <i class="icon-options-vertical icons font-2xl d-block" />
-          </div>
-        </b-button>
-      </div> -->
 
       <div class="card-columns cols-2">
         <div class="container" v-dragula="widgets" drake="first"> 
@@ -29,8 +14,12 @@
             <b-card show-header>
               <div slot="header">
                 <div class="row">
+                  <!-- v-on="mouseover: mouseOverDetails" -->
                   <div class="col-md-12 bg-light" style="padding:2px; padding-top:4px">
                   <div class="float-right">
+                    <button type="button" i="wid.i" class="btn btn-link" @click="(ev) => { onFullChartButtonClick(ev, wid) }" >
+                      <i class="icon-size-fullscreen icons font-2xl d-block" />
+                    </button>
                     <b-button type="button" i="wid.i" class="btn btn-link btn-sm" @click="(ev) => { onRemoveWidgetButtonClick(ev, wid) }">
                       <i class="icon-close icons font-2xl d-block" />
                     </b-button>
@@ -43,11 +32,7 @@
               </div>
               <div class="row">
                 <div class="col-md-12">
-                <div class="float-right">
-                  <button type="button" i="wid.i" class="btn btn-link" @click="(ev) => { onFullChartButtonClick(ev, wid) }" >
-                    <i class="icon-size-fullscreen icons font-2xl d-block" />
-                  </button>
-                </div>
+                    <span v-html="wid.widgetDetails"></span>
                 </div>
               </div>
               <div class="chart-wrapper" v-if="wid.chart == 'bar'">
@@ -419,24 +404,6 @@ export default {
     formatDate (d) {
       return moment(new Date(d)).format('MMMM Do YYYY');
     },
-    /*fetchData () {
-      let userId = this.$raptor.Auth().getUser().uuid
-      let context = this
-      let pathDashboard = '/users/'+userId+'/dashboard'
-      this.readDataFirebase('/users/', function(snapshot) {
-        if(snapshot.hasChild(userId)) {
-          console.log(snapshot.val())
-          if(snapshot.child(userId).hasChild('dashboard')) {
-            let arr = snapshot.child(userId).child('dashboard').val()
-            context.loadDefaultCharts(arr)
-            // context.setUserDashboardPreferences('dashboard', arr, userId);
-          }
-        } else {
-          context.$dbFirebase.ref('users/' + userId).set({dashboard: defaultDashboard});
-          context.loadDefaultCharts(defaultDashboard)
-        }
-      })
-    },*/
     populateMultipleDataSourceFields() {
       let obj = {
         number: 0,
@@ -480,16 +447,41 @@ export default {
       //   arr.push(widget)
       // }
       this.widgets = dasboardWidgets
+      let details = ''
+      for (var i = 0; i < dasboardWidgets.length; i++) {
+          if(dasboardWidgets[i].data) {
+            if(!(dasboardWidgets[i].data.constructor === Array)) {
+              details = ''
+              details += '<div class="col-md-12">';
+              details += '<strong> Device: </strong>'
+              details += dasboardWidgets[i].data.device + ' - ' + dasboardWidgets[i].data.stream + ' - ' + dasboardWidgets[i].data.channel
+              details += '</div>'
+            } else {
+              details = ''
+              for (var j = 0; j < dasboardWidgets[i].data.length; j++) {
+                details += '<div class="col-md-12">';
+                details += '<strong> Device ' + (j+1) +': </strong>'
+                details += dasboardWidgets[i].data[j].device.id + ' - ' + dasboardWidgets[i].data[j].stream + ' - ' + dasboardWidgets[i].data[j].channel
+                details += '</div>'
+              }
+            }
+            dasboardWidgets[i].widgetDetails = details
+          }
+      }
     },
     showDetails(event, widgetsData) {
-      console.log(widgetsData)
-      this.$raptor.Inventory().read(widgetsData.device)
+      // console.log(widgetsData)
+      if(widgetsData.constructor === Array) {
+        this.widgetDetails = this.showMultipleDevicesDetails(widgetsData)
+        this.widgetDetailModal = true
+      } else {
+        this.$raptor.Inventory().read(widgetsData.device)
         .then((device) => {
-          console.log(device)
+          // console.log(device)
           this.widgetDetails = null
           let widgetDetails = null;
-          console.log(device.id == widgetsData.device.id)
-          if(device.id == widgetsData.device.id) {
+          // console.log(device.id == widgetsData.device)
+          if(device.id == widgetsData.device) {
             widgetDetails = '<ul>';
             widgetDetails += '<li><strong>Device Name:</strong>     ' + device.name + '</li>';
             widgetDetails += '<li><strong>Device created at:</strong>     ' + this.formatDate(device.json.createdAt) + '</li>';
@@ -516,6 +508,36 @@ export default {
             this.$router.push("/pages/login");
           }
         })
+      }
+    },
+    showMultipleDevicesDetails (deviceArray) {
+      // console.log(deviceArray)
+      let devices = deviceArray.length
+      let selectedDeviceDetails = ''
+      for (var i = 0; i < devices; i++) {
+        selectedDeviceDetails += '<div class="col-md-12">';
+        selectedDeviceDetails += '<h3> Device ' + (i+1) +'</h3>'
+        selectedDeviceDetails += this.showDeviceDetails(deviceArray[i])
+        selectedDeviceDetails += '</div>'
+      }
+      return selectedDeviceDetails
+    },
+    showDeviceDetails (dev) {
+      let selectedDeviceDetails = '<ul>';
+      selectedDeviceDetails += '<li><strong>Name:</strong>     ' + dev.device.name + '</li>';
+      selectedDeviceDetails += '<li><strong>id:</strong>       ' + dev.device.id + '</li>';
+      // console.log(dev.device.streams[dev.stream])
+      if(dev.device.streams[dev.stream]) {
+        selectedDeviceDetails += '<li><strong>Stream Name:</strong>     ' + dev.stream + '</li>';
+      }
+      let stream = dev.device.streams[dev.stream]
+      if(stream.channels[dev.channel]) {
+        let channel = stream.channels[dev.channel]
+        selectedDeviceDetails += '<li><strong>Channel Name:</strong>     ' + channel.name + '</li>';
+        selectedDeviceDetails += '<li><strong>Channel Type:</strong>     ' + channel.type + '</li>';
+      }
+      selectedDeviceDetails += '</ul>';
+      return selectedDeviceDetails
     },
     addWidget(widData) {
       let widget = {
@@ -662,19 +684,10 @@ export default {
       this.clearFields()
     },
     onRemoveWidgetButtonClick (ev, widget) {
-      console.log(widget)
+      // console.log(widget)
       let index = this.widgets.indexOf(widget)
       this.widgets.splice(index, 1)
       this.setUserDashboardPreferences('dashboard', this.widgets, this.userId);
-      // this.readDataFirebase('/users/'+userId, function(snapshot) {
-      //   if(snapshot.hasChild('dashboard')) {
-      //     let arr = snapshot.child('dashboard').val()
-      //     let index = arr.indexOf(widget)
-      //     arr.splice(index, 1)
-      //     console.log(arr)
-      //     context.$dbFirebase.ref('users/' + userId).set({dashboard: arr});
-      //   }
-      // })
     },
     onCreateChannelButton () {
       if(this.tableDataSource.length < 5) {
@@ -732,25 +745,6 @@ export default {
         this.selectedChannel = null
       }
     },
-    // firebase functions
-    /*readDataFirebase(path, fun) {
-      return this.$dbFirebase.ref(path).once('value').then(fun);
-    },
-    writeToFirebase(widget) {
-      let userId = this.$raptor.Auth().getUser().uuid
-      let pathDashboard = '/users/'+userId+'/dashboard'
-      var context = this
-      this.readDataFirebase(pathDashboard, function(snapshot) {
-        console.log(snapshot.val())
-        console.log(snapshot.key)
-        if(snapshot.key == 'dashboard') {
-          let widgets = snapshot.val()
-          console.log(widgets)
-          widgets.push(widget)
-          context.$dbFirebase.ref(pathDashboard).set(widgets);
-        }
-      })
-    },*/
     // user profile
     getUserDashboardPreferences(key, userId) {
       this.$raptor.Profile().get(key, userId)
@@ -790,7 +784,6 @@ export default {
 
     // auto-complete methods
     itemClicked (item, source) {
-      console.log('You clicked an item!', item)
       let selectedDevice = null
       let optionsStreams = []
       for (var i = 0; i < this.devices.length; i++) {
@@ -799,7 +792,6 @@ export default {
           this.selectedDeviceDetail = selectedDevice;
           if(this.selectedDeviceDetail) {
             let keys = Object.keys(this.selectedDeviceDetail.json.streams);
-            // console.log(keys);
             optionsStreams.push({ value: null,text: 'Please select a stream' });
             for (var j = 0; j < keys.length; j++) {
               optionsStreams.push({ value: keys[j],text: keys[j] });
@@ -827,7 +819,6 @@ export default {
           this.selectedDeviceDetail = details;
           if(this.selectedDeviceDetail) {
             let keys = Object.keys(this.selectedDeviceDetail.json.streams);
-            // console.log(keys);
             this.optionsStreams = [];
             this.optionsStreams.push({ value: null,text: 'Please select a stream' });
             for (var j = 0; j < keys.length; j++) {
@@ -897,7 +888,6 @@ export default {
     },
     // to show the full screen chart with detailed data on new page
     onFullChartButtonClick(ev, wid) {
-      // this.unsubscribeAllCharts(wid)
       if(wid.data) {
         this.$raptor.Stream().unsubscribe({name: wid.data.stream, deviceId: wid.data.device}, function(msg) {
           console.log(msg)
@@ -917,12 +907,6 @@ export default {
             this.$router.push("/pages/login");
           }
         })
-        // this.$router.push({
-        //     name: 'ChartDetail',
-        //     params: {
-        //         widgetData: wid
-        //     }
-        // });
       }
     },
     // unsubscribe charts

@@ -14,7 +14,7 @@
     </div><!--/.row-->
 
     <b-card>
-      <div class="row" v-if="!(device != null && device.constructor === Array && device.length > 0)">
+      <div class="row" v-if="(device != null && device.constructor === Array && device.length > 0)">
         <div class="col-sm-12 hidden-sm-down">
           <b-button-toolbar class="float-right" aria-label="Toolbar with button groups">
             <b-button-group class="mr-3" aria-label="First group">
@@ -63,7 +63,7 @@
           </div>
         </div>
       </div>
-      <div class="col-md-12" v-if="!(device != null && device.constructor === Array && device.length > 0)">
+      <div class="col-md-12" v-if="(device != null && device.constructor === Array && device.length > 0)">
         <vue-slider ref="slider" v-bind="slider" v-model="slider.value" @callback="sliderValueChanged" @drag-start="sliderDragStart" @drag-end="sliderDragEnd"></vue-slider>
       </div>
     </b-card>
@@ -276,11 +276,12 @@ export default {
 
     //setting device data coming from child component
     setDeviceData (data) {
-      this.device = data
-      if(this.device.constructor === Array && this.device.length > 0) {
-        this.selectedDeviceDetails = this.showMultipleDevicesDetails(this.device)
-        this.chartLoaded = true
+      if(data.constructor === Array && data.length > 0) {
+        this.selectedDeviceDetails = this.showMultipleDevicesDetails(data)
+        // this.chartLoaded = true
+        // this.device = data
       } else {
+        this.device = data
         this.selectedDeviceDetails = this.showDeviceDetails(this.device)
         let dateArray = this.getDateList(this.device.json.createdAt*1000,moment().unix()*1000, 'hour')
         dateArray.reverse()
