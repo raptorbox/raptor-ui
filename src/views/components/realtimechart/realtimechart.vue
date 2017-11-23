@@ -147,6 +147,7 @@ export default {
       deviceDataTime : null,
       deviceName: null,
       selectedStream : null,
+      currentStream : null,
       selectedStreamData: null,
       listOfDevicesForSelectOptions : [{ value: null, text: 'Please select a device' }],
       totalNoOfDevices : 0,
@@ -277,7 +278,11 @@ export default {
       .catch((e) => {
         this.$log.debug('Failed to load device')
         this.$log.error(e)
-        this.loading = false
+        // this.loading = false
+        if(e.toString().indexOf("Unauthorized") !== -1) {
+          this.$raptor.Auth().logout();
+          this.$router.push("/pages/login");
+        }
       })
     },
     fetchDataDevice (device) {
@@ -387,7 +392,6 @@ export default {
         arr.push(this.dictDevice[s]);
       }
       this.dataChartDevice = arr;
-      console.log(this.dataChartDevice.length)
       this.realData = this.dataChartDevice
     },
     getNode () {
@@ -414,9 +418,13 @@ export default {
     onChangeOptionStream (evt) {
       // console.log(this.selectedDev.json.streams[this.selectedStream])
       // if(!this.dataSubscribed) {
-        this.unsubscribeStream(this.selectedDev.json.streams[this.selectedStream]);
+      if(this.currentStream) {
+        console.log(this.selectedDev.json.streams[this.currentStream].json.name)
+        this.unsubscribeStream(this.selectedDev.json.streams[this.currentStream]);
+      }
       //   this.dataSubscribed = true;
       // }
+      this.currentStream = this.selectedStream
       let val = evt.target.value;
       if(this.selectedDev) {
         let stream = this.selectedDev.json.streams[val];
@@ -510,7 +518,11 @@ export default {
         .catch((e) => {
           this.$log.debug('Failed to load device')
           this.$log.error(e)
-          this.loading = false
+          // this.loading = false
+          if(e.toString().indexOf("Unauthorized") !== -1) {
+            this.$raptor.Auth().logout();
+            this.$router.push("/pages/login");
+          }
         })
         i = i + 1
       }
@@ -539,8 +551,8 @@ export default {
         this.loopOverStreamPagination (stream, query, pageNumber, startDate, endDate)
     },
     searchDataApi(stream, query, callback) {
-      console.log(query)
-      console.log(stream)
+      // console.log(query)
+      // console.log(stream)
       this.$raptor.Stream().search(stream, query)
       .then((stream) => {
         // console.log(stream.length)
@@ -549,7 +561,11 @@ export default {
       .catch((e) => {
         this.$log.debug('Failed to load device')
         this.$log.error(e)
-        this.loading = false
+        // this.loading = false
+        if(e.toString().indexOf("Unauthorized") !== -1) {
+          this.$raptor.Auth().logout();
+          this.$router.push("/pages/login");
+        }
       })
     },
     loopOverStreamPagination (stream, query, pageNumber, startDate, endDate) {
@@ -587,29 +603,48 @@ export default {
       var context = this;
       this.$raptor.Stream().subscribe(stream, function(msg) {
         console.log(msg)
-        context.selectedStreamData.push(msg.record);
-        console.log(context.selectedStreamData)
-        if(context.selectedStreamData.length > 100) {
-          context.selectedStreamData.shift()
+        if(msg.record.streamId == context.currentStream) {
+          context.selectedStreamData.push(msg.record);
+          // console.log(context.selectedStreamData)
+          if(context.selectedStreamData.length > 100) {
+            context.selectedStreamData.shift()
+          }
+          context.extractChartDataDeviceStreamOneChannel(context.selectedStreamData,'minutes',context.selectedChannel);
+          if(context.isSliderDragged) {
+            context.sliderDragEnd()
+          }
+          context.changeStreamData();
+          // if(!(msg.type === 'stream' && msg.op === 'data' && msg.streamId === this.$raptor.stream)) {
+          //   return
+          // }
+          // console.log(context.selectedStreamData)
+          // console.log(context.selectedStreamData.length)
+          context.loading = false;
         }
-        context.extractChartDataDeviceStreamOneChannel(context.selectedStreamData,'minutes',context.selectedChannel);
-        if(context.isSliderDragged) {
-          context.sliderDragEnd()
+      })
+      .catch((e) => {
+        this.$log.debug('Failed to load device')
+        this.$log.error(e)
+        // this.loading = false
+        if(e.toString().indexOf("Unauthorized") !== -1) {
+          this.$raptor.Auth().logout();
+          this.$router.push("/pages/login");
         }
-        context.changeStreamData();
-        // if(!(msg.type === 'stream' && msg.op === 'data' && msg.streamId === this.$raptor.stream)) {
-        //   return
-        // }
-        // console.log(context.selectedStreamData)
-        // console.log(context.selectedStreamData.length)
-        context.loading = false;
-      });
+      })
     },
     unsubscribeStream (stream) {
-      var context = this;
       this.$raptor.Stream().unsubscribe(stream, function(msg) {
         console.log(msg)
-      });
+      })
+      .catch((e) => {
+        this.$log.debug('Failed to load device')
+        this.$log.error(e)
+        // this.loading = false
+        if(e.toString().indexOf("Unauthorized") !== -1) {
+          this.$raptor.Auth().logout();
+          this.$router.push("/pages/login");
+        }
+      })
     },
 
     // visualization of data
@@ -678,7 +713,7 @@ export default {
     },
     sliderValueChanged () {
       if(!this.isSliderDragging) {
-        console.log("slider value changed")
+        // console.log("slider value changed")
         this.sliderDragEnd()
         if(this.slider.value[0] >= 0 || this.slider.value[1] <= 100) {
           this.isSliderDragged = true
@@ -700,7 +735,7 @@ export default {
       this.$raptor.Inventory().list()
       .then((list) => {
         // this.$log.debug('Loaded %s device list', list.length);
-          console.log(list);
+          // console.log(list);
           this.extractChartDataDev(list);
           this.$data.labelChartDevices = Object.keys(this.$data.dictChartDevices); // getting labels
           this.$data.devices = list;
@@ -709,8 +744,8 @@ export default {
           this.changeDataDevicesChart();
         })
       .catch(function(e) {
-        console.log(e)
-        console.log(JSON.stringify(e))
+        // console.log(e)
+        // console.log(JSON.stringify(e))
         if(e.toString().indexOf("Unauthorized") !== -1) {
           this.$raptor.Auth().logout();
           this.$router.push("/pages/login");
@@ -748,7 +783,7 @@ export default {
     getSingleDevice (device) {
       if(device) {
         let keys = Object.keys(device.json.streams);
-        console.log(keys);
+        // console.log(keys);
         this.optionsStreams = [];
         this.optionsStreams.push({ value: null,text: 'Please select a stream' });
         for (var i = 0; i < keys.length; i++) {
