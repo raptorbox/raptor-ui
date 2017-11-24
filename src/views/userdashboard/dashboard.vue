@@ -13,10 +13,15 @@
           <div v-for="wid in widgets">
             <b-card show-header>
               <div slot="header">
-                <div class="row">
-                  <!-- v-on="mouseover: mouseOverDetails" -->
+                <div class="row" id="cardHeader">
+                  <!-- <b-tooltip target="cardHeader">
+                    <div v-html="showMouseOverDetail"></div>
+                  </b-tooltip> -->
                   <div class="col-md-12 bg-light" style="padding:2px; padding-top:4px">
                   <div class="float-right">
+                    <button type="button" i="wid.i" class="btn btn-link" @click="(ev) => { showDetails(ev, wid.data) }" >
+                      <i class="icon-info icons font-2xl d-block" />
+                    </button>
                     <button type="button" i="wid.i" class="btn btn-link" @click="(ev) => { onFullChartButtonClick(ev, wid) }" >
                       <i class="icon-size-fullscreen icons font-2xl d-block" />
                     </button>
@@ -30,11 +35,11 @@
                   </div>
                 </div>
               </div>
-              <div class="row">
+              <!-- <div class="row">
                 <div class="col-md-12">
                     <span v-html="wid.widgetDetails"></span>
                 </div>
-              </div>
+              </div> -->
               <div class="chart-wrapper" v-if="wid.chart == 'bar'">
                 <bar-chart :chartData="wid.data"/>
               </div>
@@ -318,21 +323,23 @@ export default {
       userId: null,
       // default dashboard
       dashboard: null,
-      defaultDashboard: [
-          {
-            x:0,
-            y:0,
-            w:6,
-            h:11,
-            i:0,
-            title:"Report",
-            chart: "line"
-          }],
+      defaultDashboard: [],
+          // {
+          //   x:0,
+          //   y:0,
+          //   w:6,
+          //   h:11,
+          //   i:0,
+          //   title:"Report",
+          //   chart: "line"
+          // }],
       // auto-complete item template
       itemAutoTemplate: ItemTemplate,
       itemAutoComplete: null,
       //unsubscribed all devices
       unsub: false,
+      // tooltip
+      showMouseOverDetail: null,
     }
   },
   ready: function() {
@@ -412,7 +419,8 @@ export default {
         stream: null,
         channel: null,
         optionsStreams: [],
-        optionsChannel: []
+        optionsChannel: [],
+        listOfDevicesForSelectOptions: this.listOfDevicesForSelectOptions
       }
       this.tableDataSource.push(obj)
     },
@@ -422,13 +430,15 @@ export default {
         // this.$log.debug('Loaded %s device list', list.length);
           // console.log(list);
           this.$data.devices = list;
-          list.forEach((e) => {
-            this.listOfDevicesForSelectOptions.push(e)
+          // list.forEach((e) => {
+          //   this.listOfDevicesForSelectOptions.push(e)
             // {value: e.id, text: e.name+' - '+e.id}
             // if(this.listOfDevicesTypeForSelectOptions.indexOf(e.name) == -1) {
             //   this.listOfDevicesTypeForSelectOptions.push(e.name)
             // }
-          });
+          // });
+          this.listOfDevicesForSelectOptions = list
+          this.tableDataSource[0].listOfDevicesForSelectOptions = this.listOfDevicesForSelectOptions
           // console.log(this.listOfDevicesTypeForSelectOptions)
         })
       .catch(function(e) {
@@ -441,11 +451,6 @@ export default {
       });
     },
     loadDefaultCharts(dasboardWidgets) {
-      // let arr = []
-      // for (var j = 0; j < dasboardWidgets.length; j++) {
-      //   let widget = {x:(j%2)*5,y:(j%2)*11,w:5,h:11,i:j+"", title:dasboardWidgets[j].title, chart: dasboardWidgets[j].chart, data:dasboardWidgets[j].data}
-      //   arr.push(widget)
-      // }
       this.widgets = dasboardWidgets
       let details = ''
       for (var i = 0; i < dasboardWidgets.length; i++) {
@@ -454,7 +459,7 @@ export default {
               details = ''
               details += '<div class="col-md-12">';
               details += '<strong> Device: </strong>'
-              details += dasboardWidgets[i].data.device + ' - ' + dasboardWidgets[i].data.stream + ' - ' + dasboardWidgets[i].data.channel
+              details += dasboardWidgets[i].data.device.id + ' - ' + dasboardWidgets[i].data.stream + ' - ' + dasboardWidgets[i].data.channel
               details += '</div>'
             } else {
               details = ''
@@ -481,7 +486,7 @@ export default {
           this.widgetDetails = null
           let widgetDetails = null;
           // console.log(device.id == widgetsData.device)
-          if(device.id == widgetsData.device) {
+          if(device.id == widgetsData.device.id) {
             widgetDetails = '<ul>';
             widgetDetails += '<li><strong>Device Name:</strong>     ' + device.name + '</li>';
             widgetDetails += '<li><strong>Device created at:</strong>     ' + this.formatDate(device.json.createdAt) + '</li>';
@@ -546,7 +551,7 @@ export default {
         w:6,
         h:11,
         i:this.widgets.length+1,
-        title:widData.title,
+        title: (widData.title == null || widData.title == '') ? 'Widget' : widData.title,
         chart: widData.chart,
         data:{
           device: widData.data.device,
@@ -555,6 +560,7 @@ export default {
         }
       }
       this.widgets.push(widget)
+      this.loadDefaultCharts(this.widgets)
       this.selectedDevice = null
       this.selectedStream = null
       this.selectedChannel = null
@@ -620,25 +626,33 @@ export default {
         if(stream) {
           // console.log(stream)
           this.selectedStreamDetail = stream
-          let keys = Object.keys(stream.channels);
-          this.optionsChannel = [];
-          this.optionsChannel.push({ value: null,text: 'Please select a Channel' });
-          for (var i = 0; i < keys.length; i++) {
-            if(stream.channels[keys[i]].type === 'number' || stream.channels[keys[i]].type === 'boolean') {
-              this.optionsChannel.push({ value: keys[i],text: keys[i] });
-            } else {
-              this.optionsChannel.push({ text: keys[i], disabled: true });
-            }
-          }
-          if(source) {
-            for (var i = 0; i < this.tableDataSource.length; i++) {
-              if(source.number == this.tableDataSource[i].number) {
-                this.tableDataSource[i].optionsChannel = this.optionsChannel
-                this.optionsChannel = []
-              }
-            }
+          if(stream.dynamic) {
+            this.fetchStreamDataForChannels(stream, source)
+          } else {
+            this.populateChannelSelectOptionsForStream(stream, source)
           }
         }
+      }
+    },
+    populateChannelSelectOptionsForStream(stream, source) {
+      let keys = Object.keys(stream.channels);
+      let optionsChannel = [];
+      optionsChannel.push({ value: null,text: 'Please select a Channel' });
+      for (var i = 0; i < keys.length; i++) {
+        if(stream.channels[keys[i]].type === 'number' || stream.channels[keys[i]].type === 'boolean') {
+          optionsChannel.push({ value: keys[i],text: keys[i] });
+        } else {
+          optionsChannel.push({ text: keys[i], disabled: true });
+        }
+      }
+      if(source) {
+        for (var i = 0; i < this.tableDataSource.length; i++) {
+          if(source.number == this.tableDataSource[i].number) {
+            this.tableDataSource[i].optionsChannel = optionsChannel
+          }
+        }
+      } else {
+        this.optionsChannel = optionsChannel
       }
     },
     onChangeOptionChannel (evt) {
@@ -698,7 +712,8 @@ export default {
           stream: null,
           channel: null,
           optionsStreams: [],
-          optionsChannel: []
+          optionsChannel: [],
+          listOfDevicesForSelectOptions: this.listOfDevicesForSelectOptions
         }
         this.tableDataSource.push(obj)
       }
@@ -711,7 +726,7 @@ export default {
         h:11,
         i:this.widgets.length+1,
         chart: this.selectedChart,
-        title: this.selectedTitle,
+        title: (this.selectedTitle == null || this.selectedTitle == '') ? 'Widget' : this.selectedTitle,
         data: []
       }
       for (var i = 0; i < this.tableDataSource.length; i++) {
@@ -723,6 +738,7 @@ export default {
       }
       // console.log(widget)
       this.widgets.push(widget)
+      this.loadDefaultCharts(this.widgets)
       this.clearFields()
       this.setUserDashboardPreferences('dashboard', this.widgets, this.userId);
       // this.writeToFirebase(widget)
@@ -732,7 +748,7 @@ export default {
         this.selectedChart = null
         this.selectedTitle = null
         this.tableDataSource = []
-        this.populateMultipleDataSourceFields();
+        // this.populateMultipleDataSourceFields();
       } else {
         this.listOfDevicesForSelectOptions = []
         this.optionsStreams = []
@@ -770,7 +786,8 @@ export default {
       this.$raptor.Profile().set(key, value, userId)
       .then((dashboard) => {
         // this.$log.debug('Loaded %s device list', list.length);
-        // console.log(dashboard);
+        console.log("Dashboard updated")
+        console.log(dashboard);
       })
       .catch(function(e) {
         // console.log(e)
@@ -930,6 +947,45 @@ export default {
           });
         }
       }
+    },
+    // fetch channels for dynamic streams
+    fetchStreamDataForChannels (stream, source) {
+      this.$raptor.Stream().list(stream, 0, 1, 'timestamp,desc')
+      .then((streams) => {
+        console.log(streams)
+        if(streams.length > 0) {
+          let chs = streams[0].channels
+          let keys = Object.keys(chs);
+          let optionsChannel = [];
+          console.log(keys)
+          for (var i = 0; i < keys.length; i++) {
+            if(chs[keys[i]] * 1) {
+              if(optionsChannel == 0) {
+                optionsChannel.push({ value: null,text: 'Please select a Channel' });
+              }
+              optionsChannel.push({ value: keys[i],text: keys[i] });
+            }
+          }
+          console.log(optionsChannel)
+          if(source) {
+            for (var i = 0; i < this.tableDataSource.length; i++) {
+              if(source.number == this.tableDataSource[i].number) {
+                this.tableDataSource[i].optionsChannel = optionsChannel
+              }
+            }
+          } else {
+            this.optionsChannel = optionsChannel
+          }
+        }
+      })
+      .catch(function(e) {
+        // console.log(e)
+        // console.log(JSON.stringify(e))
+        if(e.toString().indexOf("Unauthorized") !== -1) {
+          context.$raptor.Auth().logout();
+          context.$router.push("/pages/login");
+        }
+      });
     },
   }
 }

@@ -49,12 +49,12 @@ export default Bar.extend({
         this.selectedDisplayParam = this.dataPassed.display
         this.fromDate = this.dataPassed.fromDate
         this.toDate = this.dataPassed.toDate
-        console.log(this.fromDate + "    " + this.toDate)
+        // console.log(this.fromDate + "    " + this.toDate)
         this.searchDataForDates(this.fromDate, this.toDate)
       }
     },
     mounted () {
-      console.log(this.chartData)
+      // console.log(this.chartData)
       if( !(this.chartData instanceof Array) ) {
         this.device = this.chartData.device
         this.channel = this.chartData.channel
@@ -188,7 +188,7 @@ export default Bar.extend({
         for (var i = 0; i < d.length; i++) {
           let s = d[i];
           let sDate = (new Date(s.timestamp * 1000)).toUTCString();
-          if((typeof s.channels[channel]) === 'number' || (typeof s.channels[channel]) === 'boolean') {
+          if((typeof s.channels[channel]) === 'number' || (typeof s.channels[channel]) === 'boolean' || (s.channels[channel] * 1)) {
             streamChartLabels.push(sDate)
             dataForChart.push(s.channels[channel])
           }
@@ -223,8 +223,8 @@ export default Bar.extend({
                 if(!this.checkDatasetExist(dev)) {
                   this.datasets.push(dev)
                   this.devices.push(device)
-                  if(this.datasets[j] && this.datasets[j].stream) {
-                    this.subscribeDatasetStreams(this.datasets[j].stream);
+                  if(dev.stream) {
+                    this.subscribeDatasetStreams(dev.stream);
                   }
                   if(this.devices.length == this.chartData.length) {
                     this.$emit('devicedata', this.devices);
@@ -277,6 +277,7 @@ export default Bar.extend({
                   if(!this.datasets[j].pushed) {
                     this.datasets[j].pushed = true
                     this.pushNewDataStreamInChart(this.datasets[j])
+                    this.subsciptionOfStreamForMultipleData(this.datasets[j].stream)
                   }
                 }
                 this.receivedData++
@@ -313,7 +314,7 @@ export default Bar.extend({
           // this._chart.data.labels = this.streamChartLabels
           // this._chart.update()
           this._chart.destroy()
-          console.log(this.chartDatasets)
+          // console.log(this.chartDatasets)
           this.renderBarChart(this.chartDatasets, this.streamChartLabels);
         }
       },
@@ -352,7 +353,7 @@ export default Bar.extend({
                   context.datasets[j].dataForChart = obj.data
                   context.datasets[j].streamChartLabels = obj.labels
                   context.streamChartLabels = obj.labels
-                  console.log(context._chart.data)
+                  // console.log(context._chart.data)
                   context._chart.data.datasets[j] = {
                     label: context.datasets[j].channel,
                     borderColor: colors[j],

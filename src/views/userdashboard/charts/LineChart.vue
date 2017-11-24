@@ -207,7 +207,7 @@ export default Line.extend({
         for (var i = 0; i < d.length; i++) {
           let s = d[i];
           let sDate = (new Date(s.timestamp * 1000)).toUTCString();
-          if((typeof s.channels[channel]) === 'number' || (typeof s.channels[channel]) === 'boolean') {
+          if((typeof s.channels[channel]) === 'number' || (typeof s.channels[channel]) === 'boolean' || (s.channels[channel] * 1)) {
             streamChartLabels.push(sDate)
             dataForChart.push(s.channels[channel])
           }
@@ -237,8 +237,9 @@ export default Line.extend({
           .then((device) => {
             // console.log(device)
             for (var j = 0; j < this.chartData.length; j++) {
-              // console.log(this.chartData[j].device)
+              // console.log(this.chartData[j].device.id)
               // console.log(device.id)
+              // console.log(this.chartData[j].device.id == device.id)
               if(this.chartData[j].device.id == device.id) {
                 let str = device.getStream(this.chartData[j].stream)
                 let dev = {
@@ -247,11 +248,12 @@ export default Line.extend({
                   channel: this.chartData[j].channel,
                   pushed: false
                 }
-                if(!this.checkDatasetExist(dev)) {
+                let exist = this.checkDatasetExist(dev)
+                if(!exist) {
                   this.datasets.push(dev)
                   this.devices.push(device)
-                  if(this.datasets[j] && this.datasets[j].stream) {
-                    this.subscribeDatasetStreams(this.datasets[j].stream);
+                  if(dev.stream) {
+                    this.subscribeDatasetStreams(dev.stream);
                   }
                   if(this.devices.length == this.chartData.length) {
                     this.$emit('devicedata', this.devices);
@@ -287,6 +289,7 @@ export default Line.extend({
         return exist
       },
       subscribeDatasetStreams (stream) {
+        // console.log(stream)
         this.$raptor.Stream().list(stream, 0, 100, 'timestamp,desc')
         .then((streams) => {
           // console.log(streams)
@@ -307,6 +310,7 @@ export default Line.extend({
                   if(!this.datasets[j].pushed) {
                     this.datasets[j].pushed = true
                     this.pushNewDataStreamInChart(this.datasets[j])
+                    this.subsciptionOfStreamForMultipleData(this.datasets[j].stream)
                   }
                 }
                 this.receivedData++
