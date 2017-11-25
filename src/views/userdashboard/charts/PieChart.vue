@@ -108,7 +108,8 @@ export default Pie.extend({
                 return data['labels'][tooltipItem[0]['index']];
               },
               label: function(tooltipItem, data) {
-                return context.channel + ': ' + data['datasets'][0]['data'][tooltipItem['index']];
+                let channel = (context.channel) ? context.channel : context.channels[tooltipItem['datasetIndex']]
+                return channel + ': ' + data['datasets'][tooltipItem['datasetIndex']]['data'][tooltipItem['index']];
               },
               // afterLabel: function(tooltipItem, data) {
               //   return data['datasets'][0]['data'][tooltipItem['index']];

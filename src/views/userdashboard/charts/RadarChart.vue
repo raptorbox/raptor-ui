@@ -46,6 +46,7 @@ export default Radar.extend({
         toDate: null,
         // records devices
         devices: [],
+        channels: [],
       }
     },
     watch: {
@@ -91,25 +92,46 @@ export default Radar.extend({
         return moment(new Date(d)).format('MMMM Do YYYY');
       },
       renderRadarChart (datasets, lbls) {
+        var context = this
+        // if(!lbls) {
+        //   lbls = this.channels
+        // }
+        // console.log(lbls)
         this.renderChart(
         {
           labels: lbls,
           datasets: datasets
         }, {
-          responsive: true,
-          maintainAspectRatio: true,
-          // legend: {
-          //     position: 'top',
-          // },
-          // title: {
-          //     display: true,
-          //     text: 'Chart.js Radar Chart'
-          // },
-          // scale: {
-          //   ticks: {
-          //     beginAtZero: true
-          //   }
-          // }
+          // responsive: true,
+          // maintainAspectRatio: false,
+          legend: {
+              display: true,
+          },
+          scale: {
+            pointLabels: {
+              fontSize: 0
+            }
+          },
+          tooltips: {
+            callbacks: {
+              title: function(tooltipItem, data) {
+                return data['labels'][tooltipItem[0]['index']];
+              },
+              label: function(tooltipItem, data) {
+                let channel = (context.channel) ? context.channel : context.channels[tooltipItem['datasetIndex']]
+                return channel + ': ' + data['datasets'][tooltipItem['datasetIndex']]['data'][tooltipItem['index']];
+              },
+              // afterLabel: function(tooltipItem, data) {
+              //   return data['datasets'][0]['data'][tooltipItem['index']];
+              // }
+            },
+            backgroundColor: '#FFF',
+            titleFontSize: 13,
+            titleFontColor: '#0066ff',
+            bodyFontColor: '#000',
+            bodyFontSize: 11,
+            displayColors: false
+          }
         })
       },
       load() {
@@ -196,9 +218,9 @@ export default Radar.extend({
         let streamChartLabels = []
         for (var i = 0; i < d.length; i++) {
           let s = d[i];
-          let sDate = (new Date(s.timestamp * 1000)).getMonth();
+          let sDate = (new Date(s.timestamp * 1000)).toUTCString();
           if((typeof s.channels[channel]) === 'number' || (typeof s.channels[channel]) === 'boolean' || (s.channels[channel] * 1)) {
-            streamChartLabels.push(monthNames[sDate])
+            streamChartLabels.push(sDate)
             dataForChart.push(s.channels[channel])
           }
         }
@@ -237,6 +259,7 @@ export default Radar.extend({
             // console.log(device)
             for (var j = 0; j < this.chartData.length; j++) {
               if(this.chartData[j].device.id == device.id) {
+                this.channels.push(this.chartData[j].channel)
                 let dev = {
                   device: device,
                   stream: device.getStream(this.chartData[j].stream),

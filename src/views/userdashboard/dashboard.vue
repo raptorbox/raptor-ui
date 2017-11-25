@@ -566,6 +566,7 @@ export default {
       this.selectedChannel = null
       this.selectedChart = null
       this.selectedTitle = null
+      this.itemAutoComplete = null
       this.setUserDashboardPreferences('dashboard', this.widgets, this.userId);
       // this.writeToFirebase(widget)
     },

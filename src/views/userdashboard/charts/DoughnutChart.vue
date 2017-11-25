@@ -42,6 +42,7 @@ export default Doughnut.extend({
         toDate: null,
         // records devices
         devices: [],
+        channels: [],
       }
     },
     watch: {
@@ -88,6 +89,9 @@ export default Doughnut.extend({
       },
       renderDoughnutChart (datasets, lbls) {
         var context = this
+        if(!lbls) {
+          lbls = this.channels
+        }
         this.renderChart(
         {
           labels: lbls,
@@ -112,7 +116,8 @@ export default Doughnut.extend({
                 return data['labels'][tooltipItem[0]['index']];
               },
               label: function(tooltipItem, data) {
-                return context.channel + ': ' + data['datasets'][0]['data'][tooltipItem['index']];
+                let channel = (context.channel) ? context.channel : context.channels[tooltipItem['datasetIndex']]
+                return channel + ': ' + data['datasets'][tooltipItem['datasetIndex']]['data'][tooltipItem['index']];
               },
               // afterLabel: function(tooltipItem, data) {
               //   return data['datasets'][0]['data'][tooltipItem['index']];
@@ -240,6 +245,7 @@ export default Doughnut.extend({
             // console.log(device)
             for (var j = 0; j < this.chartData.length; j++) {
               if(this.chartData[j].device.id == device.id) {
+                this.channels.push(this.chartData[j].channel)
                 let dev = {
                   device: device,
                   stream: device.getStream(this.chartData[j].stream),
