@@ -23,7 +23,7 @@
     "lodash": "^4.17.2",
     "loglevel": "^1.4.1",
     "moment": "^2.18.1",
-    "raptor-sdk": "^4.3.39",
+    "raptor-sdk": "5.*",
     "request": "^2.83.0",
     "simple-line-icons": "^2.4.1",
     "simple-vue-validator": "^0.14.0",

@@ -113,7 +113,8 @@
         this.loading = true
         this.$log.debug('Fetching device list')
         this.$raptor.Inventory().list()
-        .then((list) => {
+        .then((pager) => {
+          const list = pager.getContent()
           this.$log.debug('Loaded %s device list', list.length)
           console.log(list)
           // console.log(JSON.stringify(list))
