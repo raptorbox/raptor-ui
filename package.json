@@ -1,9 +1,8 @@
 {
-  "name": "coreui-vue",
-  "version": "1.0.0-alpha.6",
-  "description": "Open Source Admin Template",
-  "author": "Łukasz Holeczek <lukasz@holeczek.pl>",
-  "private": true,
+  "name": "raptorbox-ui",
+  "version": "5.0.0",
+  "description": "Raptorbox Admin UI",
+  "author": "Ans Riaz <ariaz@fbk.eu>",
   "scripts": {
     "dev": "node build/dev-server.js",
     "start": "node build/dev-server.js",
