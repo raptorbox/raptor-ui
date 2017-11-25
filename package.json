@@ -67,7 +67,7 @@
     "eslint-plugin-node": "5.1.1",
     "eslint-plugin-promise": "3.5.0",
     "eslint-plugin-standard": "3.0.1",
-    "eslint-plugin-vue": "^3.12.0",
+    "eslint-plugin-vue": "^3.14.0",
     "eventsource-polyfill": "^0.9.6",
     "express": "4.15.4",
     "extract-text-webpack-plugin": "3.0.0",
