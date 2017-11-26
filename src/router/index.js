@@ -421,7 +421,7 @@ const router = new Router({
 })
 
 router.beforeEach((to, from, next) => {
-  Vue.log.debug('accessing path %s', to.path)
+  // Vue.log.debug('Accessing path %s', to.path)
 
   if (to.path === PATH_LOGIN) {
     Vue.log.debug('skip %s', PATH_LOGIN)

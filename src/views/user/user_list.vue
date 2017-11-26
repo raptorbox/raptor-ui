@@ -1,108 +1,58 @@
 <template>
-  <div class="animated fadeIn row row-fluid">
-    <div class="col-lg-12">
-      <!-- <b-card header="<i class='fa fa-align-justify'></i> Users"> -->
-      <b-card>
-        <div class="clearfix" style="background-color: #f0f3f5; border-bottom: 1px solid #c2cfd6; padding:5px;">
-          <!-- <div style="float: left;">
-            <p style="text-align: center; font-weight:bold; margin:0;">Users</p>
+<div class="animated fadeIn row row-fluid">
+  <div class="col-lg-12">
+
+    <b-card>
+
+      <div slot="header">
+
+        <div class="row row-fluid">
+          <div class="col-lg-8 list-inline">
+            <h3 class="list-inline-item"><i class="fa fa-users"></i> Users</h3>
+            <b-button class="list-inline-item" variant="primary" :to="{ name: 'UsersCreate'}">
+              <i class="fa fa-plus"></i> New
+            </b-button>
           </div>
-          <div style="float: right;">
-            <b-button class="btn btn-primary" :to="{ name: 'UsersCreate'}">Create User</b-button>
-            <b-form-fieldset horizontal :label-cols="1">
+          <div class="col-md-4 text-right">
+            <b-form-fieldset description="Items per page" label="Show" horizontal>
               <b-form-select :options="pageOptions" v-model="perPage" />
             </b-form-fieldset>
-          </div> -->
-          <div>
-            <div style="float: left;">
-              <p style="text-align: center; font-weight:bold; margin:0;">Users</p>
-            </div>
-            <div class="col-md-2 col-md-offset-2" style="float: right;">
-              <div class="row" style="margin-left:auto; margin-right:0;">
-                <div class="col-md-6">
-                  <b-button class="btn btn-primary" :to="{ name: 'UsersCreate'}">Create User</b-button>
-                </div>
-                <div class="col-md-6">
-                  <b-form-fieldset horizontal>
-                    <b-form-select :options="pageOptions" v-model="perPage" />
-                  </b-form-fieldset>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
-        <!-- <table class="table table-striped">
-          <thead>
-            <tr>
-              <th>Username</th>
-              <th>Registered</th>
-              <th>Roles</th>
-              <th>Status</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="row,idx in list">
-              <td>
-                <b-button class="btn btn-link" :to="{ name: 'UsersUpdate', params: { userId: row.uuid }}">
-                  {{row.username}}
-                </b-button>
-              </td>
 
-              <td>{{formatDate(row.created)}}</td>
-              <td>{{row.roles.join(", ")}}</td>
-              <td>
-                <span v-bind:class="['badge', {
-                'badge-success': row.enabled,
-                'badge-warning': !row.enabled
-              }]">{{row.enabled ? 'Enabled' : 'Disabled'}}</span>
-            </td>
-            <td>
-              <click-confirm>
-                <b-button class="btn btn-outline-danger btn-sm" @click="remove(row.uuid)">Delete</b-button>
-              </click-confirm>
-            </td>
-          </tr>
+      </div>
 
-        </tbody>
-      </table> -->
-
-      <b-table small responsive show-empty :items="list" :fields="fields" :current-page="currentPage" :per-page="perPage" >
+      <b-table no-local-sorting small responsive show-empty :items="list" :fields="fields" @sort-changed="sortingChanged" :per-page="0">
+        <template slot="id" scope="row">
+              <b-badge size="sm" variant="light" :to="{ name: 'UsersUpdate', params: { userId: row.item.id }}">{{row.item.id}}</b-badge>
+            </template>
         <template slot="username" scope="row">
-          <b-button class="btn btn-link" :to="{ name: 'UsersUpdate', params: { userId: row.item.uuid }}">
+          <b-button variant="link" :to="{ name: 'UsersUpdate', params: { userId: row.item.id }}">
             {{row.item.username}}
           </b-button>
         </template>
-        <template slot="registered" scope="row">{{formatDate(row.item.created)}}</template>
-        <template slot="roles" scope="row">{{row.item.roles ? row.item.roles.join(', ') : ''}}</template>
+        <template slot="roles" scope="row">
+            <b-badge v-for="role in row.item.roles" :key="role.name" :variant="role.name === 'admin' ? 'info' : 'light'">
+                {{ role.name }}
+            </b-badge>
+        </template>
         <template slot="status" scope="row">
-          <span v-bind:class="['badge', { 'badge-success': row.item.enabled,'badge-warning': !row.item.enabled }]"> {{row.item.enabled ? 'Enabled' : 'Disabled'}}</span>
+            <b-badge :variant="row.item.enabled ? 'success' : 'warning'">{{row.item.enabled ? 'Enabled' : 'Disabled'}}</b-badge>
+        </template>
+        <template slot="created" scope="row">
+            {{formatDate(row.item.created)}}
         </template>
         <template slot="actions" scope="row">
-          <span v-if="user.uuid == row.item.uuid || (user.name=='admin' && user.password=='admin.openiot')" >
-            <b-button class="btn btn-outline-danger btn-sm" disabled>Delete</b-button>
-          </span>
-          <span v-else>
-              <b-button class="btn btn-outline-danger btn-sm" @click="remove(row.item.uuid)">Delete</b-button>
-          </span>
+            <b-button title="Delete user" variant="danger" :disabled="!isAllowed('user_delete')" @click="remove(row.item)">
+              <i class="fa fa-remove fa-lg"></i>
+            </b-button>
         </template>
       </b-table>
 
-      <!-- <ul class="pagination">
-
-        <li class="page-item"><a class="page-link" href="#">Prev</a></li>
-
-        <li class="page-item active">
-          <a class="page-link" href="#">1</a>
-        </li>
-
-        <li class="page-item"><a class="page-link" href="#">2</a></li>
-
-        <li class="page-item"><a class="page-link" href="#">Next</a></li>
-      </ul> -->
       <div>
-        <b-pagination :total-rows="list.length" :per-page="perPage" v-model="currentPage" prev-text="Prev" next-text="Next" />
+        <b-pagination :total-rows="totalRows" :per-page="perPage" v-model="currentPage" prev-text="Prev" next-text="Next" />
       </div>
+
     </b-card>
   </div>
   <!--/.col-->
@@ -112,84 +62,127 @@
 </template>
 
 <script>
-  import moment from 'moment'
+import moment from 'moment'
 
-  export default {
-    name: 'user_list',
-    data () {
-      return {
-        loading: false,
-        list: [],
-        error: null,
-        currentPage: 1,
-        fields: {
-          username:     { label: 'Username' },
-          registered:   { label: 'Registered' },
-          roles:        { label: 'Roles' },
-          status:       { label: 'Status'},
-          actions:      { }
+export default {
+  name: 'user_list',
+  data() {
+    return {
+      loading: false,
+      pager: null,
+      list: [],
+      error: null,
+      currentPage: 1,
+      fields: {
+        id: {
+          label: 'Id',
+          sortable: true,
         },
-        perPage: 10,
-        totalRows: 0,
-        user: null,
-        pageOptions: [{text:10,value:10},{text:25,value:25},{text:50,value:50}]
-      }
+        username: {
+          label: 'Username',
+          sortable: true,
+        },
+        created: {
+          label: 'Created',
+          sortable: true,
+        },
+        roles: {
+          label: 'Roles'
+        },
+        status: {
+          label: 'Status'
+        },
+        actions: {}
+      },
+      perPage: 25,
+      totalRows: 0,
+      user: null,
+      sortBy: "created",
+      sortDir: "desc",
+      pageOptions: [{
+        text: 25,
+        value: 25
+      }, {
+        text: 100,
+        value: 100
+      }, {
+        text: 250,
+        value: 250
+      }]
+    }
+  },
+  mounted() {
+    this.user = this.$raptor.Auth().getUser()
+    this.fetchData()
+  },
+  methods: {
+    isAllowed(u) {
+      //TODO add local permission checks on sdk
+      return this.user.id == u.id || this.user.roles.indexOf("admin") > -1
     },
-    mounted () {
-      this.user = this.$raptor.Auth().getUser()
-      console.log(this.user)
+    formatDate(d) {
+      return moment(new Date(d)).format('MMMM Do YYYY')
+    },
+    fetchData() {
+      var context = this
+      this.error = null
+      this.loading = true
+      this.$log.debug('Fetching user list')
+      this.$raptor.Admin().User().list({
+        page: this.currentPage - 1,
+        size: this.perPage,
+        sort: this.sortBy,
+        sortDir: this.sortDir,
+      }).then((pager) => {
+
+        this.$log.debug('Loaded %s user list', pager.getContent().length)
+
+        this.loading = false
+        this.pager = pager
+        this.list = pager.getContent()
+        this.totalRows = pager.getTotalElements()
+
+      }).catch(function(e) {
+        this.$log.warn(e)
+        if (e.code === 401) {
+          context.$raptor.Auth().logout();
+          context.$router.push("/pages/login");
+        }
+      })
+
+    },
+    pageChanged(page) {
+      this.currentPage = page
       this.fetchData()
     },
-    methods: {
-      formatDate (d) {
-        return moment(new Date(d)).format('MMMM Do YYYY')
-      },
-      fetchData () {
-        var context = this
-        this.error = null
-        this.loading = true
-        this.$log.debug('Fetching user list')
-        this.$raptor.Admin().User().list()
-        .then((list) => {
-          this.$log.debug('Loaded %s user list', list.length)
-          console.log(list)
-          this.loading = false
-          this.list = list
-          this.totalRows = list.length
+    sortingChanged(ev) {
+      this.sortBy = ev.sortBy
+      this.sortDir = ev.sortDesc ? 'desc' : 'asc'
+      this.fetchData()
+    },
+    remove(user) {
+      const userName = user && user.username ? user.username : user
+      const userId = user && user.id ? user.id : user
+      var context = this
+      return this.$dialog.confirm(`Remove user \`${userName}\` ?`, {
+          html: false,
+          okText: 'Remove',
+          cancelText: 'Cancel',
         })
-        .catch(function(e) {
-          console.log(e)
-          console.log(JSON.stringify(e))
-          if(e.toString().indexOf("Unauthorized") !== -1) {
-            context.$raptor.Auth().logout();
-            context.$router.push("/pages/login");
-          }
-        });
-      },
-      remove (userId) {
-        var context = this
-        this.$dialog.confirm('Are you sure, you want to remove this user?')
-        .then(function () {
+        .then(() => {
           this.$log.debug("Deleting %s", userId)
-          this.$raptor.Admin().User().delete({ uuid: userId})
-          .then(() => {
-            this.$log.debug("Deleted %s", userId)
-            this.fetchData()
-          })
-          .catch(function(e) {
-            console.log(e)
-            console.log(JSON.stringify(e))
-            if(e.toString().indexOf("Unauthorized") !== -1) {
-              context.$raptor.Auth().logout();
-              context.$router.push("/pages/login");
-            }
-          });
+          this.$raptor.Admin().User().delete({
+              id: userId
+            })
+            .then(() => {
+              this.$log.debug("Deleted %s", userId)
+              this.fetchData()
+            })
+        }).catch(function(e) {
+          this.$log.error(e)
         })
-        .catch(function () {
-          console.log('Clicked on cancel')
-        });
-      },
-    }
-
+    },
   }
+
+}
 </script>

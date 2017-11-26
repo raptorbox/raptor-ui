@@ -2,21 +2,21 @@
 <div class="animated fadeIn row row-fluid">
   <div class="col-lg-12">
     <b-card>
-      <div class="row-fluid">
+
+      <div slot="header">
 
         <div class="row">
-          <div class="col-lg-12 text-right">
+          <div class="col-lg-12 list-inline">
+            <h3 class="list-inline-item"><i class="fa fa-screen-smartphone"></i> Devices</h3>
             <b-button variant="primary" :to="{ name: 'DeviceCreate'}">
-              <i class="fa fa-plus"></i> Add Device
+              <i class="fa fa-plus"></i> New
             </b-button>
           </div>
         </div>
 
         <div class="row">
           <div class="col-lg-12 text-left">
-            <!-- <p style="text-align: center; font-weight:bold; margin:0;">Devices</p> -->
             <b-form-fieldset description="Enter Device id to filter" label="Search">
-              <!-- <b-form-input type="text" placeholder="Enter UserId" v-model="userId"></b-form-input> -->
               <v-autocomplete :items="list" v-model="itemAutoComplete" :get-label="getLabel" :component-item='itemAutoTemplate' @update-items="updateItems" :input-attrs="{id: 'v-my-autocomplete'}" @item-clicked="itemClicked" @change="inputChangeEvent"></v-autocomplete>
             </b-form-fieldset>
           </div>
@@ -25,7 +25,7 @@
         <div class="row">
           <div class="col-lg-9"> </div>
           <div class="col-lg-3 text-right">
-            <b-form-fieldset description="Items per page" label="Show" :horizontal=true>
+            <b-form-fieldset description="Items per page" label="Show" horizontal>
               <b-form-select :options="pageOptions" v-model="perPage" />
             </b-form-fieldset>
           </div>
@@ -47,8 +47,7 @@
             <b-button variant="link" :to="{ name: 'DeviceUpdate', params: { deviceId: row.item.id }}">{{row.item.name}}</b-button>
           </template>
         <template slot="description" scope="row">{{row.item.description}}</template>
-        <template slot="created" scope="row">{{formatDate(row.item.json.createdAt * 1000)}}</template>
-        <!-- <template slot="updated" scope="row">{{formatDate(row.item.json.updatedAt * 1000)}}</template> -->
+        <template slot="created" scope="row">{{formatDate(row.item.createdAt)}}</template>
         <template slot="actions" scope="row">
               <b-button title="Remove device and stored data" variant="outline-danger" @click="remove(row.item)">
                   <i class="fa fa-remove fa-lg"></i>
@@ -122,7 +121,6 @@ export default {
           label: 'Created',
           sortable: true
         },
-        //   { key:'updated',        label: 'Updated'   },
         {
           key: 'actions',
           label: 'Actions'
@@ -146,7 +144,6 @@ export default {
     }
   },
   mounted() {
-    // this.remove("36a1e930-83de-4b97-a967-0f5ed649d532")
     this.fetchData()
   },
   methods: {
@@ -159,7 +156,12 @@ export default {
       this.$log.debug('Fetching device list page=%s, size=%s sort=%s.%s', this.currentPage, this.perPage, this.sortBy, this.sortDir)
       //TODO add sort
       this.loading = true
-      this.$raptor.Inventory().list(this.currentPage - 1, this.perPage, this.sortBy, this.sortDir)
+      this.$raptor.Inventory().list({
+          page: this.currentPage - 1,
+          size: this.perPage,
+          sort: this.sortBy,
+          sortDir: this.sortDir,
+        })
         .then((pager) => {
 
           const list = pager.getContent()
@@ -167,14 +169,15 @@ export default {
 
           this.loading = false
           this.pager = pager
-          this.totalRows = pager.getTotal()
+          this.totalRows = pager.getTotalElements()
           this.devices = list
           this.list = list
 
         })
         .catch((e) => {
-          this.$log.debug('Failed to load device list')
-          this.$log.error(e)
+
+          this.$log.warn('Failed to load device list: %s', e.message)
+          this.$log.debug(e)
 
           this.error = e.message
           this.list = []
@@ -187,7 +190,6 @@ export default {
       this.fetchData()
     },
     sortingChanged(ev) {
-      console.warn(ev, ev.sortBy, ev.sortDesc);
       this.sortBy = ev.sortBy
       this.sortDir = ev.sortDesc ? 'desc' : 'asc'
       this.fetchData()
@@ -203,7 +205,6 @@ export default {
         })
         .then(function() {
           // This will be triggered when user clicks on proceed
-          console.log('canceled operation')
           context.$log.debug("Deleting %s", deviceId)
           context.$raptor.Inventory().delete({
               id: deviceId
@@ -216,10 +217,6 @@ export default {
               context.$log.error("Error deleting %s", e)
             })
         })
-        .catch(function() {
-          // This will be triggered when user clicks on cancel
-          console.log('canceled operation')
-        });
     },
     // auto-complete methods
     itemClicked(item) {
