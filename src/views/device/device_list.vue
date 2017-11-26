@@ -128,17 +128,17 @@ export default {
           label: 'Actions'
         }
       ],
-      perPage: 10,
+      perPage: 25,
       totalRows: 0,
       pageOptions: [{
-        text: 10,
-        value: 10
-      }, {
         text: 25,
         value: 25
       }, {
-        text: 50,
-        value: 50
+        text: 100,
+        value: 100
+      }, {
+        text: 250,
+        value: 250
       }],
       // auto-complete item template
       itemAutoTemplate: ItemTemplate,
@@ -147,11 +147,6 @@ export default {
   },
   mounted() {
     // this.remove("36a1e930-83de-4b97-a967-0f5ed649d532")
-    // this.remove("70c3ab16-1303-4f05-9ba2-2ecfaca5b918")
-    // this.remove("603d2474-aeb4-4b26-9417-e939cc6f55bb")
-    // this.remove("5f38f2e8-ae08-4f0d-bc58-ded23dfb1b18")
-    // this.remove("cb6bc1ef-b4aa-4f0f-a24d-a9d97a44506a")
-    // this.remove("477158e2-b544-4622-9dab-caddcefd69b0")
     this.fetchData()
   },
   methods: {
@@ -164,17 +159,15 @@ export default {
       this.$log.debug('Fetching device list page=%s, size=%s sort=%s.%s', this.currentPage, this.perPage, this.sortBy, this.sortDir)
       //TODO add sort
       this.loading = true
-      this.$raptor.Inventory().list(this.currentPage-1, this.perPage, this.sortBy, this.sortDir)
+      this.$raptor.Inventory().list(this.currentPage - 1, this.perPage, this.sortBy, this.sortDir)
         .then((pager) => {
-
-          console.log(pager)
 
           const list = pager.getContent()
           this.$log.debug('Loaded %s device list', list.length)
 
           this.loading = false
           this.pager = pager
-          this.totalRows = pager.json.totalElements
+          this.totalRows = pager.getTotal()
           this.devices = list
           this.list = list
 
@@ -194,10 +187,10 @@ export default {
       this.fetchData()
     },
     sortingChanged(ev) {
-        console.warn(ev, ev.sortBy, ev.sortDesc);
-        this.sortBy = ev.sortBy
-        this.sortDir = ev.sortDesc ? 'desc' : 'asc'
-        this.fetchData()
+      console.warn(ev, ev.sortBy, ev.sortDesc);
+      this.sortBy = ev.sortBy
+      this.sortDir = ev.sortDesc ? 'desc' : 'asc'
+      this.fetchData()
     },
     remove(device) {
       const deviceId = device && device.id ? device.id : device
