@@ -14,7 +14,8 @@
     </div><!--/.row-->
 
     <b-card>
-      <div class="row" v-if="(device != null && device.constructor === Array && device.length > 0)">
+      <!-- && device.constructor === Array && device.length > 0 -->
+      <div class="row" v-if="device">
         <div class="col-sm-12 hidden-sm-down">
           <b-button-toolbar class="float-right" aria-label="Toolbar with button groups">
             <b-button-group class="mr-3" aria-label="First group">
@@ -63,7 +64,8 @@
           </div>
         </div>
       </div>
-      <div class="col-md-12" v-if="(device != null && device.constructor === Array && device.length > 0)">
+      <!-- && device.constructor === Array && device.length > 0 -->
+      <div class="col-md-12" v-if="device">
         <vue-slider ref="slider" v-bind="slider" v-model="slider.value" @callback="sliderValueChanged" @drag-start="sliderDragStart" @drag-end="sliderDragEnd"></vue-slider>
       </div>
     </b-card>
@@ -257,6 +259,7 @@ export default {
       if(this.chartLoaded) {
         this.dataToPass = {display: this.selectedDisplayParam, fromDate: this.slider.value[1], toDate: this.slider.value[0]}
         this.searchDataObj = this.dataToPass
+        // console.log('slider Drag end called')
       }
     },
     sliderDragStart () {
@@ -281,13 +284,18 @@ export default {
         // this.chartLoaded = true
         // this.device = data
       } else {
+        this.chartLoaded = false
         this.device = data
         this.selectedDeviceDetails = this.showDeviceDetails(this.device)
         let dateArray = this.getDateList(this.device.json.createdAt*1000,moment().unix()*1000, 'hour')
         dateArray.reverse()
         this.slider.data = dateArray
         let slider = this.$refs['slider']
-        slider.setIndex([0,1])
+        console.log("===slider====")
+        console.log(slider)
+        if(slider) {
+          slider.setIndex([0,1])
+        }
         this.chartLoaded = true
       }
     },
