@@ -43,7 +43,7 @@ import Cards from '@/views/components/Cards'
 import Forms from '@/views/components/Forms'
 import Modals from '@/views/components/Modals'
 import Switches from '@/views/components/Switches'
-import Tables from '@/views/components/Tables'
+// import Tables from '@/views/components/Tables'
 
 // Views - Icons
 import FontAwesome from '@/views/icons/FontAwesome'
@@ -72,22 +72,22 @@ const router = new Router({
       children: [
         {
           path: 'dashboardold',
-          name: 'Dashboard',
+          name: 'DeviceDataChart',
           component: DeviceDataChart
         },
         {
           path: 'dashboard',
-          name: 'User Dashboard',
+          name: 'UserDashboard',
           component: UserDashboard
         },
         {
           path: 'dashboarddef',
-          name: 'Dashboard',
+          name: 'Dashboarddef',
           component: Dashboarddef
         },
         {
           path: 'admindashboard',
-          name: 'Dashboard',
+          name: 'AdminDashboard',
           component: AdminDashboard
         },
         {
@@ -141,11 +141,11 @@ const router = new Router({
           name: 'Widgets',
           component: Widgets
         },
-        {
-          path: 'tables',
-          name: 'Tables',
-          component: Tables
-        },
+        // {
+        //   path: 'tables',
+        //   name: 'Tables',
+        //   component: Tables
+        // },
         {
           path: 'admin',
           redirect: '/admin/users',
@@ -265,12 +265,12 @@ const router = new Router({
               path: 'switches',
               name: 'Switches',
               component: Switches
-            },
-            {
-              path: 'tables',
-              name: 'Tables',
-              component: Tables
             }
+            // {
+            //   path: 'tables',
+            //   name: 'Tables',
+            //   component: Tables
+            // }
           ]
         },
         {
