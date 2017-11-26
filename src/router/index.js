@@ -4,11 +4,6 @@ import Router from 'vue-router'
 // Containers
 import Full from '@/containers/Full'
 
-// Views
-import Dashboarddef from '@/views/Dashboard'
-import Charts from '@/views/Charts'
-import Widgets from '@/views/Widgets'
-
 import UsersList from '@/views/user/user_list'
 import UsersForm from '@/views/user/user_form'
 
@@ -35,15 +30,6 @@ import AdminDashboard from '@/views/admin/dashboard'
 
 // User Dashboard
 import UserDashboard from '@/views/userdashboard/dashboard'
-
-// Views - Components
-import Buttons from '@/views/components/Buttons'
-import SocialButtons from '@/views/components/SocialButtons'
-import Cards from '@/views/components/Cards'
-import Forms from '@/views/components/Forms'
-import Modals from '@/views/components/Modals'
-import Switches from '@/views/components/Switches'
-import Tables from '@/views/components/Tables'
 
 // Views - Icons
 import FontAwesome from '@/views/icons/FontAwesome'
@@ -81,19 +67,9 @@ const router = new Router({
           component: UserDashboard
         },
         {
-          path: 'dashboarddef',
-          name: 'Dashboard',
-          component: Dashboarddef
-        },
-        {
           path: 'admindashboard',
           name: 'Dashboard',
           component: AdminDashboard
-        },
-        {
-          path: 'charts',
-          name: 'Charts',
-          component: Charts
         },
         {
           path: 'chartDetail',
@@ -103,48 +79,6 @@ const router = new Router({
           },
           component: ChartDetail,
           props: true
-        },
-        // {
-        //   path: 'inventory/search',
-        //   component: DeviceSearch,
-        //   name: 'Search Device',
-        //   children: [
-        //     {
-        //       path: 'chart',
-        //       name: 'RealTimeChart',
-        //       component: DeviceDataChart
-        //     }
-        //   ]
-        // },
-        // {
-        //   path: '/inventory/search',
-        //   name: 'Search Device',
-        //   redirect: '/inventory/search',
-        //   component: {
-        //     render (c) { return c('router-view') }
-        //   },
-        //   children: [
-        //     {
-        //       path: 'search',
-        //       component: DeviceSearch,
-        //       name: 'Search Device'
-        //     },
-        //     {
-        //       path: ':deviceId/chart',
-        //       name: 'RealTimeChart',
-        //       component: DeviceDataChart
-        //     }
-        //   ]
-        // },
-        {
-          path: 'widgets',
-          name: 'Widgets',
-          component: Widgets
-        },
-        {
-          path: 'tables',
-          name: 'Tables',
-          component: Tables
         },
         {
           path: 'admin',
@@ -224,52 +158,6 @@ const router = new Router({
                   props: true
                 }
               ]
-            }
-          ]
-        },
-
-        {
-          path: 'components',
-          redirect: '/components/buttons',
-          name: 'Components',
-          component: {
-            render (c) { return c('router-view') }
-          },
-          children: [
-            {
-              path: 'buttons',
-              name: 'Buttons',
-              component: Buttons
-            },
-            {
-              path: 'social-buttons',
-              name: 'Social Buttons',
-              component: SocialButtons
-            },
-            {
-              path: 'cards',
-              name: 'Cards',
-              component: Cards
-            },
-            {
-              path: 'forms',
-              name: 'Forms',
-              component: Forms
-            },
-            {
-              path: 'modals',
-              name: 'Modals',
-              component: Modals
-            },
-            {
-              path: 'switches',
-              name: 'Switches',
-              component: Switches
-            },
-            {
-              path: 'tables',
-              name: 'Tables',
-              component: Tables
             }
           ]
         },
