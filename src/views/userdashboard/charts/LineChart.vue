@@ -45,7 +45,7 @@ export default Line.extend({
       }
     },
     mounted () {
-      console.log(this.chartData)
+      // console.log(this.chartData)
       if( !(this.chartData instanceof Array) ) {
         this.device = this.chartData.device
         this.channel = this.chartData.channel
@@ -62,7 +62,7 @@ export default Line.extend({
     watch: {
       searchData: function(data) {
         this._chart.destroy()
-        console.log(data)
+        // console.log(data)
         this.selectedDisplayParam = this.dataPassed.display
         this.fromDate = this.dataPassed.fromDate
         this.toDate = this.dataPassed.toDate
@@ -144,7 +144,9 @@ export default Line.extend({
         this.$raptor.Stream().list(stream, 0, 100, 'timestamp,desc')
         .then((streams) => {
           // console.log(streams)
-          streams.reverse()
+          streams.sort(function(a, b) {
+            return a.timestamp - b.timestamp;
+          });
           this.selectedStreamData = streams
           this.dataForChart = [];
           this.streamChartLabels = []
@@ -164,30 +166,34 @@ export default Line.extend({
         })
         .then(() => {
           this.$raptor.Stream().subscribe(stream, function(msg) {
+            console.log(msg.record)
             if((context._chart || context._chart != undefined || context._chart != null) && context._chart.ctx != null) {
-              context.selectedStreamData.push(msg.record);
-              if(context.selectedStreamData.length > 100) {
-                context.selectedStreamData.shift()
-              }
-              context.dataForChart = [];
-              context.streamChartLabels = []
-              let obj = context.extractChartDataDeviceStream(context.selectedStreamData,context.channel,context.selectedDisplayParam);
-              context.dataForChart = obj.data
-              context.streamChartLabels = obj.labels
-              // console.log("=====================update arrived===========================")
-              context._chart.data.datasets[0] = {
-                label: context.channel,
-                borderColor: colors[0],
-                backgroundColor: colorsWithOpacity[0],
-                data: context.dataForChart
-              }
-              context._chart.data.labels = context.streamChartLabels
-              context._chart.update()
-              // context.populateChart(context.streamChartLabels, context.channel, context.dataForChart)
+              let last = context.selectedStreamData[context.selectedStreamData.length-1]
+              if(last.timestamp != msg.record.timestamp && last.deviceId == msg.record.deviceId) {
+                context.selectedStreamData.push(msg.record);
+                if(context.selectedStreamData.length > 100) {
+                  context.selectedStreamData.shift()
+                }
+                context.dataForChart = [];
+                context.streamChartLabels = []
+                let obj = context.extractChartDataDeviceStream(context.selectedStreamData,context.channel,context.selectedDisplayParam);
+                context.dataForChart = obj.data
+                context.streamChartLabels = obj.labels
+                // console.log("=====================update arrived===========================")
+                context._chart.data.datasets[0] = {
+                  label: context.channel,
+                  borderColor: colors[0],
+                  backgroundColor: colorsWithOpacity[0],
+                  data: context.dataForChart
+                }
+                context._chart.data.labels = context.streamChartLabels
+                context._chart.update()
+                // context.populateChart(context.streamChartLabels, context.channel, context.dataForChart)
 
-              // if(!(msg.type === 'stream' && msg.op === 'data' && msg.streamId === context.$raptor.stream)) {
-              //   return
-              // }
+                // if(!(msg.type === 'stream' && msg.op === 'data' && msg.streamId === context.$raptor.stream)) {
+                //   return
+                // }
+              }
             }
           });
         })
@@ -296,24 +302,29 @@ export default Line.extend({
           if(streams.length > 0) {
             for (var j = 0; j < this.datasets.length; j++) {
               if(this.datasets[j].device.id == streams[0].json.deviceId) {
-                streams.reverse()
-                this.datasets[j].selectedStreamData = streams
-                let obj = this.extractChartDataDeviceStream(streams,this.datasets[j].channel, this.selectedDisplayParam);
-                this.datasets[j].dataForChart = obj.data
-                this.datasets[j].streamChartLabels = obj.labels
-                this.streamChartLabels = obj.labels
-                if(this.receivedData == 0) {
-                  this.datasets[j].pushed = true
-                  this.createChart(this.datasets[j], this.streamChartLabels)
-                  this.subsciptionOfStreamForMultipleData(this.datasets[j].stream)
-                } else {
-                  if(!this.datasets[j].pushed) {
+                let dataset = this.datasets[j]
+                if(dataset.selectedStreamData == null) {
+                  streams.sort(function(a, b) {
+                    return a.timestamp - b.timestamp;
+                  });
+                  this.datasets[j].selectedStreamData = streams
+                  let obj = this.extractChartDataDeviceStream(streams,this.datasets[j].channel, this.selectedDisplayParam);
+                  this.datasets[j].dataForChart = obj.data
+                  this.datasets[j].streamChartLabels = obj.labels
+                  this.streamChartLabels = obj.labels
+                  if(this.receivedData == 0) {
                     this.datasets[j].pushed = true
-                    this.pushNewDataStreamInChart(this.datasets[j])
+                    this.createChart(this.datasets[j], this.streamChartLabels)
                     this.subsciptionOfStreamForMultipleData(this.datasets[j].stream)
+                  } else {
+                    if(!this.datasets[j].pushed) {
+                      this.datasets[j].pushed = true
+                      this.pushNewDataStreamInChart(this.datasets[j])
+                      this.subsciptionOfStreamForMultipleData(this.datasets[j].stream)
+                    }
                   }
+                  this.receivedData++
                 }
-                this.receivedData++
               }
             }
           }
@@ -347,7 +358,7 @@ export default Line.extend({
           // this._chart.data.labels = this.streamChartLabels
           // this._chart.update()
           this._chart.destroy()
-          console.log(this.chartDatasets)
+          // console.log(this.chartDatasets)
           this.renderLineChart(this.chartDatasets, this.streamChartLabels);
         }
       },
@@ -372,10 +383,10 @@ export default Line.extend({
         this.$raptor.Stream().subscribe(stream, function(msg) {
           console.log(msg)
           if((context._chart || context._chart != undefined || context._chart != null) && context._chart.ctx != null) {
-            let dsets = []
             for (var j = 0; j < context.datasets.length; j++) {
               if(context.datasets[j].device.id == msg.device.id) {
-                if(context.datasets[j].selectedStreamData.indexOf(msg.record) == -1) {
+                let last = context.datasets[j].selectedStreamData[context.datasets[j].selectedStreamData.length-1]
+                if(last.timestamp != msg.record.timestamp) {
                   context.datasets[j].selectedStreamData.push(msg.record)
                   if(context.datasets[j].selectedStreamData.length > 100) {
                     context.datasets[j].selectedStreamData.shift()
@@ -386,7 +397,6 @@ export default Line.extend({
                   context.datasets[j].dataForChart = obj.data
                   context.datasets[j].streamChartLabels = obj.labels
                   context.streamChartLabels = obj.labels
-                  console.log(context._chart.data)
                   context._chart.data.datasets[j] = {
                     label: context.datasets[j].channel,
                     borderColor: colors[j],
@@ -423,8 +433,6 @@ export default Line.extend({
         let pageNumber = 0
         this.selectedStreamData = []
           let query = {timestamp: {between:[startDate, endDate]}, page:pageNumber, size:500,sort:"createdAt,DESC"}
-          // console.log(query)
-          // console.log(stream)
           this.loopOverStreamPagination (this.stream, query, pageNumber, startDate, endDate)
       },
       searchDataApi(stream, query, callback) {

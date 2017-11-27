@@ -79,7 +79,7 @@
           <span v-bind:class="['badge', { 'badge-success': row.item.enabled,'badge-warning': !row.item.enabled }]"> {{row.item.enabled ? 'Enabled' : 'Disabled'}}</span>
         </template>
         <template slot="actions" scope="row">
-          <span v-if="user.uuid == row.item.uuid || (user.name=='admin' && user.password=='admin.openiot')" >
+          <span v-if="user.uuid == row.item.uuid" >
             <b-button class="btn btn-outline-danger btn-sm" disabled>Delete</b-button>
           </span>
           <span v-else>

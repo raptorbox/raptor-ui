@@ -134,7 +134,9 @@ export default Line.extend({
         this.$raptor.Stream().list(stream, 0, 100, 'timestamp,desc')//list(stream, 0, ts)
         .then((streams) => {
           // console.log(streams)
-          streams.reverse()
+          streams.sort(function(a, b) {
+            return a.timestamp - b.timestamp;
+          });
           context.selectedStreamData = streams
           this.dataForChart = [];
           this.streamChartLabels = []
@@ -155,19 +157,20 @@ export default Line.extend({
         this.$raptor.Stream().subscribe(stream, function(msg) {
           console.log(msg)
           if((context._chart || context._chart != undefined || context._chart != null) && context._chart.ctx != null) {
-            context.selectedStreamData.push(msg.record);
-            if(context.selectedStreamData.length > 100) {
-              context.selectedStreamData.shift()
+            let last = context.selectedStreamData[context.selectedStreamData.length-1]
+            if(last.timestamp != msg.record.timestamp && last.deviceId == msg.record.deviceId) {
+              context.selectedStreamData.push(msg.record);
+              if(context.selectedStreamData.length > 100) {
+                context.selectedStreamData.shift()
+              }
+              context.dataForChart = [];
+              context.streamChartLabels = []
+              context.selectedStreamData.push(msg.record);
+              let obj = context.extractChartDataDeviceStream(context.selectedStreamData,context.channel);
+              context.dataForChart = obj.data
+              context.streamChartLabels = obj.labels
+              context.populateChart(context.streamChartLabels, context.channel, context.dataForChart)
             }
-            context.dataForChart = [];
-            context.streamChartLabels = []
-            context.selectedStreamData.push(msg.record);
-            let obj = context.extractChartDataDeviceStream(context.selectedStreamData,context.channel);
-            context.dataForChart = obj.data
-            context.streamChartLabels = obj.labels
-            context.populateChart(context.streamChartLabels, context.channel, context.dataForChart)// if(!(msg.type === 'stream' && msg.op === 'data' && msg.streamId === this.$raptor.stream)) {
-            //   return
-            // }
           }
         });
         // context.unsubscribeStream({name: this.stream, deviceId: this.device})
@@ -325,7 +328,9 @@ export default Line.extend({
           if(streams.length > 0) {
             for (var j = 0; j < this.datasets.length; j++) {
               if(this.datasets[j].device.id == streams[0].json.deviceId) {
-                streams.reverse()
+                streams.sort(function(a, b) {
+                  return a.timestamp - b.timestamp;
+                });
                 this.datasets[j].selectedStreamData = streams
                 let obj = this.extractChartDataDeviceStream(streams,this.datasets[j].channel, this.selectedDisplayParam);
                 this.datasets[j].dataForChart = obj.data
@@ -376,7 +381,7 @@ export default Line.extend({
           // this._chart.data.labels = this.streamChartLabels
           // this._chart.update()
           this._chart.destroy()
-          console.log(this.chartDatasets)
+          // console.log(this.chartDatasets)
           this.renderLineChart(this.chartDatasets, this.streamChartLabels);
         }
       },
@@ -403,8 +408,8 @@ export default Line.extend({
           if((context._chart || context._chart != undefined || context._chart != null) && context._chart.ctx != null) {
             let dsets = []
             for (var j = 0; j < context.datasets.length; j++) {
-              if(context.datasets[j].device.id == msg.device.id) {
-                if(context.datasets[j].selectedStreamData.indexOf(msg.record) == -1) {
+              let last = context.datasets[j].selectedStreamData[context.datasets[j].selectedStreamData.length-1]
+              if(context.datasets[j].device.id == msg.device.id && last.timestamp != msg.record.timestamp) {
                   context.datasets[j].selectedStreamData.push(msg.record)
                   if(context.datasets[j].selectedStreamData.length > 100) {
                     context.datasets[j].selectedStreamData.shift()
@@ -424,7 +429,6 @@ export default Line.extend({
                   }
                   context._chart.data.labels = context.streamChartLabels
                   context._chart.update()
-                }
               }
             }
             // if(!(msg.type === 'stream' && msg.op === 'data' && msg.streamId === this.$raptor.stream)) {
@@ -457,8 +461,8 @@ export default Line.extend({
           this.loopOverStreamPagination (this.stream, query, pageNumber, startDate, endDate)
       },
       searchDataApi(stream, query, callback) {
-        console.log(query)
-        console.log(stream)
+        // console.log(query)
+        // console.log(stream)
         this.$raptor.Stream().search(stream, query)
         .then((stream) => {
           // console.log(stream.length)
@@ -490,7 +494,7 @@ export default Line.extend({
             for (var i = 0; i < streams.length; i++) {
               context.selectedStreamData.push(streams[i])
             }
-            console.log(context.selectedStreamData)
+            // console.log(context.selectedStreamData)
             context.dataForChart = [];
             context.streamChartLabels = []
             let obj = context.extractChartDataDeviceStream(context.selectedStreamData,context.channel, context.selectedDisplayParam);

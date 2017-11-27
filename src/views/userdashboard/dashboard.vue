@@ -29,7 +29,10 @@
                       <i class="icon-close icons font-2xl d-block" />
                     </b-button>
                   </div>
-                  <div class="float-left" v-on:click.capture="(ev) => { showDetails(ev, wid.data) }">
+                  <!-- <div class="float-left" v-on:click.capture="(ev) => { editWidget(ev, wid) }">
+                    <h5>{{wid.title}}  <i class="icon-pencil icons" /></h5>
+                  </div> -->
+                  <div class="float-left">
                     <h5>{{wid.title}}</h5>
                   </div>
                   </div>
@@ -143,7 +146,7 @@
         </div>
       </b-form-fieldset> -->
       <b-form-fieldset description="Enter Device id to filter or select from list" label="Device" :horizontal="false">
-        <v-autocomplete :items="listOfDevicesForSelectOptions" v-model="selectedDevice" :get-label="getLabel" :component-item='itemAutoTemplate' @update-items="updateItems" :input-attrs="{id: 'v-my-autocomplete'}" @item-clicked="itemClicked" @change="inputChangeEvent">
+        <v-autocomplete :items="listOfDevicesForSelectOptions" v-model="selectedDevice" :get-label="getLabel" :component-item='itemAutoTemplate' @update-items="updateItems" :input-attrs="{id: 'v-my-autocomplete', placeholder:'Please search/select a device'}" @item-clicked="itemClicked" @change="inputChangeEvent" :auto-select-one-item="false" >
         </v-autocomplete>
       </b-form-fieldset>
       <b-form-fieldset description="Please select a stream" label="Stream" :horizontal="false">
@@ -183,7 +186,7 @@
 
           <div class="col-md-6" style="padding: 10px">
             <b-form-fieldset description="Enter Device id to filter or select from list" label="Device" :horizontal="false">
-              <v-autocomplete :items="source.listOfDevicesForSelectOptions" v-model="source.device" :get-label="getLabel" :component-item='itemAutoTemplate' :input-attrs="{id: 'v-my-autocomplete'}" @update-items="(item) => {updateItems(item, source)}" @item-clicked="(item) => {itemClicked(item, source)}" @change="(item) => {inputChangeEvent(item, source)}">
+              <v-autocomplete :items="source.listOfDevicesForSelectOptions" v-model="source.device" :get-label="getLabel" :component-item='itemAutoTemplate' :input-attrs="{id: 'v-my-autocomplete', placeholder:'Please search/select a device'}" @update-items="(item) => {updateItems(item, source)}" @item-clicked="(item) => {itemClicked(item, source)}" @change="(item) => {inputChangeEvent(item, source)}" :auto-select-one-item="false">
               </v-autocomplete>
             </b-form-fieldset>
             
@@ -233,8 +236,6 @@ import PolarAreaChart from './charts/PolarAreaChart'
 import LineChartReport from './charts/LineChartReport'
 import moment from 'moment'
 
-import RadarExample from './../charts/RadarExample'
-
 import Vue from 'vue'
 import Icon from 'vue-awesome/components/Icon'
 import 'vue-awesome/icons/remove'
@@ -267,7 +268,6 @@ export default {
   name: 'dashboard',
   components: {
     // DragableView,
-    RadarExample,
     BarChart,
     LineChart,
     DoughnutChart,
@@ -335,7 +335,6 @@ export default {
           // }],
       // auto-complete item template
       itemAutoTemplate: ItemTemplate,
-      itemAutoComplete: null,
       //unsubscribed all devices
       unsub: false,
       // tooltip
@@ -475,7 +474,10 @@ export default {
       }
     },
     showDetails(event, widgetsData) {
-      // console.log(widgetsData)
+      console.log(widgetsData)
+      if(widgetsData == null) {
+        return false
+      }
       if(widgetsData.constructor === Array) {
         this.widgetDetails = this.showMultipleDevicesDetails(widgetsData)
         this.widgetDetailModal = true
@@ -513,6 +515,40 @@ export default {
             this.$router.push("/pages/login");
           }
         })
+      }
+    },
+    editWidget (event, widgetsData) {
+      console.log(widgetsData)
+      if(widgetsData.title == 'Report') {
+        return
+      }
+      if(widgetsData.constructor === Array) {
+        this.widgetDetails = this.showMultipleDevicesDetails(widgetsData)
+        this.widgetDetailModal = true
+      } else {
+        this.selectedChart = widgetsData.chart
+        this.selectedTitle = widgetsData.title
+        this.selectedDevice = widgetsData.data.device
+        this.optionsStreams = [{ value: null, text: 'Please select a stream' }]
+        this.optionsChannel = [{ value: null, text: 'Please select a channel' }]
+        this.selectedDeviceDetail = widgetsData.data.device
+        let streamKeys = Object.keys(widgetsData.data.device.streams)
+        for (var i = 0; i < streamKeys.length; i++) {
+          console.log(streamKeys[i])
+          this.optionsStreams.push({ value: streamKeys[i], text:streamKeys[i] })
+          if(streamKeys[i].name == widgetsData.data.stream) {
+            let chKeys = Object.keys(widgetsData.data.device.streams[streamKeys[i]].channels)
+            console.log(chKeys)
+            chKeys.forEach((e) => {
+              this.optionsChannel.push({ value: e, text: e })
+            })
+          }
+        }
+        console.log(this.optionsStreams)
+        console.log(this.optionsChannel)
+        this.selectedStream = widgetsData.data.stream
+        this.selectedChannel = widgetsData.data.channel
+        this.singleDataModal = true
       }
     },
     showMultipleDevicesDetails (deviceArray) {
@@ -561,14 +597,7 @@ export default {
       }
       this.widgets.push(widget)
       this.loadDefaultCharts(this.widgets)
-      this.selectedDevice = null
-      this.selectedStream = null
-      this.selectedChannel = null
-      this.selectedChart = null
-      this.selectedTitle = null
-      this.itemAutoComplete = null
       this.setUserDashboardPreferences('dashboard', this.widgets, this.userId);
-      // this.writeToFirebase(widget)
     },
     onChangeDeviceType (evt, source) {
       let val = evt.target.value;
@@ -623,6 +652,7 @@ export default {
       if(val) {
         // console.log(val)
         this.selectedStream = val;
+        console.log(this.selectedDeviceDetail)
         let stream = this.selectedDeviceDetail.json.streams[val];
         if(stream) {
           // console.log(stream)
@@ -696,6 +726,7 @@ export default {
         }
       }
       this.addWidget(widData);
+      this.selectedDevice = null
       this.clearFields()
     },
     onRemoveWidgetButtonClick (ev, widget) {
@@ -784,20 +815,22 @@ export default {
       });
     },
     setUserDashboardPreferences(key, value, userId) {
-      this.$raptor.Profile().set(key, value, userId)
-      .then((dashboard) => {
-        // this.$log.debug('Loaded %s device list', list.length);
-        console.log("Dashboard updated")
-        console.log(dashboard);
-      })
-      .catch(function(e) {
-        // console.log(e)
-        // console.log(JSON.stringify(e))
-        if(e.toString().indexOf("Unauthorized") !== -1) {
-          this.$raptor.Auth().logout();
-          this.$router.push("/pages/login");
-        }
-      });
+      if(this.$raptor) {
+        this.$raptor.Profile().set(key, value, userId)
+        .then((dashboard) => {
+          // this.$log.debug('Loaded %s device list', list.length);
+          console.log("Dashboard updated")
+          console.log(dashboard);
+        })
+        .catch(function(e) {
+          // console.log(e)
+          // console.log(JSON.stringify(e))
+          if(e.toString().indexOf("Unauthorized") !== -1) {
+            this.$raptor.Auth().logout();
+            this.$router.push("/pages/login");
+          }
+        });
+      }
     },
 
     // auto-complete methods
