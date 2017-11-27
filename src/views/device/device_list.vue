@@ -9,7 +9,7 @@
                 <!-- <p style="text-align: center; font-weight:bold; margin:0;">Devices</p> -->
                 <b-form-fieldset description="Enter Device id to filter" label="Devices" :horizontal="false">
                   <!-- <b-form-input type="text" placeholder="Enter UserId" v-model="userId"></b-form-input> -->
-                  <v-autocomplete :items="list" v-model="itemAutoComplete" :get-label="getLabel" :component-item='itemAutoTemplate' @update-items="updateItems" :input-attrs="{id: 'v-my-autocomplete'}" @item-clicked="itemClicked" @change="inputChangeEvent">
+                  <v-autocomplete :items="list" v-model="itemAutoComplete" :get-label="getLabel" :component-item='itemAutoTemplate' @update-items="updateItems" :input-attrs="{id: 'v-my-autocomplete'}" @item-clicked="itemClicked" @change="inputChangeEvent" :auto-select-one-item="false">
                   </v-autocomplete>
                 </b-form-fieldset>
               </div>
@@ -41,7 +41,6 @@
           <template slot="updated" scope="row">{{formatDate(row.item.json.updatedAt * 1000)}}</template>
           <template slot="actions" scope="row">
             <!-- <div class="row"> -->
-              <b-button class="btn btn-sm" :to="{ name: 'Streams', params: { deviceId: row.item.id }}">Streams</b-button>
               <b-button class="btn btn-primary btn-sm" :to="{ name: 'RecordSet', params: { deviceId: row.item.id }}">Records</b-button>
               <b-button class="btn btn-outline-danger btn-sm" @click="remove(row.item.id)">Delete</b-button>
               <b-button class="btn btn-outline-info btn-sm" :to="{ name: 'Clone', params: { deviceId: row.item.id }}">Clone</b-button>

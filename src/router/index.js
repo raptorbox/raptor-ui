@@ -16,8 +16,6 @@ import DeviceSearch from '@/views/device/search'
 import DeviceDataChart from '@/views/components/realtimechart/realtimechart'
 
 import ChartDetail from '@/views/components/chartDetailPage'
-// Streams
-import StreamList from '@/views/device/streams/stream_list'
 
 // Device RecordSet
 import DeviceRecordSet from '@/views/device/records/records'
@@ -228,15 +226,6 @@ const router = new Router({
                 name: 'Clone',
                 meta: {
                   label: 'Create device'
-                },
-                props: true
-              },
-              {
-                path: ':deviceId/streams',
-                component: StreamList,
-                name: 'Streams',
-                meta: {
-                  label: 'Streams'
                 },
                 props: true
               },
