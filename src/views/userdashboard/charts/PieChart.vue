@@ -108,7 +108,8 @@ export default Pie.extend({
                 return data['labels'][tooltipItem[0]['index']];
               },
               label: function(tooltipItem, data) {
-                return context.channel + ': ' + data['datasets'][0]['data'][tooltipItem['index']];
+                let channel = (context.channel) ? context.channel : context.channels[tooltipItem['datasetIndex']]
+                return channel + ': ' + data['datasets'][tooltipItem['datasetIndex']]['data'][tooltipItem['index']];
               },
               // afterLabel: function(tooltipItem, data) {
               //   return data['datasets'][0]['data'][tooltipItem['index']];
@@ -150,7 +151,9 @@ export default Pie.extend({
           // console.log(streams)
           // context.selectedStreamData = streams
           // context.extractChartDataDeviceStream(context.selectedStreamData,context.channel);
-          streams.reverse()
+          streams.sort(function(a, b) {
+            return a.timestamp - b.timestamp;
+          });
           context.selectedStreamData = streams
           this.dataForChart = [];
           this.streamChartLabels = []
@@ -170,20 +173,20 @@ export default Pie.extend({
         this.$raptor.Stream().subscribe(stream, function(msg) {
           console.log(msg)
           if((context._chart || context._chart != undefined || context._chart != null) && context._chart.ctx != null) {
-            context.selectedStreamData.push(msg.record);
-            if(context.selectedStreamData.length > 100) {
-              context.selectedStreamData.shift()
+            let last = context.selectedStreamData[context.selectedStreamData.length-1]
+            if(last.timestamp != msg.record.timestamp && last.deviceId == msg.record.deviceId) {
+              context.selectedStreamData.push(msg.record);
+              if(context.selectedStreamData.length > 100) {
+                context.selectedStreamData.shift()
+              }
+              context.dataForChart = [];
+              context.streamChartLabels = []
+              context.selectedStreamData.push(msg.record);
+              let obj = context.extractChartDataDeviceStream(context.selectedStreamData,context.channel);
+              context.dataForChart = obj.data
+              context.streamChartLabels = obj.labels
+              context.populateChart(context.streamChartLabels, context.channel, context.dataForChart)
             }
-            context.dataForChart = [];
-            context.streamChartLabels = []
-            context.selectedStreamData.push(msg.record);
-            let obj = context.extractChartDataDeviceStream(context.selectedStreamData,context.channel);
-            context.dataForChart = obj.data
-            context.streamChartLabels = obj.labels
-            context.populateChart(context.streamChartLabels, context.channel, context.dataForChart)
-            // if(!(msg.type === 'stream' && msg.op === 'data' && msg.streamId === this.$raptor.stream)) {
-            //   return
-            // }
           }
         });
         // context.unsubscribeStream(stream)
@@ -283,7 +286,9 @@ export default Pie.extend({
           if(streams.length > 0) {
             for (var j = 0; j < this.datasets.length; j++) {
               if(this.datasets[j].device.id == streams[0].json.deviceId) {
-                streams.reverse()
+                streams.sort(function(a, b) {
+                  return a.timestamp - b.timestamp;
+                });
                 this.datasets[j].selectedStreamData = streams
                 let obj = this.extractChartDataDeviceStream(streams,this.datasets[j].channel, this.selectedDisplayParam);
                 this.datasets[j].dataForChart = obj.data
@@ -339,10 +344,10 @@ export default Pie.extend({
         }
       },
       pushNewDataStreamInChart(data) {
-        console.log(data)
+        // console.log(data)
         if((this._chart || this._chart != undefined || this._chart != null) && this._chart.ctx != null) {
           let index = this._chart.data.datasets.length
-          console.log(index)
+          // console.log(index)
           this._chart.data.datasets.push({
             label: data.channel,
             // fill: false,
@@ -352,8 +357,8 @@ export default Pie.extend({
             pointColor: 'rgba(220,180,0,1)',
             data: data.dataForChart
           })
-          console.log("pushed")
-          console.log(this._chart.data.datasets)
+          // console.log("pushed")
+          // console.log(this._chart.data.datasets)
           this._chart.update()
         }
       },
@@ -365,8 +370,8 @@ export default Pie.extend({
           if((context._chart || context._chart != undefined || context._chart != null) && context._chart.ctx != null) {
             let dsets = []
             for (var j = 0; j < context.datasets.length; j++) {
-              if(context.datasets[j].device.id == msg.device.id) {
-                if(context.datasets[j].selectedStreamData.indexOf(msg.record) == -1) {
+              let last = context.datasets[j].selectedStreamData[context.datasets[j].selectedStreamData.length-1]
+              if(context.datasets[j].device.id == msg.device.id && last.timestamp != msg.record.timestamp) {
                   context.datasets[j].selectedStreamData.push(msg.record)
                   if(context.datasets[j].selectedStreamData.length > 100) {
                     context.datasets[j].selectedStreamData.shift()
@@ -377,7 +382,7 @@ export default Pie.extend({
                   context.datasets[j].dataForChart = obj.data
                   context.datasets[j].streamChartLabels = obj.labels
                   context.streamChartLabels = obj.labels
-                  console.log(context._chart.data)
+                  // console.log(context._chart.data)
                   context._chart.data.datasets[j] = {
                     label: context.datasets[j].channel,
                     borderColor: colors[j],
@@ -386,7 +391,6 @@ export default Pie.extend({
                   }
                   context._chart.data.labels = context.streamChartLabels
                   context._chart.update()
-                }
               }
             }
             // if(!(msg.type === 'stream' && msg.op === 'data' && msg.streamId === this.$raptor.stream)) {
@@ -419,8 +423,8 @@ export default Pie.extend({
           this.loopOverStreamPagination (this.stream, query, pageNumber, startDate, endDate)
       },
       searchDataApi(stream, query, callback) {
-        console.log(query)
-        console.log(stream)
+        // console.log(query)
+        // console.log(stream)
         this.$raptor.Stream().search(stream, query)
         .then((stream) => {
           // console.log(stream.length)
@@ -452,7 +456,7 @@ export default Pie.extend({
             for (var i = 0; i < streams.length; i++) {
               context.selectedStreamData.push(streams[i])
             }
-            console.log(context.selectedStreamData)
+            // console.log(context.selectedStreamData)
             context.dataForChart = [];
             context.streamChartLabels = []
             let obj = context.extractChartDataDeviceStream(context.selectedStreamData,context.channel, context.selectedDisplayParam);

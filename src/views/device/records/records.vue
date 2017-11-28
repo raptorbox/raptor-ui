@@ -34,7 +34,7 @@
             </div>
           </div>
         </div>
-        <b-table striped hover show-empty :items="deviceStreams" :fields="fields" :current-page="currentPage" :per-page="perPage" >
+        <b-table small responsive show-empty :items="deviceStreams" :fields="fields" :current-page="currentPage" :per-page="perPage" >
           <!-- <span v-html="streamDetail"></span> -->
           <!-- <template slot="time" scope="row">
             {{formatDate(row.item.timestamp*1000)}}

@@ -42,6 +42,7 @@ export default Doughnut.extend({
         toDate: null,
         // records devices
         devices: [],
+        channels: [],
       }
     },
     watch: {
@@ -88,6 +89,9 @@ export default Doughnut.extend({
       },
       renderDoughnutChart (datasets, lbls) {
         var context = this
+        if(!lbls) {
+          lbls = this.channels
+        }
         this.renderChart(
         {
           labels: lbls,
@@ -112,7 +116,8 @@ export default Doughnut.extend({
                 return data['labels'][tooltipItem[0]['index']];
               },
               label: function(tooltipItem, data) {
-                return context.channel + ': ' + data['datasets'][0]['data'][tooltipItem['index']];
+                let channel = (context.channel) ? context.channel : context.channels[tooltipItem['datasetIndex']]
+                return channel + ': ' + data['datasets'][tooltipItem['datasetIndex']]['data'][tooltipItem['index']];
               },
               // afterLabel: function(tooltipItem, data) {
               //   return data['datasets'][0]['data'][tooltipItem['index']];
@@ -147,10 +152,9 @@ export default Doughnut.extend({
         // var ts = Math.round((new Date()).getTime() / 1000);
         this.$raptor.Stream().list(stream, 0, 100, 'timestamp,desc')//list(stream, 0, ts)
         .then((streams) => {
-          // console.log(streams)
-          // context.selectedStreamData = streams
-          // context.extractChartDataDeviceStream(context.selectedStreamData, context.channel);
-          streams.reverse()
+          streams.sort(function(a, b) {
+            return a.timestamp - b.timestamp;
+          });
           context.selectedStreamData = streams
           this.dataForChart = [];
           this.streamChartLabels = []
@@ -167,20 +171,20 @@ export default Doughnut.extend({
         this.$raptor.Stream().subscribe(stream, function(msg) {
           console.log(msg)
           if((context._chart || context._chart != undefined || context._chart != null) && context._chart.ctx != null) {
-            context.selectedStreamData.push(msg.record);
-            if(context.selectedStreamData.length > 100) {
-              context.selectedStreamData.shift()
+            let last = context.selectedStreamData[context.selectedStreamData.length-1]
+            if(last.timestamp != msg.record.timestamp && last.deviceId == msg.record.deviceId) {
+              context.selectedStreamData.push(msg.record);
+              if(context.selectedStreamData.length > 100) {
+                context.selectedStreamData.shift()
+              }
+              context.dataForChart = [];
+              context.streamChartLabels = []
+              context.selectedStreamData.push(msg.record);
+              let obj = context.extractChartDataDeviceStream(context.selectedStreamData,context.channel);
+              context.dataForChart = obj.data
+              context.streamChartLabels = obj.labels
+              context.populateChart(context.streamChartLabels, context.channel, context.dataForChart)
             }
-            context.dataForChart = [];
-            context.streamChartLabels = []
-            context.selectedStreamData.push(msg.record);
-            let obj = context.extractChartDataDeviceStream(context.selectedStreamData,context.channel);
-            context.dataForChart = obj.data
-            context.streamChartLabels = obj.labels
-            context.populateChart(context.streamChartLabels, context.channel, context.dataForChart)
-            // if(!(msg.type === 'stream' && msg.op === 'data' && msg.streamId === this.$raptor.stream)) {
-            //   return
-            // }
           }
         });
         // context.unsubscribeStream(stream)
@@ -191,22 +195,6 @@ export default Doughnut.extend({
           console.log(msg)
         });
       },
-      // extractChartDataDeviceStream (d, channel, pushData) {
-      //   this.dataForChart = [];
-      //   this.streamChartLabels = []
-      //   for (var i = 0; i < d.length; i++) {
-      //     let s = d[i];
-      //     if(i == 0) {
-      //       this.deviceDataTime = this.formatDate(s.timestamp * 1000);
-      //     }
-      //     let sDate = (new Date(s.timestamp * 1000)).toUTCString();
-      //     if((typeof s.channels[channel]) === 'number' || (typeof s.channels[channel]) === 'boolean') {
-      //       this.streamChartLabels.push(sDate)
-      //       this.dataForChart.push(s.channels[channel])
-      //     }
-      //   }
-      //   this.renderDoughnutChart(this.streamChartLabels);
-      // },
       extractChartDataDeviceStream (d, channel, pushData) {
         let dataForChart = [];
         let streamChartLabels = []
@@ -240,6 +228,7 @@ export default Doughnut.extend({
             // console.log(device)
             for (var j = 0; j < this.chartData.length; j++) {
               if(this.chartData[j].device.id == device.id) {
+                this.channels.push(this.chartData[j].channel)
                 let dev = {
                   device: device,
                   stream: device.getStream(this.chartData[j].stream),
@@ -290,7 +279,9 @@ export default Doughnut.extend({
           if(streams.length > 0) {
             for (var j = 0; j < this.datasets.length; j++) {
               if(this.datasets[j].device.id == streams[0].json.deviceId) {
-                streams.reverse()
+                streams.sort(function(a, b) {
+                  return a.timestamp - b.timestamp;
+                });
                 this.datasets[j].selectedStreamData = streams
                 let obj = this.extractChartDataDeviceStream(streams,this.datasets[j].channel, this.selectedDisplayParam);
                 this.datasets[j].dataForChart = obj.data
@@ -368,8 +359,8 @@ export default Doughnut.extend({
           if((context._chart || context._chart != undefined || context._chart != null) && context._chart.ctx != null) {
             let dsets = []
             for (var j = 0; j < context.datasets.length; j++) {
-              if(context.datasets[j].device.id == msg.device.id) {
-                if(context.datasets[j].selectedStreamData.indexOf(msg.record) == -1) {
+              let last = context.datasets[j].selectedStreamData[context.datasets[j].selectedStreamData.length-1]
+              if(context.datasets[j].device.id == msg.device.id && last.timestamp != msg.record.timestamp) {
                   context.datasets[j].selectedStreamData.push(msg.record)
                   if(context.datasets[j].selectedStreamData.length > 100) {
                     context.datasets[j].selectedStreamData.shift()
@@ -380,7 +371,7 @@ export default Doughnut.extend({
                   context.datasets[j].dataForChart = obj.data
                   context.datasets[j].streamChartLabels = obj.labels
                   context.streamChartLabels = obj.labels
-                  console.log(context._chart.data)
+                  // console.log(context._chart.data)
                   context._chart.data.datasets[j] = {
                     label: context.datasets[j].channel,
                     borderColor: colors[j],
@@ -389,7 +380,6 @@ export default Doughnut.extend({
                   }
                   context._chart.data.labels = context.streamChartLabels
                   context._chart.update()
-                }
               }
             }
             // if(!(msg.type === 'stream' && msg.op === 'data' && msg.streamId === this.$raptor.stream)) {

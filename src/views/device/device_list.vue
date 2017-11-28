@@ -17,7 +17,7 @@
         <div class="row">
           <div class="col-lg-12 text-left">
             <b-form-fieldset description="Enter Device id to filter" label="Search">
-              <v-autocomplete :items="list" v-model="itemAutoComplete" :get-label="getLabel" :component-item='itemAutoTemplate' @update-items="updateItems" :input-attrs="{id: 'v-my-autocomplete'}" @item-clicked="itemClicked" @change="inputChangeEvent"></v-autocomplete>
+              <v-autocomplete :items="list" v-model="itemAutoComplete" :get-label="getLabel" :component-item='itemAutoTemplate' @update-items="updateItems" :input-attrs="{id: 'v-my-autocomplete'}" @item-clicked="itemClicked" @change="inputChangeEvent" :auto-select-one-item="false"></v-autocomplete>
             </b-form-fieldset>
           </div>
         </div>
@@ -34,18 +34,14 @@
 
       <br />
 
-      <!-- v-autocomplete(:items="items" v-model='item', :get-label='getLabel', :min-len='0' @update-items='update', :component-item='tpl', @item-selected="itemSelected", @item-clicked="itemClicked", :input-attrs="{name: 'input-test', id: 'v-my-autocomplete'}")
-  p Selected item:
-  pre {{ item }} -->
-
       <!-- striped hover -->
       <b-table no-local-sorting small responsive show-empty :items="list" :fields="fields" @sort-changed="sortingChanged" :per-page="0">
         <template slot="id" scope="row">
             <b-badge size="sm" variant="light" :to="{ name: 'DeviceUpdate', params: { deviceId: row.item.id }}">{{row.item.id}}</b-badge>
-          </template>
+        </template>
         <template slot="name" scope="row">
             <b-button variant="link" :to="{ name: 'DeviceUpdate', params: { deviceId: row.item.id }}">{{row.item.name}}</b-button>
-          </template>
+        </template>
         <template slot="description" scope="row">{{row.item.description}}</template>
         <template slot="created" scope="row">{{formatDate(row.item.createdAt)}}</template>
         <template slot="actions" scope="row">
@@ -55,9 +51,9 @@
               <b-button title="Edit device definition" variant="outline-primary" :to="{ name: 'DeviceUpdate', params: { deviceId: row.item.id }}">
                   <i class="fa fa-edit fa-lg"></i>
               </b-button>
-              <b-button title="Edit data streams definitions" variant="outline-primary" :to="{ name: 'Streams', params: { deviceId: row.item.id }}">
+              <!-- <b-button title="Edit data streams definitions" variant="outline-primary" :to="{ name: 'Streams', params: { deviceId: row.item.id }}">
                   <i class="fa fa-table fa-lg"></i>
-              </b-button>
+              </b-button> -->
               <b-button title="View stored records" variant="outline-primary" :to="{ name: 'RecordSet', params: { deviceId: row.item.id }}">
                   <i class="fa fa-database fa-lg"></i>
               </b-button>
