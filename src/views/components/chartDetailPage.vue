@@ -18,15 +18,44 @@
       <div class="row" v-if="device">
         <div class="col-sm-12 hidden-sm-down">
           <b-button-toolbar class="float-right" aria-label="Toolbar with button groups">
+            <b-button variant="outline-secondary" @click="showHideSearchView">
+              <i v-if="collapsed" class="icon-arrow-up"></i>
+              <i v-else class="icon-arrow-down"></i>
+          </b-button>
             <b-button-group class="mr-3" aria-label="First group">
-              <b-button variant="outline-secondary" value="hour" @click="onChangeDisplayDataTime">Hours</b-button>
-              <b-button variant="outline-secondary" value="day" @click="onChangeDisplayDataTime">Day</b-button>
-              <b-button variant="outline-secondary" value="month" @click="onChangeDisplayDataTime">Month</b-button>
+              <!-- <b-button variant="outline-secondary" value="hour" @click="onChangeDisplayDataTime">Hours</b-button> -->
+              <!-- <b-button variant="outline-secondary" value="day" @click="onChangeDisplayDataTime">Day</b-button> -->
+              <!-- <b-button variant="outline-secondary" value="month" @click="onChangeDisplayDataTime">Month</b-button> -->
               <b-button variant="outline-secondary" value="realhour" @click="onChangeDisplayDataTime">Real time</b-button>
             </b-button-group>
           </b-button-toolbar>
         </div><!--/.col-->
       </div><!--/.row-->
+      <div class="row" v-if="collapsed">
+        <div class="col-md-12">
+          <b-form-fieldset label="Select date & time to search data" :horizontal="false">
+            <b-row>
+              <b-col lg="5">
+                <b-input-group>
+                  <b-input-group-addon>From</b-input-group-addon>
+                  <date-picker class="form-control" placeholder="Select start date and time"  :config="dateTimePicker" v-model="fromDate" >
+                  </date-picker>
+                </b-input-group>
+              </b-col>
+              <b-col lg="5">
+                <b-input-group>
+                  <b-input-group-addon>To</b-input-group-addon>
+                  <date-picker class="form-control" :config="dateTimePicker" placeholder="Select end date and time" v-model="toDate">
+                  </date-picker>
+                </b-input-group>
+              </b-col>
+              <b-col lg="2">
+                <b-button variant="outline-secondary" @click="searchData">Search</b-button>
+              </b-col>
+            </b-row>
+          </b-form-fieldset>
+        </div>
+      </div>
       <div>
         <div v-if="widgetData.chart == 'bar'">
           <div class="chart-wrapper">
@@ -65,25 +94,31 @@
         </div>
       </div>
       <!-- && device.constructor === Array && device.length > 0 -->
-      <div class="col-md-12" v-if="device">
+      <!-- <div class="col-md-12" v-if="device">
         <vue-slider ref="slider" v-bind="slider" v-model="slider.value" @callback="sliderValueChanged" @drag-start="sliderDragStart" @drag-end="sliderDragEnd"></vue-slider>
-      </div>
+      </div> -->
     </b-card>
   </div>
 </template>
 
 
 <script>
-import moment from 'moment'
-import vueSlider from 'vue-slider-component'
+  import moment from 'moment'
+  import vueSlider from 'vue-slider-component'
 
-import BarChart from './../userdashboard/charts/BarChart'
-import LineChart from './../userdashboard/charts/LineChart'
-import DoughnutChart from './../userdashboard/charts/DoughnutChart'
-import RadarChart from './../userdashboard/charts/RadarChart'
-import PieChart from './../userdashboard/charts/PieChart'
-import PolarAreaChart from './../userdashboard/charts/PolarAreaChart'
-import LineChartReport from './../userdashboard/charts/LineChartReport'
+  import BarChart from './../userdashboard/charts/BarChart'
+  import LineChart from './../userdashboard/charts/LineChart'
+  import DoughnutChart from './../userdashboard/charts/DoughnutChart'
+  import RadarChart from './../userdashboard/charts/RadarChart'
+  import PieChart from './../userdashboard/charts/PieChart'
+  import PolarAreaChart from './../userdashboard/charts/PolarAreaChart'
+  import LineChartReport from './../userdashboard/charts/LineChartReport'
+
+  //data and time picker
+  import datePicker from 'vue-flatpickr-component';
+  import 'flatpickr/dist/flatpickr.css';
+  import ConfirmDatePlugin from 'flatpickr/dist/plugins/confirmDate/confirmDate';
+  import 'flatpickr/dist/plugins/confirmDate/confirmDate.css';
 
 var currentDate = moment();
 
@@ -91,6 +126,9 @@ export default {
   name: 'realtimechart',
   props: ['widgetData'],
   components: {
+    //datetime picker
+    datePicker,
+    //vue slider
     vueSlider,
     // charts
     BarChart,
@@ -103,6 +141,7 @@ export default {
   },
   data () {
     return {
+      collapsed: false,
       device: null,
       selectedDeviceDetails: null,
       realtimeData: null,
@@ -114,6 +153,7 @@ export default {
       realStreamChartLabels: [],
       isSliderDragging: false,
       isSliderDragged: false,
+      realtimeUpdate: false,
       slider: {
         value: [
           currentDate.format("YYYY-MM-DDTHH:MM") +"",
@@ -185,6 +225,19 @@ export default {
       // search query
       searchDataObj: null,
       dataToPass: null,
+      // from and to date for search
+      fromDate: new Date(),
+      toDate: new Date(),
+      dateTimePicker: {
+        enableTime: true,
+        altInput: true,
+        defaultDate: new Date(),
+        // maxDate: 'today',
+        wrap: true,
+        enableSeconds: true,
+        weekNumbers: true,
+        plugins: [new ConfirmDatePlugin({confirmText: 'Done', showAlways:true})]
+      },
     }
   },
   mounted () {
@@ -199,7 +252,10 @@ export default {
     },
     onChangeDisplayDataTime (evt) {
       let val = evt.target.value;
-      // console.log(val)
+      console.log(val)
+      if(val == 'realhour') {
+        this.realtimeUpdate = true
+      }
       if(val == this.selectedDisplayParam) {
         return
       }
@@ -207,19 +263,29 @@ export default {
         this.selectedDisplayParam = 'hour';
       }
       this.selectedDisplayParam = val;
-      if(this.widgetData.data.stream && this.widgetData.data.channel && this.device) {
-        let dateArray = this.getDateList(this.device.json.createdAt*1000,moment().unix()*1000, this.selectedDisplayParam)
-        dateArray.reverse()
-        let slider = this.$refs['slider']
-        this.slider.data = dateArray
-        slider.setIndex([0,1])
-        // console.log(this.slider.data)
-        // console.log(this.slider.value)
-        this.dataToPass = {display: this.selectedDisplayParam, fromDate: this.slider.data[1], toDate: this.slider.data[0]}
+      let d = new Date();
+      let requiredDate = null
+      if(this.selectedDisplayParam == 'month') {
+        requiredDate = new Date(d.getMonth() - 1);
+      } else if (this.selectedDisplayParam == 'day') {
+        requiredDate = new Date(d.getDate() - 1);
+      } else if (this.selectedDisplayParam == 'hour') {
+        requiredDate = new Date(d.getTime() - (1000*60*60));
+      } else if (this.selectedDisplayParam == 'realtime') {
+        requiredDate = new Date(d.getTime() - (1000*60*60));
+      } else {
+        requiredDate = new Date(d.getTime() - (1000*60*60));
+      }
+      if(this.widgetData.data && this.device) {
+        // let dateArray = this.getDateList(this.device.json.createdAt*1000,moment().unix()*1000, this.selectedDisplayParam)
+        // dateArray.reverse()
+        // let slider = this.$refs['slider']
+        // this.slider.data = dateArray
+        // slider.setIndex([0,1])
+        this.dataToPass = {display: this.selectedDisplayParam, fromDate: requiredDate.getTime(), toDate: moment().unix()*1000, realtime: this.realtimeUpdate}
         this.searchDataObj = null
         this.searchDataObj = this.dataToPass
-        // console.log(this.dataToPass)
-        // this.searchDataObj(this.selectedDev.json.streams[this.selectedStream], this.slider.data[1], this.slider.data[0])
+        console.log(this.dataToPass)
       }
     },
 
@@ -257,7 +323,7 @@ export default {
         this.selectedDisplayParam = 'hour'
       }
       if(this.chartLoaded) {
-        this.dataToPass = {display: this.selectedDisplayParam, fromDate: this.slider.value[1], toDate: this.slider.value[0]}
+        this.dataToPass = {display: this.selectedDisplayParam, fromDate: this.slider.value[1], toDate: this.slider.value[0], realtime: this.realtimeUpdate}
         this.searchDataObj = this.dataToPass
         // console.log('slider Drag end called')
       }
@@ -277,25 +343,38 @@ export default {
       }
     },
 
+    // search data between dates
+    searchData () {
+      if(this.selectedDisplayParam == null || this.selectedDisplayParam == '' ) {
+        this.selectedDisplayParam = 'hour'
+      }
+      // console.log(this.fromDate)
+      // console.log(this.toDate)
+      if(this.chartLoaded) {
+        this.dataToPass = {display: this.selectedDisplayParam, fromDate: moment(this.fromDate).unix()*1000, toDate: moment(this.toDate).unix()*1000, realtime: this.realtimeUpdate}
+        this.searchDataObj = this.dataToPass
+        // console.log('slider Drag end called')
+      }
+    },
+
     //setting device data coming from child component
     setDeviceData (data) {
+      this.chartLoaded = false
       if(data.constructor === Array && data.length > 0) {
         this.selectedDeviceDetails = this.showMultipleDevicesDetails(data)
-        // this.chartLoaded = true
-        // this.device = data
+        this.device = data
       } else {
-        this.chartLoaded = false
         this.device = data
         this.selectedDeviceDetails = this.showDeviceDetails(this.device)
         let dateArray = this.getDateList(this.device.json.createdAt*1000,moment().unix()*1000, 'hour')
         dateArray.reverse()
         this.slider.data = dateArray
-        let slider = this.$refs['slider']
-        console.log("===slider====")
-        console.log(slider)
-        if(slider) {
-          slider.setIndex([0,1])
-        }
+        // let slider = this.$refs['slider']
+        // console.log("===slider====")
+        // console.log(slider)
+        // if(slider) {
+        //   slider.setIndex([0,1])
+        // }
         this.chartLoaded = true
       }
     },
@@ -319,6 +398,11 @@ export default {
       }
       return selectedDeviceDetails
     },
+
+    // show and hide search view on button click
+    showHideSearchView () {
+      this.collapsed = !this.collapsed
+    } ,
   }
 }
 </script>

@@ -3,9 +3,9 @@
     <div class="animated fadeIn">
       <div class="col-md-9">
         <!-- <button @click="addWidget">Add Widget</button> -->
-        <b-button type="button" variant="success" @click="addChartForDevicesCount">Add Device Count Chart</b-button>
-        <b-button type="button" variant="success" @click="singleDataModal = true">Add Widget</b-button>
-        <b-button type="button" variant="success" @click="multipleDataModal = true">Add Mix Chart Widget</b-button>
+        <!-- <b-button type="button" variant="success" @click="addChartForDevicesCount">Add Device Count Chart</b-button> -->
+        <!-- <b-button type="button" variant="success" @click="singleDataModal = true">Add Widget</b-button> -->
+        <b-button type="button" variant="success" @click="multipleDataModal = true">Add Chart Widget</b-button>
       </div>
 
       <div class="card-columns cols-2">
