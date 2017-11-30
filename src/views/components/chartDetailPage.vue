@@ -228,6 +228,7 @@ export default {
       // from and to date for search
       fromDate: new Date(),
       toDate: new Date(),
+      currentTime: new Date(),
       dateTimePicker: {
         enableTime: true,
         altInput: true,
@@ -256,33 +257,35 @@ export default {
       if(val == 'realhour') {
         this.realtimeUpdate = true
       }
-      if(val == this.selectedDisplayParam) {
-        return
-      }
+      // if(val == this.selectedDisplayParam) {
+      //   return
+      // }
       if(val == null) {
         this.selectedDisplayParam = 'hour';
       }
       this.selectedDisplayParam = val;
-      let d = new Date();
+      let d1 = new Date();
+      let d2 = new Date();
       let requiredDate = null
       if(this.selectedDisplayParam == 'month') {
-        requiredDate = new Date(d.getMonth() - 1);
+        requiredDate = new Date(d1.getMonth() - 1);
       } else if (this.selectedDisplayParam == 'day') {
-        requiredDate = new Date(d.getDate() - 1);
+        requiredDate = new Date(d1.getDate() - 1);
       } else if (this.selectedDisplayParam == 'hour') {
-        requiredDate = new Date(d.getTime() - (1000*60*60));
+        requiredDate = new Date(d1.getTime() - (1000*60*60));
       } else if (this.selectedDisplayParam == 'realtime') {
-        requiredDate = new Date(d.getTime() - (1000*60*60));
+        requiredDate = new Date(d1.getTime() - (1000*60*60));
       } else {
-        requiredDate = new Date(d.getTime() - (1000*60*60));
+        requiredDate = new Date(d1.getTime() - (1000*60*60));
       }
-      if(this.widgetData.data && this.device) {
+      // this.widgetData.data &&
+      if(this.device) {
         // let dateArray = this.getDateList(this.device.json.createdAt*1000,moment().unix()*1000, this.selectedDisplayParam)
         // dateArray.reverse()
         // let slider = this.$refs['slider']
         // this.slider.data = dateArray
         // slider.setIndex([0,1])
-        this.dataToPass = {display: this.selectedDisplayParam, fromDate: requiredDate.getTime(), toDate: moment().unix()*1000, realtime: this.realtimeUpdate}
+        this.dataToPass = {display: this.selectedDisplayParam, fromDate: requiredDate.getTime(), toDate: d2.getTime(), realtime: this.realtimeUpdate}
         this.searchDataObj = null
         this.searchDataObj = this.dataToPass
         console.log(this.dataToPass)
@@ -348,10 +351,18 @@ export default {
       if(this.selectedDisplayParam == null || this.selectedDisplayParam == '' ) {
         this.selectedDisplayParam = 'hour'
       }
-      // console.log(this.fromDate)
-      // console.log(this.toDate)
+      let from = new Date(this.fromDate)
+      let to = new Date(this.toDate)
+      console.log(from)
+      console.log(to)
+      if(to.getTime() == this.currentTime.getTime()) {
+        this.realtimeUpdate = true
+      } else {
+        this.realtimeUpdate = false
+      }
+      console.log(this.realtimeUpdate)
       if(this.chartLoaded) {
-        this.dataToPass = {display: this.selectedDisplayParam, fromDate: moment(this.fromDate).unix()*1000, toDate: moment(this.toDate).unix()*1000, realtime: this.realtimeUpdate}
+        this.dataToPass = {display: this.selectedDisplayParam, fromDate: from.getTime(), toDate: to.getTime(), realtime: this.realtimeUpdate}
         this.searchDataObj = this.dataToPass
         // console.log('slider Drag end called')
       }

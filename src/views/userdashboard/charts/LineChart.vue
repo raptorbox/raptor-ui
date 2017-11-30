@@ -1,5 +1,6 @@
 <script>
 import { Line } from 'vue-chartjs'
+import zoom from 'chartjs-plugin-zoom';
 import moment from 'moment'
 
 var currentDate = moment();
@@ -47,6 +48,7 @@ export default Line.extend({
       }
     },
     mounted () {
+      this.addPlugin(zoom);
       // console.log(this.chartData)
       if( !(this.chartData instanceof Array) ) {
         this.device = this.chartData.device
@@ -124,6 +126,22 @@ export default Line.extend({
             mode: 'index',
             intersect: false,
           },
+          // Container for pan options
+          pan: {
+              // Boolean to enable panning
+              enabled: true,
+              // Panning directions. Remove the appropriate direction to disable
+              // Eg. 'y' would only allow panning in the y direction
+              mode: 'x',
+          },
+          // Container for zoom options
+          zoom: {
+              // Boolean to enable zooming
+              enabled: true,
+              // Zooming directions. Remove the appropriate direction to disable
+              // Eg. 'y' would only allow zooming in the y direction
+              mode: 'x',
+          }
         })
       },
       load() {
@@ -239,7 +257,8 @@ export default Line.extend({
           label: this.device.name + ' - ' + lbl,
           fill: false,
           borderColor: colors[0],
-          backgroundColor: colorsWithOpacity[0],
+          backgroundColor: colors[0],
+          fillColor: colors[0],
           data: dataForChart
         }]
         // console.log(this._chart)
@@ -311,6 +330,8 @@ export default Line.extend({
           dsets.push({
             label: data[i].device.name + ' - ' + data[i].channel,
             fill: false,
+            backgroundColor: colors[i],
+            fillColor: colors[i],
             borderColor: colors[i],
             data: []
           })
@@ -384,6 +405,7 @@ export default Line.extend({
             label: data.device.name + ' - ' + data.channel,
             fill: false,
             borderColor: colors[0],
+            fillColor: colors[0],
             backgroundColor: colorsWithOpacity[0],
             strokeColor: 'rgba(220,180,0,1)',
             pointColor: 'rgba(220,180,0,1)',
@@ -404,6 +426,7 @@ export default Line.extend({
             label: data.device.name + ' - ' + data.channel,
             fill: false,
             borderColor: colors[index],
+            fillColor: colors[index],
             backgroundColor: colorsWithOpacity[index],
             strokeColor: 'rgba(220,180,0,1)',
             pointColor: 'rgba(220,180,0,1)',
@@ -517,8 +540,8 @@ export default Line.extend({
         }
       },
       searchDataApi(stream, query, callback) {
-        console.log(query)
-        console.log(stream)
+        // console.log(query)
+        // console.log(stream)
         this.$raptor.Stream().search(stream, query)
         .then((stream) => {
           console.log(stream.length)
@@ -551,7 +574,12 @@ export default Line.extend({
             }
           } else {
             if( context.datasets.length > 0) {
-              context.processMultipleData(streams, true)
+              for (var i = 0; i < context.datasets.length; i++) {
+                if(context.datasets[i].device.id == streams[0].json.deviceId) {
+                  context.datasets[i].selectedStreamData = context.datasets[i].selectedStreamData.concat(streams)
+                  context.processMultipleData(context.datasets[i].selectedStreamData, true)
+                }
+              }
             } else {
               context.selectedStreamData = context.selectedStreamData.concat(streams)
               context.processSingleData()
