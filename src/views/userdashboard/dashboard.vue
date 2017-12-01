@@ -127,49 +127,8 @@
         </grid-item>
     </grid-layout> -->
 
-    <!-- single data source widget -->
-    <b-modal title="Add Widget" class="modal-info" v-model="singleDataModal" @ok="onAddChartButtonClick" @cancel="clearFields">
-      <b-form-fieldset description="Please enter a widget title" label="Title" :horizontal="false">
-        <b-form-input type="text" placeholder="Enter Widget Name" v-model="selectedTitle"></b-form-input>
-      </b-form-fieldset>
-      <!-- <b-form-fieldset description="Please select device type" label="Device Type" :horizontal="false">
-        <div class="float-right">
-          <b-form-select variant="outline-secondary" class="mr-3" @change.native="onChangeDeviceType" v-model="selectedDeviceType" :options="listOfDevicesTypeForSelectOptions" />
-        </div>
-      </b-form-fieldset> -->
-      <!-- <b-form-fieldset description="Please select a device" label="Device" :horizontal="false">
-        <select class="form-control" @change="onChangeDevice">
-          <option v-for="dev in listOfDevicesForSelectOptions" v-bind:value="dev.value">{{dev.text}}</option>
-        </select>
-        <div class="float-right">
-          <b-form-select variant="outline-secondary" class="mr-3" @change.native="onChangeDevice" v-model="selectedDevice" :options="listOfDevicesForSelectOptions" />
-        </div>
-      </b-form-fieldset> -->
-      <b-form-fieldset description="Enter Device id to filter or select from list" label="Device" :horizontal="false">
-        <v-autocomplete :items="listOfDevicesForSelectOptions" v-model="selectedDevice" :get-label="getLabel" :component-item='itemAutoTemplate' @update-items="updateItems" :input-attrs="{id: 'v-my-autocomplete', placeholder:'Please search/select a device'}" @item-clicked="itemClicked" @change="inputChangeEvent" :auto-select-one-item="false" >
-        </v-autocomplete>
-      </b-form-fieldset>
-      <b-form-fieldset description="Please select a stream" label="Stream" :horizontal="false">
-        <div class="float-right">
-          <b-form-select variant="outline-secondary" class="mr-3" @change.native="onChangeOptionStream" v-model="selectedStream" :options="optionsStreams" />
-        </div>
-      </b-form-fieldset>
-      <b-form-fieldset description="Please select a channel" label="Channel" :horizontal="false">
-        <div class="float-right">
-          <b-form-select variant="outline-secondary" class="mr-3" @change.native="onChangeOptionChannel" v-model="selectedChannel" :options="optionsChannel" />
-        </div>
-      </b-form-fieldset>
-
-      <!-- Select chart type to show -->
-      <b-form-fieldset description="Please select a chart you want to add" label="Chart Type" :horizontal="false">
-        <div class="float-right">
-          <b-form-select variant="outline-secondary" class="mr-3" @change.native="onChangeOptionChart" v-model="selectedChart" :options="optionsChart" />
-        </div>
-      </b-form-fieldset>
-    </b-modal>
-
     <!-- multi data source widget -->
-    <b-modal title="Add Multuiple Data source Widget" size="lg" class="modal-info" v-model="multipleDataModal" @ok="onAddMixChart" @cancel="clearFields">
+    <b-modal title="Add Widget" size="lg" class="modal-info" v-model="multipleDataModal" @ok="onAddMixChart" @cancel="clearFields">
       <b-form-fieldset description="Please enter a widget title" label="Title" :horizontal="false">
         <b-form-input type="text" placeholder="Enter Widget Name" v-model="selectedTitle"></b-form-input>
       </b-form-fieldset>
@@ -895,6 +854,11 @@ export default {
           for (var j = 0; j < this.tableDataSource.length; j++) {
             if(source.number == this.tableDataSource[j].number) {
               this.tableDataSource[j].listOfDevicesForSelectOptions = this.devices
+              this.tableDataSource[j].optionsStreams = []
+              this.tableDataSource[j].optionsChannel = []
+              this.tableDataSource[j].device = null
+              this.tableDataSource[j].stream = null
+              this.tableDataSource[j].channel = null
             }
           }
           let data = this.tableDataSource
@@ -909,7 +873,6 @@ export default {
       return item.name + " - " + item.id
     },
     updateItems (text, source) {
-      // console.log(text)
       let listOfDevicesForSelectOptions = []
       for (var i = 0; i < this.devices.length; i++) {
         if(this.devices[i].id.indexOf(text) !== -1 || this.devices[i].name.indexOf(text) !== -1) {
@@ -986,15 +949,15 @@ export default {
     fetchStreamDataForChannels (stream, source) {
       this.$raptor.Stream().list(stream, 0, 1, 'timestamp,desc')
       .then((streams) => {
-        console.log(streams)
+        // console.log(streams)
         if(streams.length > 0) {
           let chs = streams[0].channels
           let keys = Object.keys(chs);
           let optionsChannel = [];
           console.log(keys)
           for (var i = 0; i < keys.length; i++) {
-            if(chs[keys[i]] * 1) {
-              if(optionsChannel == 0) {
+            if(chs[keys[i]] * 1 || chs[keys[i]] * 1 == 0) {
+              if(optionsChannel.length == 0) {
                 optionsChannel.push({ value: null,text: 'Please select a Channel' });
               }
               optionsChannel.push({ value: keys[i],text: keys[i] });
