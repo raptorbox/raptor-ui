@@ -223,7 +223,7 @@ export default PolarArea.extend({
         for (var i = 0; i < d.length; i++) {
           let s = d[i];
           let sDate = (new Date(s.timestamp * 1000)).toUTCString();
-          if((typeof s.channels[channel]) === 'number' || (typeof s.channels[channel]) === 'boolean' || (s.channels[channel] * 1)) {
+          if((typeof s.channels[channel]) === 'number' || (typeof s.channels[channel]) === 'boolean' || (!isNaN(s.channels[channel] * 1))) {
             streamChartLabels.push(sDate)
             dataForChart.push(s.channels[channel])
           }

@@ -219,7 +219,7 @@ export default Bar.extend({
           let date = new Date(s.timestamp * 1000)
           date.setSeconds(0,0)
           let sDate = date.toString(); //.toLocaleString();
-          if((typeof s.channels[channel]) === 'number' || (typeof s.channels[channel]) === 'boolean' || (s.channels[channel] * 1)) {
+          if((typeof s.channels[channel]) === 'number' || (typeof s.channels[channel]) === 'boolean' || (!isNaN(s.channels[channel] * 1))) {
             streamChartLabels.push(sDate)
             dataForChart.push(s.channels[channel])
           }
