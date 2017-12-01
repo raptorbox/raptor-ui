@@ -956,7 +956,7 @@ export default {
           let optionsChannel = [];
           console.log(keys)
           for (var i = 0; i < keys.length; i++) {
-            if(chs[keys[i]] * 1 || chs[keys[i]] * 1 == 0) {
+            if(!isNaN(chs[keys[i]] * 1)) {
               if(optionsChannel.length == 0) {
                 optionsChannel.push({ value: null,text: 'Please select a Channel' });
               }
