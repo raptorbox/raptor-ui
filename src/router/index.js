@@ -4,8 +4,13 @@ import Router from 'vue-router'
 // Containers
 import Full from '@/containers/Full'
 
+// Users
 import UsersList from '@/views/user/user_list'
 import UsersForm from '@/views/user/user_form'
+
+// Applications
+import AppList from '@/views/app/app_list'
+import AppForm from '@/views/app/app_form'
 
 import TokensList from '@/views/token/token_list'
 import TokensForm from '@/views/token/token_form'
@@ -86,6 +91,42 @@ const router = new Router({
             render (c) { return c('router-view') }
           },
           children: [
+            {
+              path: 'applications',
+              name: 'Applications',
+              redirect: '/admin/applications/list',
+              component: {
+                render (c) { return c('router-view') }
+              },
+              children: [
+                {
+                  path: 'list',
+                  name: 'List',
+                  meta: {
+                    label: 'List'
+                  },
+                  component: AppList
+                },
+                {
+                  path: 'create',
+                  name: 'AppCreate',
+                  meta: {
+                    label: 'Create'
+                  },
+                  component: AppForm,
+                  props: true
+                },
+                {
+                  path: ':applicationId',
+                  component: AppForm,
+                  name: 'ApplicationUpdate',
+                  meta: {
+                    label: 'Update'
+                  },
+                  props: true
+                }
+              ]
+            },
             {
               path: 'users',
               name: 'Users',

@@ -8,8 +8,8 @@
 
         <div class="row row-fluid">
           <div class="col-lg-8 list-inline">
-            <h3 class="list-inline-item"><i class="fa fa-users"></i> Users</h3>
-            <b-button class="list-inline-item" variant="primary" :to="{ name: 'UsersCreate'}">
+            <h3 class="list-inline-item">Applications</h3>
+            <b-button class="list-inline-item" variant="primary" :to="{ name: 'AppCreate'}">
               <i class="fa fa-plus"></i> New
             </b-button>
           </div>
@@ -25,11 +25,11 @@
       <b-table no-local-sorting small responsive show-empty :items="list" :fields="fields" @sort-changed="sortingChanged">
         
         <template slot="id" scope="row">
-              <b-badge size="sm" variant="light" :to="{ name: 'UsersUpdate', params: { userId: row.item.id }}">{{row.item.id}}</b-badge>
+              <b-badge size="sm" variant="light" :to="{ name: 'ApplicationUpdate', params: { appId: row.item.id }}">{{row.item.id}}</b-badge>
             </template>
-        <template slot="username" scope="row">
-          <b-button variant="link" :to="{ name: 'UsersUpdate', params: { userId: row.item.id }}">
-            {{row.item.username}}
+        <template slot="name" scope="row">
+          <b-button variant="link" :to="{ name: 'ApplicationUpdate', params: { appId: row.item.id }}">
+            {{row.item.name}}
           </b-button>
         </template>
         <template slot="roles" scope="row">
@@ -44,7 +44,7 @@
             {{formatDate(row.item.created)}}
         </template>
         <template slot="actions" scope="row">
-            <b-button title="Delete user" variant="danger" :disabled="!isAllowed('user_delete')" @click="remove(row.item)">
+            <b-button title="Delete application" variant="danger" @click="remove(row.item)">
               <i class="fa fa-remove fa-lg"></i>
             </b-button>
         </template>
@@ -66,7 +66,7 @@
 import moment from 'moment'
 
 export default {
-  name: 'user_list',
+  name: 'app_list',
   data() {
     return {
       loading: false,
@@ -79,16 +79,13 @@ export default {
           label: 'Id',
           sortable: true,
         },
-        username: {
-          label: 'Username',
+        name: {
+          label: 'Name',
           sortable: true,
         },
         created: {
           label: 'Created',
           sortable: true,
-        },
-        roles: {
-          label: 'Roles'
         },
         status: {
           label: 'Status'
@@ -97,21 +94,17 @@ export default {
       },
       perPage: 25,
       totalRows: 0,
-      user: null,
+      appId: null,
       sortBy: "created",
       sortDir: "desc",
       pageOptions: [25,100,250]
     }
   },
   mounted() {
-    this.user = this.$raptor.Auth().getUser()
+    // this.app = this.$raptor.Auth().getUser()
     this.fetchData()
   },
   methods: {
-    isAllowed(u) {
-      //TODO add local permission checks on sdk
-      return this.user.id == u.id || this.user.roles.indexOf("admin") > -1
-    },
     formatDate(d) {
       return moment(new Date(d)).format('MMMM Do YYYY')
     },
@@ -119,7 +112,7 @@ export default {
       var context = this
       this.error = null
       this.loading = true
-      this.$log.debug('Fetching user list')
+      this.$log.debug('Fetching app list')
       // page config
       let page = {
         page: this.currentPage,
@@ -128,10 +121,9 @@ export default {
         sortDir: this.sortDir,
       }
       console.log(page)
-      this.$raptor.Admin().User().list(page).then((pager) => {
+      this.$raptor.App().list(page).then((pager) => {
 
-        console.log(pager)
-        this.$log.debug('Loaded %s user list', pager.getContent().length)
+        this.$log.debug('Loaded %s app list', pager.getContent().length)
 
         this.loading = false
         this.pager = pager
@@ -162,20 +154,20 @@ export default {
       this.perPage = limit
       this.fetchData()
     },
-    remove(user) {
-      const userName = user && user.username ? user.username : user
-      const userId = user && user.id ? user.id : user
+    remove(app) {
+      const appName = app && app.name ? app.name : app
+      const appId = app && app.id ? app.id : app
       var context = this
-      return this.$dialog.confirm(`Remove user \`${userName}\` ?`, {
+      return this.$dialog.confirm(`Remove app \`${appName}\` ?`, {
           html: false,
           okText: 'Remove',
           cancelText: 'Cancel',
         })
         .then(() => {
-          this.$log.debug("Deleting %s", userId)
-          this.$raptor.Admin().User().delete(userId)
+          this.$log.debug("Deleting %s", appId)
+          this.$raptor.App().delete(appId)
             .then(() => {
-              this.$log.debug("Deleted %s", userId)
+              this.$log.debug("Deleted %s", appId)
               this.fetchData()
             })
         }).catch(function(e) {

@@ -26,7 +26,7 @@
           <div class="col-lg-9"> </div>
           <div class="col-lg-3 text-right">
             <b-form-fieldset description="Items per page" label="Show" horizontal>
-              <b-form-select :options="pageOptions" v-model="perPage" />
+              <b-form-select :options="pageOptions" v-model="perPage"  @change="itemsLimitChange" />
             </b-form-fieldset>
           </div>
         </div>
@@ -35,7 +35,7 @@
       <br />
 
       <!-- striped hover -->
-      <b-table no-local-sorting small responsive show-empty :items="list" :fields="fields" @sort-changed="sortingChanged" :per-page="0">
+      <b-table no-local-sorting small responsive show-empty :items="list" :fields="fields" @sort-changed="sortingChanged">
         <template slot="id" scope="row">
             <b-badge size="sm" variant="light" :to="{ name: 'DeviceUpdate', params: { deviceId: row.item.id }}">{{row.item.id}}</b-badge>
         </template>
@@ -152,16 +152,19 @@ export default {
       this.$log.debug('Fetching device list page=%s, size=%s sort=%s.%s', this.currentPage, this.perPage, this.sortBy, this.sortDir)
       //TODO add sort
       this.loading = true
-      this.$raptor.Inventory().list({
-          page: this.currentPage - 1,
+      let queryParam = {
+          page: this.currentPage-1,
           size: this.perPage,
           sort: this.sortBy,
           sortDir: this.sortDir,
-        })
+        }
+      // console.log(queryParam)
+      this.$raptor.Inventory().list(queryParam)
         .then((pager) => {
 
-          const list = pager.getContent()
+          // const list = pager.getContent()
           this.$log.debug('Loaded %s device list', list.length)
+          // console.log(list.length)
 
           this.loading = false
           this.pager = pager
@@ -188,6 +191,11 @@ export default {
     sortingChanged(ev) {
       this.sortBy = ev.sortBy
       this.sortDir = ev.sortDesc ? 'desc' : 'asc'
+      this.fetchData()
+    },
+    itemsLimitChange(limit) {
+      this.currentPage = 1
+      this.perPage = limit
       this.fetchData()
     },
     remove(device) {
