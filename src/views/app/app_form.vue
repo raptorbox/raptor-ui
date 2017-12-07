@@ -1,89 +1,114 @@
 <template>
-<b-card>
+  <div>
+    <b-card>
 
-  <div slot="header" class="row">
-    <div class="col-md-12">
-      <h3>
-          <i class="fa fa-user"></i>
-          {{ this.appId ? 'Edit' : 'New' }} User</h3>
-    </div>
-  </div>
+      <div slot="header" class="row">
+        <div class="col-md-12">
+          <h3>{{ this.appId ? 'Edit' : 'New' }} Application</h3>
+        </div>
+      </div>
 
-  <div class="row">
-    <div class="col-md-6">
-      <div class="form-group" :class="{error: validation.hasError('name')}">
-        <div class="content">
-          <b-form-fieldset description="Please enter application name" label="Name" :horizontal="false">
-            <b-form-input type="text" placeholder="Enter application name" v-model="name"></b-form-input>
+      <div class="row">
+        <div class="col-md-6">
+          <div class="form-group">
+            <div class="content">
+              <b-form-fieldset description="Please enter application name" label="Name" :horizontal="false">
+                <b-form-input type="text" placeholder="Enter application name" v-model="app.name"></b-form-input>
+              </b-form-fieldset>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <b-form-fieldset label="Roles" :horizontal="false">
+            <ul class="list-inline row-fluid">
+              <li class="list-inline-item col-md-3" v-for="role in availRoles" :key="role.name">
+                <b-form-checkbox v-model="roles" :plain="true" :value="role.name">
+                  <span :title="role.name">{{ role.name.length > 12 ? role.name.substr(0, 10) + '..' : role.name  }}</span>
+                </b-form-checkbox>
+              </li>
+            </ul>
+          </b-form-fieldset>
+
+          <b-form-fieldset label="Status" :horizontal="false">
+            <b-form-checkbox v-model="app.enabled">Enabled</b-form-checkbox>
           </b-form-fieldset>
         </div>
-        <div class="message text-danger">{{ validation.firstError('name') }}</div>
       </div>
-      <!-- <div class="form-group" :class="{error: validation.hasError('email')}">
-        <div class="content">
-          <b-form-fieldset description="Please enter an email" label="Email" :horizontal="false">
-            <b-form-input type="email" placeholder="Enter email" v-model="email"></b-form-input>
-          </b-form-fieldset>
+
+      <div slot="footer">
+        <div class="row">
+          <div class="col-md-6 text-left">
+            <b-button type="reset" size="lg" variant="danger" @click="cancel">
+              <i class="fa fa-undo"></i> Cancel
+            </b-button>
+          </div>
+          <div class="col-md-6 text-right">
+            <b-button type="submit" size="lg" variant="primary" @click="save">
+              <i class="fa fa-floppy-o"></i> Save
+            </b-button>
+          </div>
         </div>
-        <div class="message text-danger">{{ validation.firstError('email') }}</div>
       </div>
-      <div class="form-group" :class="{error: validation.hasError('password')}">
-        <div class="content">
-          <b-form-fieldset description="Please enter a password" label="Password" :horizontal="false">
-            <b-form-input type="password" placeholder="Enter password" v-model="password"></b-form-input>
-          </b-form-fieldset>
-          <b-form-fieldset description="Please re-type the password" label="Confitm Password" :horizontal="false">
-            <b-form-input type="password" placeholder="Confirm password" v-model="password1"></b-form-input>
-          </b-form-fieldset>
-        </div>
-        <div class="message text-danger">{{ validation.firstError('password') }}</div>
-      </div> -->
-    </div>
+    </b-card>
 
-    <div class="col-md-6">
+    <b-card header="Users">
+      <div class="row">
+        <b-table no-local-sorting small responsive show-empty :items="app.users" :fields="fieldsUsers">
+        
+          <template slot="userid" scope="row">
+            <b-badge size="sm" variant="light">{{row.item.id}}</b-badge>
+          </template>
+          <!-- <template slot="name" scope="row">
+            <b-button variant="link">{{row.item.name}}</b-button>
+          </template> -->
+          <template slot="roles" scope="row">
+              <b-badge v-for="role in row.item.roles" :key="role" :variant="role === 'admin' ? 'info' : 'light'">
+                  {{ role }}
+              </b-badge>
+          </template>
+          <template slot="status" scope="row">
+              <b-badge :variant="row.item.enabled ? 'success' : 'warning'">{{row.item.enabled ? 'Enabled' : 'Disabled'}}</b-badge>
+          </template>
+          <template slot="actions" scope="row">
+              <b-button title="Delete user" variant="danger" @click="remove(row.item)">
+                <i class="fa fa-remove fa-lg"></i>
+              </b-button>
+          </template>
+        </b-table>
+      </div>
+    </b-card>
 
-      <!-- <b-form-fieldset label="Roles" :horizontal="false">
-        <ul class="list-inline row-fluid">
-          <li class="list-inline-item col-md-3" v-for="role in availRoles" :key="role.name">
-            <b-form-checkbox v-model="roles" :plain="true" :value="role.name">
-              <span :title="role.name">{{ role.name.length > 12 ? role.name.substr(0, 10) + '..' : role.name  }}</span>
-            </b-form-checkbox>
-          </li>
-        </ul>
-      </b-form-fieldset>
-
-      <b-form-fieldset label="Status" :horizontal="false">
-        <b-form-checkbox v-model="enabled">enabled</b-form-checkbox>
-      </b-form-fieldset> -->
-    </div>
-    <!--/.col-->
+    <b-card header="Devices">
+      <div class="row">
+        <b-table no-local-sorting small responsive show-empty :items="app.devices" :fields="fieldsDevices">
+        
+          <template slot="deviceId" scope="row">
+            <b-badge size="sm" variant="light">{{row.item.id}}</b-badge>
+          </template>
+          <!-- <template slot="name" scope="row">
+            <b-button variant="link"> {{row.item.name}} </b-button>
+          </template> -->
+          <template slot="roles" scope="row">
+              <b-badge v-for="role in row.item.roles" :key="role" :variant="role === 'admin' ? 'info' : 'light'">
+                  {{ role }}
+              </b-badge>
+          </template>
+          <template slot="status" scope="row">
+              <b-badge :variant="row.item.enabled ? 'success' : 'warning'">{{row.item.enabled ? 'Enabled' : 'Disabled'}}</b-badge>
+          </template>
+          <template slot="actions" scope="row">
+              <b-button title="Delete device" variant="danger" @click="remove(row.item)">
+                <i class="fa fa-remove fa-lg"></i>
+              </b-button>
+          </template>
+        </b-table>
+      </div>
+    </b-card>
   </div>
-  <!--/.row-->
-
-  <div slot="footer">
-    <div class="row">
-      <div class="col-md-6 text-left">
-        <b-button type="reset" size="lg" variant="danger" @click="cancel">
-          <i class="fa fa-undo"></i> Cancel
-        </b-button>
-      </div>
-      <div class="col-md-6 text-right">
-        <b-button type="submit" size="lg" variant="primary" @click="save">
-          <i class="fa fa-floppy-o"></i> Save
-        </b-button>
-      </div>
-    </div>
-    <!--/.col-->
-  </div>
-  <!--/.row-->
-</b-card>
 </template>
 
 <script>
-import Raptor from 'raptor-sdk'
-var SimpleVueValidation = require('simple-vue-validator');
-var Validator = SimpleVueValidation.Validator;
-
 export default {
   name: 'user_form',
   data() {
@@ -93,22 +118,59 @@ export default {
       error: false,
       loggedInUser: null,
       availRoles: [],
-      password1: null,
+      app: {
+        name: null,
+        roles: [],
+        devices: [],
+        users: []
+      },
+      roles: [],
+      fieldsUsers: {
+        userid: {
+          label: 'Id',
+          sortable: true,
+        },
+        // name: {
+        //   label: 'Name',
+        //   sortable: true,
+        // },
+        roles: {
+          label: 'Roles',
+          sortable: true,
+        },
+        status: {
+          label: 'Status'
+        },
+        actions: {}
+      },
+      fieldsDevices: {
+        deviceId: {
+          label: 'Id',
+          sortable: true,
+        },
+        name: {
+          label: 'Name',
+          sortable: true,
+        },
+        roles: {
+          label: 'Roles',
+          sortable: true,
+        },
+        status: {
+          label: 'Status'
+        },
+        actions: {}
+      },
     }
-  },
-  validators: {
-    username: function(value) {
-      return Validator.value(value).required('Username is required');
-    },
   },
   mounted() {
     this.loggedInUser = this.$raptor.Auth().getUser()
 
     //load roles async
-    // this.loadRoles().catch((e) => {
-    //     this.$log.error("Failed to load roles: %s", e.message)
-    //     this.$log.debug(e)
-    // })
+    this.loadRoles().catch((e) => {
+        this.$log.error("Failed to load roles: %s", e.message)
+        this.$log.debug(e)
+    })
 
     this.appId = this.$route.params.appId
 
@@ -136,7 +198,8 @@ export default {
         .then((app) => {
           this.$log.debug('app %s loaded', appId)
           this.loading = false
-          Object.assign(this.$data, app)
+          this.app = app
+          app.roles.forEach((role) => { this.roles.push(role.name) })
         })
         .catch((e) => {
           this.$log.console.warn();
@@ -151,39 +214,28 @@ export default {
     save() {
 
       var context = this
-      const d = defaultData()
-      const u = {}
-      for (let p in d) {
-        u[p] = this[p]
-      }
-
-      //needed ?
-      u.roles = this.roles
-
-      if (this.appId) {
-        u.id = this.appId
-      }
 
       this.loading = true
-      this.$log.debug('Saving user', u)
+      this.$log.debug('Saving user', this.app.name)
+      let json = {
+        name: this.app.name,
+        role: this.roles,
+        users: [],
+        devices: []
+      }
+      if(this.app.id) {
+        json.id = this.app.id
+      }
 
-      this.$validate()
-        .then((success) => {
-
-          if (!success) {
-            return Promise.reject(new Error("Validation failed"))
-          }
-
-          context.$raptor.App().save(u)
-            .then((app) => {
-              this.$log.debug('App %s saved', app.id)
-              this.loading = false
-              this.$router.push("/admin/applications")
-            })
-            .catch((e) => {
-              this.$log.error("Error saving app: %s", e.message)
-              this.$log.debug(e)
-            })
+      this.$raptor.App().save(json)
+        .then((app) => {
+          this.$log.debug('App %s saved', app.id)
+          this.loading = false
+          this.$router.push("/admin/applications")
+        })
+        .catch((e) => {
+          this.$log.error("Error saving app: %s", e.message)
+          this.$log.debug(e)
         })
     }
   }

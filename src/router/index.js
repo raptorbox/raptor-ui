@@ -101,7 +101,7 @@ const router = new Router({
               children: [
                 {
                   path: 'list',
-                  name: 'List',
+                  name: 'AppList',
                   meta: {
                     label: 'List'
                   },
@@ -117,9 +117,9 @@ const router = new Router({
                   props: true
                 },
                 {
-                  path: ':applicationId',
+                  path: ':appId',
                   component: AppForm,
-                  name: 'ApplicationUpdate',
+                  name: 'AppUpdate',
                   meta: {
                     label: 'Update'
                   },
@@ -142,6 +142,15 @@ const router = new Router({
                     label: 'List'
                   },
                   component: UsersList
+                },
+                {
+                  path: ':appId',
+                  name: 'UsersListApp',
+                  meta: {
+                    label: 'List'
+                  },
+                  component: UsersList,
+                  props: true
                 },
                 {
                   path: 'create',
@@ -242,6 +251,15 @@ const router = new Router({
                   label: 'List'
                 },
                 component: DeviceList
+              },
+              {
+                path: ':id',
+                name: 'DeviceListApp',
+                meta: {
+                  label: 'List'
+                },
+                component: DeviceList,
+                props: true
               },
               {
                 path: 'create',

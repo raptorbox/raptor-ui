@@ -87,7 +87,7 @@
           <span v-bind:class="['badge', { 'badge-success': row.item.enabled,'badge-warning': !row.item.enabled }]"> {{row.item.enabled ? 'Enabled' : 'Disabled'}}</span>
         </template>
         <template slot="permission" scope="row">
-        <div @click="loadPermissions(row.item)">
+          <div @click="loadPermissions(row.item)">
             <span v-if="listWithPermissions[row.item.id] && listWithPermissions[row.item.id].length > 0"><p><span v-bind:id="row.item.id" v-for="p in listWithPermissions[row.item.id]">{{p}}, </span></p></span>
             <span v-else>
               <b-button class="btn btn-sm">Show Permissions</b-button>

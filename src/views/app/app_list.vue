@@ -25,12 +25,15 @@
       <b-table no-local-sorting small responsive show-empty :items="list" :fields="fields" @sort-changed="sortingChanged">
         
         <template slot="id" scope="row">
-              <b-badge size="sm" variant="light" :to="{ name: 'ApplicationUpdate', params: { appId: row.item.id }}">{{row.item.id}}</b-badge>
-            </template>
+          <b-badge size="sm" variant="light" :to="{ name: 'AppUpdate', params: { appId: row.item.id }}">{{row.item.id}}</b-badge>
+        </template>
         <template slot="name" scope="row">
-          <b-button variant="link" :to="{ name: 'ApplicationUpdate', params: { appId: row.item.id }}">
+          <b-button variant="link" :to="{ name: 'AppUpdate', params: { appId: row.item.id }}">
             {{row.item.name}}
           </b-button>
+        </template>
+        <template slot="userId" scope="row">
+          <b-badge size="sm" variant="light">{{row.item.userId}}</b-badge>
         </template>
         <template slot="roles" scope="row">
             <b-badge v-for="role in row.item.roles" :key="role.name" :variant="role.name === 'admin' ? 'info' : 'light'">
@@ -40,12 +43,15 @@
         <template slot="status" scope="row">
             <b-badge :variant="row.item.enabled ? 'success' : 'warning'">{{row.item.enabled ? 'Enabled' : 'Disabled'}}</b-badge>
         </template>
-        <template slot="created" scope="row">
-            {{formatDate(row.item.created)}}
-        </template>
         <template slot="actions" scope="row">
             <b-button title="Delete application" variant="danger" @click="remove(row.item)">
               <i class="fa fa-remove fa-lg"></i>
+            </b-button>
+            <b-button title="View users" variant="success" :to="{ name: 'UsersListApp', params: { appId: row.item.id }}">
+              <i class="fa fa-users fa-lg"></i>
+            </b-button>
+            <b-button title="View devices" variant="success" :to="{ name: 'DeviceListApp', params: { id: row.item.id }}">
+              <i class="fa fa-mobile fa-lg"></i>
             </b-button>
         </template>
       </b-table>
@@ -83,8 +89,11 @@ export default {
           label: 'Name',
           sortable: true,
         },
-        created: {
-          label: 'Created',
+        userId: {
+          label: 'User Id',
+        },
+        roles: {
+          label: 'Roles',
           sortable: true,
         },
         status: {

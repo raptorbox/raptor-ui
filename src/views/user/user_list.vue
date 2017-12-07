@@ -8,7 +8,15 @@
 
         <div class="row row-fluid">
           <div class="col-lg-8 list-inline">
-            <h3 class="list-inline-item"><i class="fa fa-users"></i> Users</h3>
+            <div>
+              <div class="col-md-3">
+                <h3 class="list-inline-item"><i class="fa fa-users"></i> Users</h3>
+              </div>
+              <!-- <div class="row-fluid" v-if="appId && app">
+                <strong>Application: </strong>
+                <span>{{app.name}}</span>
+              </div> -->
+            </div>
             <b-button class="list-inline-item" variant="primary" :to="{ name: 'UsersCreate'}">
               <i class="fa fa-plus"></i> New
             </b-button>
@@ -25,12 +33,14 @@
       <b-table no-local-sorting small responsive show-empty :items="list" :fields="fields" @sort-changed="sortingChanged">
         
         <template slot="id" scope="row">
-              <b-badge size="sm" variant="light" :to="{ name: 'UsersUpdate', params: { userId: row.item.id }}">{{row.item.id}}</b-badge>
-            </template>
-        <template slot="username" scope="row">
-          <b-button variant="link" :to="{ name: 'UsersUpdate', params: { userId: row.item.id }}">
+          <b-badge size="sm" variant="light" :to="{ name: 'UsersUpdate', params: { userId: row.item.id }}">{{row.item.id}}</b-badge>
+        </template>
+        <template slot="username" scope="row" v-if="row.item.username">
+          <span v-if="row.item.name">
+            <b-button variant="link" :to="{ name: 'UsersUpdate', params: { userId: row.item.id }}">
             {{row.item.username}}
-          </b-button>
+            </b-button>
+          </span>
         </template>
         <template slot="roles" scope="row">
             <b-badge v-for="role in row.item.roles" :key="role.name" :variant="role.name === 'admin' ? 'info' : 'light'">
@@ -41,7 +51,7 @@
             <b-badge :variant="row.item.enabled ? 'success' : 'warning'">{{row.item.enabled ? 'Enabled' : 'Disabled'}}</b-badge>
         </template>
         <template slot="created" scope="row">
-            {{formatDate(row.item.created)}}
+          <span v-if="row.item.created">{{formatDate(row.item.created)}}</span>
         </template>
         <template slot="actions" scope="row">
             <b-button title="Delete user" variant="danger" :disabled="!isAllowed('user_delete')" @click="remove(row.item)">
@@ -100,12 +110,21 @@ export default {
       user: null,
       sortBy: "created",
       sortDir: "desc",
-      pageOptions: [25,100,250]
+      pageOptions: [25,100,250],
+      // users of application
+      appId: null,
+      app: null,
     }
   },
   mounted() {
     this.user = this.$raptor.Auth().getUser()
-    this.fetchData()
+    this.appId = this.$route.params.appId
+    console.log(this.appId)
+    if(this.appId) {
+      this.serachDataForAppId()
+    } else {
+      this.fetchData()
+    }
   },
   methods: {
     isAllowed(u) {
@@ -127,10 +146,8 @@ export default {
         sort: this.sortBy,
         sortDir: this.sortDir,
       }
-      console.log(page)
       this.$raptor.Admin().User().list(page).then((pager) => {
 
-        console.log(pager)
         this.$log.debug('Loaded %s user list', pager.getContent().length)
 
         this.loading = false
@@ -185,6 +202,26 @@ export default {
             context.$raptor.Auth().logout();
             context.$router.push("/pages/login");
           }
+        })
+    },
+    serachDataForAppId() {
+      var context = this
+      this.error = null
+      this.loading = true
+      this.$log.debug('Fetching user list')
+      // page config
+      this.$raptor.App().read(this.appId)
+        .then((app) => {
+          this.$log.debug('app %s loaded', app.id)
+          this.loading = false
+          this.app = app
+          this.list = app.users
+          this.totalRows = app.users.length
+        })
+        .catch((e) => {
+          ('Failed to load app: %s', e.message)
+          this.$log.debug(e)
+          this.loading = false
         })
     },
   }
