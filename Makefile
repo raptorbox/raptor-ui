@@ -7,6 +7,7 @@ tag := $(shell echo ${gittag} | cut -d'-' -f 1)
 basetag := $(shell echo ${gittag} | cut -d'.' -f 1)
 
 build:
+	npm i
 	npm run build
 
 docker/build: build
