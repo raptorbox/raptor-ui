@@ -2,10 +2,6 @@
 
 Raptor Admin Panel
 
-## Credits
-
-Based on https://vuejs.org/ Open Source Admin Panel
-
 ## Build Setup
 
 ``` bash
@@ -32,3 +28,13 @@ npm test
 ```
 
 For detailed explanation on how things work, checkout the [guide](http://vuejs-templates.github.io/webpack/) and [docs for vue-loader](http://vuejs.github.io/vue-loader).
+
+## Credits
+
+Based on https://vuejs.org/ Open Source Admin Panel
+
+## License
+
+Apache2
+
+Copyright FBK/CREATE-NET
