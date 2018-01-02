@@ -4,8 +4,13 @@ import Router from 'vue-router'
 // Containers
 import Full from '@/containers/Full'
 
+// Users
 import UsersList from '@/views/user/user_list'
 import UsersForm from '@/views/user/user_form'
+
+// Applications
+import AppList from '@/views/app/app_list'
+import AppForm from '@/views/app/app_form'
 
 import TokensList from '@/views/token/token_list'
 import TokensForm from '@/views/token/token_form'
@@ -56,17 +61,17 @@ const router = new Router({
       children: [
         {
           path: 'dashboardold',
-          name: 'Dashboard',
+          name: 'DeviceDataChart',
           component: DeviceDataChart
         },
         {
           path: 'dashboard',
-          name: 'User Dashboard',
+          name: 'UserDashboard',
           component: UserDashboard
         },
         {
           path: 'admindashboard',
-          name: 'Dashboard',
+          name: 'AdminDashboard',
           component: AdminDashboard
         },
         {
@@ -87,6 +92,42 @@ const router = new Router({
           },
           children: [
             {
+              path: 'applications',
+              name: 'Applications',
+              redirect: '/admin/applications/list',
+              component: {
+                render (c) { return c('router-view') }
+              },
+              children: [
+                {
+                  path: 'list',
+                  name: 'AppList',
+                  meta: {
+                    label: 'List'
+                  },
+                  component: AppList
+                },
+                {
+                  path: 'create',
+                  name: 'AppCreate',
+                  meta: {
+                    label: 'Create'
+                  },
+                  component: AppForm,
+                  props: true
+                },
+                {
+                  path: ':appId',
+                  component: AppForm,
+                  name: 'AppUpdate',
+                  meta: {
+                    label: 'Update'
+                  },
+                  props: true
+                }
+              ]
+            },
+            {
               path: 'users',
               name: 'Users',
               redirect: '/admin/users/list',
@@ -101,6 +142,15 @@ const router = new Router({
                     label: 'List'
                   },
                   component: UsersList
+                },
+                {
+                  path: ':appId',
+                  name: 'UsersListApp',
+                  meta: {
+                    label: 'List'
+                  },
+                  component: UsersList,
+                  props: true
                 },
                 {
                   path: 'create',
@@ -203,6 +253,15 @@ const router = new Router({
                 component: DeviceList
               },
               {
+                path: ':id',
+                name: 'DeviceListApp',
+                meta: {
+                  label: 'List'
+                },
+                component: DeviceList,
+                props: true
+              },
+              {
                 path: 'create',
                 name: 'DeviceCreate',
                 meta: {
@@ -298,7 +357,7 @@ const router = new Router({
 })
 
 router.beforeEach((to, from, next) => {
-  Vue.log.debug('accessing path %s', to.path)
+  // Vue.log.debug('Accessing path %s', to.path)
 
   if (to.path === PATH_LOGIN) {
     Vue.log.debug('skip %s', PATH_LOGIN)

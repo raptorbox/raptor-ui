@@ -23,6 +23,20 @@ class VueRaptor {
       token: token
     }, options))
 
+    raptor.on('request.error', (err) => {
+      if (err.code && err.code === 401) {
+        if (raptor.Auth().loginIsExpired()) {
+          Vue.log.warn('Request failed, login expired')
+
+          let pos = location.hash.indexOf('?') - 1
+          pos = pos >= 0 ? pos : location.hash.length - 1
+          const redir = '?' + location.hash.substr(1, pos)
+
+          Vue.router.push('/pages/login' + redir)
+        }
+      }
+    })
+
     Vue.mixin({
       $raptor: raptor
     })

@@ -19,6 +19,11 @@ export default {
       icon: 'icon-calculator',
       children: [
         {
+          name: 'Apps',
+          url: '/admin/applications',
+          icon: 'icon-puzzle'
+        },
+        {
           name: 'Users',
           url: '/admin/users',
           icon: 'icon-user'
@@ -26,7 +31,7 @@ export default {
         {
           name: 'Tokens',
           url: '/admin/tokens',
-          icon: 'icon-puzzle'
+          icon: 'icon-screen-smartphone'
         }
       ]
     },
