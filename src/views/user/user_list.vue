@@ -31,7 +31,7 @@
       </div>
 
       <b-table no-local-sorting small responsive show-empty :items="list" :fields="fields" @sort-changed="sortingChanged">
-        
+
         <template slot="id" scope="row">
           <b-badge size="sm" variant="light" :to="{ name: 'UsersUpdate', params: { userId: row.item.id }}">{{row.item.id}}</b-badge>
         </template>
@@ -59,7 +59,7 @@
             </b-button>
         </template>
       </b-table>
-      
+
       <div>
         <b-pagination align="center" :total-rows="totalRows" :per-page="perPage" v-model="currentPage" prev-text="Prev" next-text="Next" @change="pageChanged" />
       </div>
@@ -146,7 +146,7 @@ export default {
         sort: this.sortBy,
         sortDir: this.sortDir,
       }
-      this.$raptor.Admin().User().list(page).then((pager) => {
+      this.$raptor.Admin().User().list({}, page).then((pager) => {
 
         this.$log.debug('Loaded %s user list', pager.getContent().length)
 
