@@ -5,8 +5,8 @@ class VueRaptor {
   install (Vue, options) {
     options = options || {}
 
-    let url = ''
-    if (process && process.env && process.env.RAPTOR) {
+    let url = null
+    if (process && process.env && process.env.RAPTOR && process.env.RAPTOR.url) {
       url = process.env.RAPTOR.url
     }
 
@@ -18,10 +18,7 @@ class VueRaptor {
       } catch (e) {}
     }
 
-    const raptor = new Raptor(Object.assign({
-      url: url,
-      token: token
-    }, options))
+    const raptor = new Raptor(Object.assign({ url, token }, options))
 
     raptor.on('request.error', (err) => {
       if (err.code && err.code === 401) {
