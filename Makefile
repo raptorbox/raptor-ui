@@ -6,7 +6,11 @@ gittag := $(shell git describe --tag --always)
 tag := $(shell echo ${gittag} | cut -d'-' -f 1)
 basetag := $(shell echo ${gittag} | cut -d'.' -f 1)
 
-build:
+release:
+	npm run release
+	git push --tags
+
+build: release
 	npm run build
 
 docker/build: build
