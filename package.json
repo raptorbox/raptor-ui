@@ -10,7 +10,9 @@
     "unit": "cross-env BABEL_ENV=test karma start test/unit/karma.conf.js --single-run",
     "e2e": "node test/e2e/runner.js",
     "test": "npm run unit && npm run e2e",
-    "lint": "eslint --ext .js,.vue src test/unit/specs test/e2e/specs"
+    "lint": "eslint --ext .js,.vue src test/unit/specs test/e2e/specs",
+    "release-major": "./node_modules/.bin/standard-version",
+    "release": "./node_modules/.bin/standard-version -- --release-as minor"
   },
   "dependencies": {
     "bootstrap": "^3.3.7",
@@ -104,6 +106,7 @@
     "semver": "5.4.1",
     "shelljs": "0.7.8",
     "sinon": "^2.4.1",
+    "standard-version": "^4.3.0",
     "url-loader": "0.5.9",
     "vue-loader": "13.0.4",
     "vue-style-loader": "3.0.1",
