@@ -27,6 +27,7 @@
     "moment": "^2.18.1",
     "mqtt": "^2.15.0",
     "raptor-sdk": "^5.0.18",
+    "raptorjs": "^1.0.2",
     "request": "^2.83.0",
     "simple-line-icons": "^2.4.1",
     "simple-vue-validator": "^0.14.0",
