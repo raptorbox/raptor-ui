@@ -25,34 +25,47 @@
       <b-table no-local-sorting small responsive show-empty :items="list" :fields="fields" @sort-changed="sortingChanged">
         
         <template slot="id" scope="row">
-          <b-badge size="sm" variant="light" :to="{ name: 'AppUpdate', params: { appId: row.item.id }}">{{row.item.id}}</b-badge>
+          <div v-if="isAllowed()">
+            <b-badge size="sm" variant="light" :to="{ name: 'AppUpdate', params: { appId: row.item.id }}">{{row.item.id}}</b-badge>
+          </div>
+          <div v-else>
+            {{row.item.id}}
+          </div>
         </template>
         <template slot="name" scope="row">
-          <b-button variant="link" :to="{ name: 'AppUpdate', params: { appId: row.item.id }}">
+          <div v-if="isAllowed()">
+            <b-button variant="link" :to="{ name: 'AppUpdate', params: { appId: row.item.id }}">
+              {{row.item.name}}
+            </b-button>
+          </div>
+          <div v-else>
             {{row.item.name}}
-          </b-button>
+          </div>
         </template>
         <template slot="userId" scope="row">
+          <!-- <div v-if="isAllowed()"></div> -->
           <b-badge size="sm" variant="light">{{row.item.userId}}</b-badge>
         </template>
         <template slot="roles" scope="row">
-            <b-badge v-for="role in row.item.roles" :key="role.name" :variant="role.name === 'admin' ? 'info' : 'light'">
-                {{ role.name }}
+            <b-badge v-for="role in user.roles" :key="role" :variant="role === 'admin' ? 'info' : 'light'">
+                {{ role }}
             </b-badge>
         </template>
         <template slot="status" scope="row">
             <b-badge :variant="row.item.enabled ? 'success' : 'warning'">{{row.item.enabled ? 'Enabled' : 'Disabled'}}</b-badge>
         </template>
         <template slot="actions" scope="row">
+          <span v-if="isAllowed()">
             <b-button title="Delete application" variant="danger" @click="remove(row.item)">
               <i class="fa fa-remove fa-lg"></i>
             </b-button>
             <b-button title="View users" variant="success" :to="{ name: 'UsersListApp', params: { appId: row.item.id }}">
               <i class="fa fa-users fa-lg"></i>
             </b-button>
-            <b-button title="View devices" variant="success" :to="{ name: 'DeviceListApp', params: { id: row.item.id }}">
-              <i class="fa fa-mobile fa-lg"></i>
-            </b-button>
+          </span>
+          <b-button title="View devices" variant="success" :to="{ name: 'DeviceListApp', params: { appId: row.item.id }}">
+            <i class="fa fa-mobile fa-lg"></i>
+          </b-button>
         </template>
       </b-table>
       
@@ -90,7 +103,7 @@ export default {
           sortable: true,
         },
         userId: {
-          label: 'User Id',
+          label: 'Admin',
         },
         roles: {
           label: 'Roles',
@@ -106,11 +119,14 @@ export default {
       appId: null,
       sortBy: "created",
       sortDir: "desc",
-      pageOptions: [25,100,250]
+      pageOptions: [25,100,250],
+      // user
+      user: null,
     }
   },
   mounted() {
     // this.app = this.$raptor.Auth().getUser()
+    this.user = this.$raptor.Auth().getUser()
     this.fetchData()
   },
   methods: {
@@ -129,7 +145,7 @@ export default {
         sort: this.sortBy,
         sortDir: this.sortDir,
       }
-      console.log(page)
+      this.$log.debug(page)
       this.$raptor.App().list(page).then((pager) => {
 
         this.$log.debug('Loaded %s app list', pager.getContent().length)
@@ -148,6 +164,9 @@ export default {
       })
 
     },
+    isAllowed() {
+      return this.user.roles.indexOf("admin") > -1
+    },
     pageChanged(page) {
       this.currentPage = page
       this.fetchData()
@@ -158,7 +177,6 @@ export default {
       this.fetchData()
     },
     itemsLimitChange(limit) {
-      console.log(limit)
       this.currentPage = 0
       this.perPage = limit
       this.fetchData()

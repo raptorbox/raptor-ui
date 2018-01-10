@@ -102,6 +102,8 @@ export default {
       loggedInUser: null,
       availRoles: [],
       password1: null,
+      // application specific
+      appId: null,
       ...defaultData()
     }
   },
@@ -120,6 +122,9 @@ export default {
   },
   mounted() {
     this.loggedInUser = this.$raptor.Auth().getUser()
+
+    this.appId = this.$route.params.appId
+    console.log(this.appId)
 
     //load roles async
     this.loadRoles().catch((e) => {
@@ -195,7 +200,9 @@ export default {
             .then((u) => {
               this.$log.debug('User %s saved', u.id)
               this.loading = false
-              this.$router.push("/admin/users")
+              // if(!this.appId) {
+                this.$router.push("/admin/users")
+              // }
             })
             .catch((e) => {
               this.$log.error("Error saving user: %s", e.message)

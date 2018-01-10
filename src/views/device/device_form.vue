@@ -108,10 +108,14 @@
         deviceUserId: "",
         propertiesTextArea: "",
         clone: false,
+        // devices of application
+        appId: null,
         ...defaultData()
       }
     },
     mounted() {
+      this.appId = this.$route.params.appId
+      console.log(this.appId)
       if (this.$route.params.deviceId) {
         this.$log.debug('Load %s ', this.$route.params.deviceId)
         this.load(this.$route.params.deviceId)
@@ -162,6 +166,9 @@
         const u = {}
         for(let p in d) {
           u[p] = this[p]
+        }
+        if(this.appId) {
+          u.domain = this.appId
         }
         this.loading = true
         this.$log.debug('Saving device', u)

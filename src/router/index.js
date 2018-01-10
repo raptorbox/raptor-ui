@@ -7,18 +7,22 @@ import Full from '@/containers/Full'
 // Users
 import UsersList from '@/views/user/user_list'
 import UsersForm from '@/views/user/user_form'
+import UsersListAddToApp from '@/views/user/user_list_add_to_app'
 
 // Applications
 import AppList from '@/views/app/app_list'
 import AppForm from '@/views/app/app_form'
 
+// Tokens
 import TokensList from '@/views/token/token_list'
 import TokensForm from '@/views/token/token_form'
 
+// Devices / Inventory
 import DeviceList from '@/views/device/device_list'
 import DeviceForm from '@/views/device/device_form'
 import DeviceSearch from '@/views/device/search'
 import DeviceDataChart from '@/views/components/realtimechart/realtimechart'
+import DeviceListAddToApp from '@/views/device/device_list_add_to_app'
 
 import ChartDetail from '@/views/components/chartDetailPage'
 
@@ -145,11 +149,29 @@ const router = new Router({
                 },
                 {
                   path: ':appId',
+                  name: 'UsersListAddToApp',
+                  meta: {
+                    label: 'Add Users To App'
+                  },
+                  component: UsersListAddToApp,
+                  props: true
+                },
+                {
+                  path: ':appId',
                   name: 'UsersListApp',
                   meta: {
                     label: 'List'
                   },
                   component: UsersList,
+                  props: true
+                },
+                {
+                  path: 'create/:appId',
+                  name: 'UsersCreateWithAppId',
+                  meta: {
+                    label: 'Create'
+                  },
+                  component: UsersForm,
                   props: true
                 },
                 {
@@ -253,15 +275,6 @@ const router = new Router({
                 component: DeviceList
               },
               {
-                path: ':id',
-                name: 'DeviceListApp',
-                meta: {
-                  label: 'List'
-                },
-                component: DeviceList,
-                props: true
-              },
-              {
                 path: 'create',
                 name: 'DeviceCreate',
                 meta: {
@@ -295,6 +308,34 @@ const router = new Router({
                 meta: {
                   label: 'Records'
                 },
+                props: true
+              },
+              // for application
+              {
+                path: ':appId',
+                name: 'DeviceListAddToApp',
+                meta: {
+                  label: 'Add Devices To App'
+                },
+                component: DeviceListAddToApp,
+                props: true
+              },
+              {
+                path: ':appId',
+                name: 'DeviceListApp',
+                meta: {
+                  label: 'List'
+                },
+                component: DeviceList,
+                props: true
+              },
+              {
+                path: 'create/:appId',
+                name: 'DeviceCreateInApp',
+                meta: {
+                  label: 'Create'
+                },
+                component: DeviceForm,
                 props: true
               }]
             }

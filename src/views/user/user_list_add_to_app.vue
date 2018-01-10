@@ -17,16 +17,9 @@
                 <span>{{app.name}}</span>
               </div> -->
             </div>
-            <span v-if="appId">
-              <b-button class="list-inline-item" variant="primary" :to="{ name: 'UsersCreateWithAppId'}">
-                <i class="fa fa-plus"></i> New
-              </b-button>
-            </span>
-            <span v-else>
-              <b-button class="list-inline-item" variant="primary" :to="{ name: 'UsersCreate'}">
-                <i class="fa fa-plus"></i> New
-              </b-button>
-            </span>
+            <b-button class="list-inline-item" variant="primary" :to="{ name: 'UsersCreate'}">
+              <i class="fa fa-plus"></i> New
+            </b-button>
           </div>
           <div class="col-md-4 text-right">
             <b-form-fieldset description="Items per page" label="Show" horizontal>
@@ -38,7 +31,6 @@
       </div>
 
       <b-table no-local-sorting small responsive show-empty :items="list" :fields="fields" @sort-changed="sortingChanged">
-
         <template slot="id" scope="row">
           <b-badge size="sm" variant="light" :to="{ name: 'UsersUpdate', params: { userId: row.item.id }}">{{row.item.id}}</b-badge>
         </template>
@@ -49,11 +41,11 @@
             </b-button>
           </span>
         </template>
-        <template slot="roles" scope="row">
+        <!-- <template slot="roles" scope="row">
             <b-badge v-for="role in row.item.roles" :key="role.name" :variant="role.name === 'admin' ? 'info' : 'light'">
                 {{ role.name }}
             </b-badge>
-        </template>
+        </template> -->
         <template slot="status" scope="row">
             <b-badge :variant="row.item.enabled ? 'success' : 'warning'">{{row.item.enabled ? 'Enabled' : 'Disabled'}}</b-badge>
         </template>
@@ -61,15 +53,24 @@
           <span v-if="row.item.created">{{formatDate(row.item.created)}}</span>
         </template>
         <template slot="actions" scope="row">
-            <b-button title="Delete user" variant="danger" :disabled="!isAllowed('user_delete')" @click="remove(row.item)">
-              <i class="fa fa-remove fa-lg"></i>
-            </b-button>
+          <b-form-select :options="roleOptions" v-model="row.item.selectedRole" @change.native="(ev) => {addUserAs(ev, row.item)}"/>
+          <!-- <b-button class="list-inline-item" variant="primary" @click="addUserAs(row.item)">
+              <i class="fa fa-plus"></i> Add as User
+          </b-button> -->
         </template>
       </b-table>
 
       <div>
         <b-pagination align="center" :total-rows="totalRows" :per-page="perPage" v-model="currentPage" prev-text="Prev" next-text="Next" @change="pageChanged" />
       </div>
+
+      <b-card-footer>
+        <!-- @click="addUsersToApplication" -->
+        <div>
+          <!-- :to="{ name: 'AppUpdate', params: { usersToAdd: usersToAdd }}" -->
+          <b-button class="float-right" variant="primary" @click="addUsersToApplication">Add</b-button>
+        </div>
+      </b-card-footer>      
 
     </b-card>
   </div>
@@ -84,6 +85,7 @@ import moment from 'moment'
 
 export default {
   name: 'user_list',
+  props: ['rolesInApplication', 'appUsers'],
   data() {
     return {
       loading: false,
@@ -104,13 +106,15 @@ export default {
           label: 'Created',
           sortable: true,
         },
-        roles: {
-          label: 'Roles'
-        },
+        // roles: {
+        //   label: 'Roles'
+        // },
         status: {
           label: 'Status'
         },
-        actions: {}
+        actions: {
+          label: 'Add User as'
+        },
       },
       perPage: 25,
       totalRows: 0,
@@ -121,17 +125,19 @@ export default {
       // users of application
       appId: null,
       app: null,
+      totalPages: 1,
+      usersToAdd: [],
+      roleOptions: [],
+      selectedRole: null,
     }
   },
   mounted() {
     this.user = this.$raptor.Auth().getUser()
     this.appId = this.$route.params.appId
+    this.usersToAdd = this.appUsers
     // console.log(this.appId)
-    if(this.appId) {
-      this.serachDataForAppId()
-    } else {
-      this.fetchData()
-    }
+    this.rolesInApplication.forEach((e) => this.roleOptions.push(e.name))
+    this.fetchData()
   },
   methods: {
     isAllowed(u) {
@@ -160,7 +166,10 @@ export default {
         this.loading = false
         this.pager = pager
         this.list = pager.getContent()
+        this.list.forEach((e) => e.selectedRole = null)
         this.totalRows = pager.getTotalElements()
+        this.totalPages = pager.getTotalPages()
+        console.log(this.totalPages)
 
       }).catch(function(e) {
         context.$log.warn(e)
@@ -211,25 +220,56 @@ export default {
           }
         })
     },
-    serachDataForAppId() {
-      var context = this
-      this.error = null
-      this.loading = true
-      this.$log.debug('Fetching user list')
-      // page config
-      this.$raptor.App().read(this.appId)
+    toggleSelect(user) {
+      console.log(user)
+      console.log(user.selectedRole)
+      if(userId) {
+        this.usersToAdd.push(user)
+      } else {
+        this.$log.debug('UserId not forund')
+      }
+    },
+    addUsersToApplication() {
+      if(this.appId) {
+        var context = this
+
+        this.loading = true
+        let json = {
+          id: this.appId,
+          users: this.usersToAdd
+        }
+        this.$raptor.App().save(json)
         .then((app) => {
-          this.$log.debug('app %s loaded', app.id)
+          this.$log.debug('App %s updated', app.id)
           this.loading = false
-          this.app = app
-          this.list = app.users
-          this.totalRows = app.users.length
+          this.$router.push("/admin/applications")
         })
         .catch((e) => {
-          ('Failed to load app: %s', e.message)
+          this.$log.error("Error saving app: %s", e.message)
           this.$log.debug(e)
-          this.loading = false
         })
+      } else {
+        alert("Application Id not found")
+      }
+    },
+    addUserAs(evt, user) {
+      let role = evt.target.value;
+      console.log(user)
+      console.log(role)
+      if(user.id) {
+        let found = false
+        for (var i = 0; i < this.usersToAdd.length; i++) {
+          if (this.usersToAdd[i].id === user.id) {
+              this.usersToAdd[i] = {id: user.id, roles: [role]}
+              found = true
+          }
+        }
+        if(!found){
+          this.usersToAdd.push({id: user.id, roles: [role]})
+        }
+      } else {
+        this.$log.debug('UserId not forund')
+      }
     },
   }
 

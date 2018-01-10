@@ -8,16 +8,9 @@
         <div class="row">
           <div class="col-lg-12 list-inline">
             <h3 class="list-inline-item"><i class="fa fa-screen-smartphone"></i> Devices</h3>
-            <div v-if="appId">
-            <b-button class="list-inline-item" title="Add device" variant="primary" :to="{ name: 'DeviceCreateInApp', params: { appId: appId }}">
-              <i class="fa fa-plus"></i> New
-            </b-button>
-          </div>
-          <div v-else>
             <b-button variant="primary" :to="{ name: 'DeviceCreate'}">
               <i class="fa fa-plus"></i> New
             </b-button>
-          </div>
           </div>
         </div>
 
@@ -52,27 +45,22 @@
         <template slot="description" scope="row">{{row.item.description}}</template>
         <template slot="created" scope="row">{{formatDate(row.item.createdAt)}}</template>
         <template slot="actions" scope="row">
-              <b-button title="Remove device and stored data" variant="outline-danger" @click="remove(row.item)">
-                  <i class="fa fa-remove fa-lg"></i>
-              </b-button>
-              <b-button title="Edit device definition" variant="outline-primary" :to="{ name: 'DeviceUpdate', params: { deviceId: row.item.id }}">
-                  <i class="fa fa-edit fa-lg"></i>
-              </b-button>
-              <!-- <b-button title="Edit data streams definitions" variant="outline-primary" :to="{ name: 'Streams', params: { deviceId: row.item.id }}">
-                  <i class="fa fa-table fa-lg"></i>
-              </b-button> -->
-              <b-button title="View stored records" variant="outline-primary" :to="{ name: 'RecordSet', params: { deviceId: row.item.id }}">
-                  <i class="fa fa-database fa-lg"></i>
-              </b-button>
-              <b-button title="Clone this device definition" variant="outline-primary" :to="{ name: 'Clone', params: { deviceId: row.item.id }}">
-                  <i class="fa fa-clone fa-lg"></i>
-              </b-button>
-          </template>
+          <b-button variant="primary" :@click="addDeviceAs(row.item)">
+            <i class="fa fa-plus"></i>
+          </b-button>
+        </template>
       </b-table>
 
       <div>
         <b-pagination align="center" :total-rows="totalRows" :per-page="perPage" v-model="currentPage" prev-text="Prev" next-text="Next" @change="pageChanged" />
       </div>
+
+      <b-card-footer>
+        <!-- @click="addUsersToApplication" -->
+        <div>
+          <b-button class="float-right" variant="primary" :to="{ name: 'AppUpdate', params: { devicesToAdd: devicesToAdd }}">Add</b-button>
+        </div>
+      </b-card-footer>      
 
     </b-card>
   </div>
@@ -92,6 +80,7 @@ import ItemTemplate from './../components/ItemTemplate.vue'
 
 export default {
   name: 'user_list',
+  props: ['appDevices'],
   components: {
     'v-autocomplete': Autocomplete
   },
@@ -126,11 +115,12 @@ export default {
         },
         {
           key: 'actions',
-          label: 'Actions'
+          label: 'Add Device to App'
         }
       ],
       perPage: 25,
       totalRows: 0,
+      totalPages: 1,
       pageOptions: [{
         text: 25,
         value: 25
@@ -144,19 +134,16 @@ export default {
       // auto-complete item template
       itemAutoTemplate: ItemTemplate,
       itemAutoComplete: null,
-      // devices of application
+      // variable realted to app device management
       appId: null,
-      app: null,
+      devicesToAdd: [],
     }
   },
   mounted() {
     this.appId = this.$route.params.appId
-    console.log(this.appId)
-    if(this.appId) {
-      this.serachDataForAppId()
-    } else {
-      this.fetchData()
-    }
+    this.devicesToAdd = this.appDevices
+
+    this.fetchData()
   },
   methods: {
     formatDate(d) {
@@ -265,38 +252,21 @@ export default {
         }
       }
     },
-    // for application management
-    serachDataForAppId() {
-      var context = this
-      this.error = null
-      this.loading = true
-      this.$log.debug('Fetching device list')
-      let queryParam = {
-        page: this.currentPage-1,
-        size: this.perPage,
-        sort: this.sortBy,
-        sortDir: this.sortDir,
+    addDeviceAs(dev) {
+      if(dev.id) {
+        let found = false
+        for (var i = 0; i < this.devicesToAdd.length; i++) {
+          if (this.devicesToAdd[i].id === dev.id) {
+              this.devicesToAdd[i] = {id: dev.id, roles: [role]}
+              found = true
+          }
+        }
+        if(!found){
+          this.devicesToAdd.push({id: dev.id, roles: [role]})
+        }
+      } else {
+        this.$log.debug('Device not forund')
       }
-      this.$raptor.Inventory().search({domain: this.appId}, queryParam)
-      .then((pager) => {
-        this.$log.debug('Loaded %s device list', pager.getContent().length)
-
-        this.loading = false
-        this.pager = pager
-        this.totalRows = pager.getTotalElements()
-        this.devices = pager.getContent()
-        this.list = this.devices
-      })
-      .catch((e) => {
-
-        this.$log.warn('Failed to load device list: %s', e.message)
-        this.$log.debug(e)
-
-        this.error = e.message
-        this.list = []
-        this.pager = null
-        this.loading = false
-      })
     },
   }
 }
