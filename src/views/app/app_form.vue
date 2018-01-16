@@ -23,12 +23,13 @@
           <b-form-fieldset label="Roles" :horizontal="false">
             <ul class="list-inline row-fluid">
               <li class="list-inline-item col-md-3" v-for="role in availRoles" :key="role.name">
-                <b-form-checkbox v-model="roles" :plain="true" :value="role.name">
-                  <span :title="role.name">{{ role.name.length > 12 ? role.name.substr(0, 10) + '..' : role.name  }}</span>
+                <b-form-checkbox v-model="selectedRoles" :plain="true" :value="role">
+                  <span :title="role.name">{{ role.name.length > 12 ? role.name.substr(0, 10) + '..' : role.name }}</span>
                 </b-form-checkbox>
               </li>
             </ul>
           </b-form-fieldset>
+          <b-btn v-b-toggle.addNewRole variant="primary">Add New Role</b-btn>
 
           <b-form-fieldset label="Status" :horizontal="false">
             <b-form-checkbox v-model="app.enabled">Enabled</b-form-checkbox>
@@ -52,6 +53,36 @@
       </div>
     </b-card>
 
+    <!-- role -->
+    <b-collapse id="addNewRole" class="mt-2">
+      <b-card>
+        <div slot="header" class="row">
+          <div class="col-md-6 float-left">
+            <h5>Roles</h5>
+          </div>
+          <div class="col-md-6 float-right">
+            <div class="text-right">
+              <b-button class="btn btn-primary" @click="onCreateRoleButton">Add New Role</b-button>
+            </div>
+          </div>
+        </div>
+        <div>
+          <b-table no-local-sorting small responsive show-empty :items="roles" :fields="rolesFields">
+            <template slot="permission" scope="row">
+                <b-form-select variant="outline-secondary" class="mr-3" v-model="row.item.permission" :options="permissions"> </b-form-select>
+            </template>
+            <template slot="ownership" scope="row">
+                <b-form-select variant="outline-secondary" class="mr-3" v-model="row.item.ownership" :options="ownership"> </b-form-select>
+            </template>
+            <template slot="subject" scope="row">
+                <b-form-select variant="outline-secondary" class="mr-3" v-model="row.item.subject" :options="subjectTypes"> </b-form-select>
+            </template>
+          </b-table>
+        </div>
+      </b-card>
+    </b-collapse>
+
+    <!-- users -->
     <b-card>
       <div slot="header" class="row">
         <div class="col-md-6 float-left">
@@ -78,7 +109,7 @@
             </span>
           </template> -->
           <template slot="roles" scope="row">
-              <b-badge v-for="role in row.item.roles" :key="role" :variant="role === 'admin' ? 'info' : 'light'">
+              <b-badge v-for="role in row.item.roles" :key="role" :variant="role === 'admin' ? 'info' : 'light'" @click="openModalWin(row.item)">
                   {{ role }}
               </b-badge>
           </template>
@@ -97,6 +128,7 @@
       </div>
     </b-card>
 
+    <!-- devices -->
     <b-card>
       <div slot="header" class="row">
         <div class="col-md-6 float-left">
@@ -141,6 +173,23 @@
         </div>
       </div>
     </b-card>
+
+    <!-- update permission for a user -->
+    <b-modal title="Update Roles For User" size="lg" class="modal-info" v-model="updateRoles" @ok="onUpdateRolesForUser">
+      <b-form-fieldset description="UserId" label="UserId" :horizontal="false">
+        <b-form-input type="text" placeholder="Enter Widget Name" v-model="modalWin.id" disabled></b-form-input>
+      </b-form-fieldset>
+      <b-form-fieldset label="Roles of User in application" :horizontal="false">
+        <ul class="list-inline row-fluid">
+          <li class="list-inline-item col-md-3" v-for="role in modalWin.roles" :key="role">
+            <b-form-checkbox v-model="modalWin.selectedRoles" :plain="true" :value="role">
+              <span :title="role">{{ role }}</span>
+            </b-form-checkbox>
+          </li>
+        </ul>
+      </b-form-fieldset>
+    </b-modal>
+
   </div>
 </template>
 
@@ -205,17 +254,43 @@ export default {
       totalRows: 0,
       currentPage: 1,
       currentPageUser: 1,
+      // roles
+      selectedRoles: [],
+      rolesFields: [
+        {
+          key: 'permission',
+          label: 'Permission'
+        },
+        {
+          key: 'ownership',
+          label: 'Ownership'
+        },
+        {
+          key: 'subject',
+          label: 'Subject'
+        }
+      ],
+      permissions: [],
+      // {value: 'all', text: 'All'}
+      ownership: [{value: 'own', text: 'OWN (Owned devices)'}],
+      subjectTypes: [{value: 'device', text: 'Device'},
+                     {value: 'user', text: 'User'},
+                     {value: 'app', text: 'Application'},
+                     {value: 'tree', text: 'Tree'},
+                     {value: 'stream', text: 'Stream (Data)'},
+                     {value: 'token', text: 'Token (used to query API)'},
+                     {value: 'client', text: 'OAuth2 Client'}],
+      updateRoles: false,
+      modalWin: {},
     }
   },
   mounted() {
     this.loggedInUser = this.$raptor.Auth().getUser()
 
-    // this.$log.debug(this.usersToAdd)
-
-    //load roles async
-    this.loadRoles().catch((e) => {
-        this.$log.error("Failed to load roles: %s", e.message)
-        this.$log.debug(e)
+    Object.values(this.$raptor.permissions).forEach((e) => {
+      if(e == 'administration')
+        e = 'admin'
+      this.permissions.push({value:e, text:e})
     })
 
     this.appId = this.$route.params.appId
@@ -230,15 +305,15 @@ export default {
     }
   },
   methods: {
-    loadRoles() {
-      return this.$raptor.Admin().Role().list().then((pager) => {
-        this.availRoles.length = 0
-        pager.getContent().forEach((role) => {
-          this.availRoles.push(role)
-        })
-        return Promise.resolve()
-      })
-    },
+    // loadRoles() {
+    //   return this.$raptor.Admin().Role().list().then((pager) => {
+    //     this.availRoles.length = 0
+    //     pager.getContent().forEach((role) => {
+    //       this.availRoles.push(role)
+    //     })
+    //     return Promise.resolve()
+    //   })
+    // },
     load(appId) {
       this.loading = true
       this.$raptor.App().read(appId)
@@ -246,7 +321,8 @@ export default {
           this.$log.debug('app %s loaded', appId)
           this.loading = false
           this.app = app
-          app.roles.forEach((role) => { this.roles.push(role.name) })
+          app.roles.forEach((role) => { this.availRoles.push(role) })
+          this.selectedRoles = this.availRoles
         })
         .catch((e) => {
           this.$log.console.warn();
@@ -293,9 +369,21 @@ export default {
       if(!this.app.users) {
         this.app.users = []
       }
+
+      let finalRoles = []
+      for (var i = 0; i < this.roles.length; i++) {
+        let role
+        if(this.roles[i].ownership) {
+          role = this.roles[i].permission + '_' + this.roles[i].ownership + '_' + this.roles[i].subject
+        } else {
+          role = this.roles[i].permission + '_' + this.roles[i].subject
+        }
+        finalRoles.push({name: role, permissions: [role]})
+      }
+
       let json = {
         name: this.app.name,
-        role: this.roles,
+        roles: finalRoles.concat(this.selectedRoles),
         users: this.app.users
       }
       if(this.app.id) {
@@ -306,7 +394,7 @@ export default {
         .then((app) => {
           this.$log.debug('App %s saved', app.id)
           this.loading = false
-          if(source != 'userDel') {
+          if(source != 'userOpetion') {
             this.$router.push("/admin/applications")
           }
         })
@@ -321,7 +409,7 @@ export default {
             this.app.users.splice(i,1)
         }
       }
-      this.save('userDel')
+      this.save('userOpetion')
     },
     removeDevice(device) {
       const deviceId = device && device.id ? device.id : device
@@ -356,6 +444,25 @@ export default {
       this.sortBy = ev.sortBy
       this.sortDir = ev.sortDesc ? 'desc' : 'asc'
       this.loadDevices(this.appId)
+    },
+    // roles creation
+    onCreateRoleButton() {
+      this.roles.push({permission: null, onwership: null, subject: null})
+    },
+    // update user's roles
+    onUpdateRolesForUser() {
+      this.updateRoles = false
+      this.app.users.forEach((e) => {
+        if(e.id == this.modalWin.id) {
+          e.roles = this.modalWin.selectedRoles
+        }
+      })
+      this.save('userOpetion')
+    },
+    openModalWin(user) {
+      this.modalWin = user
+      this.modalWin.selectedRoles = user.roles
+      this.updateRoles = true
     },
   }
 }

@@ -18,7 +18,7 @@
               </div> -->
             </div>
             <span v-if="appId">
-              <b-button class="list-inline-item" variant="primary" :to="{ name: 'UsersCreateWithAppId'}">
+              <b-button class="list-inline-item" variant="primary" :to="{ name: 'UsersCreateWithAppId', params: {appId: appId}}">
                 <i class="fa fa-plus"></i> New
               </b-button>
             </span>
@@ -61,7 +61,7 @@
           <span v-if="row.item.created">{{formatDate(row.item.created)}}</span>
         </template>
         <template slot="actions" scope="row">
-            <b-button title="Delete user" variant="danger" :disabled="!isAllowed('user_delete')" @click="remove(row.item)">
+            <b-button title="Delete user" variant="danger" :disabled="!isAllowed()" @click="remove(row.item)">
               <i class="fa fa-remove fa-lg"></i>
             </b-button>
         </template>
@@ -121,22 +121,38 @@ export default {
       // users of application
       appId: null,
       app: null,
+      hasPermission: null,
     }
   },
   mounted() {
     this.user = this.$raptor.Auth().getUser()
     this.appId = this.$route.params.appId
-    // console.log(this.appId)
-    if(this.appId) {
-      this.serachDataForAppId()
-    } else {
-      this.fetchData()
-    }
+    this.fetchData()
   },
   methods: {
-    isAllowed(u) {
+    isAllowed() {
+      if(this.hasPermission != null) {
+        return this.hasPermission
+      }
       //TODO add local permission checks on sdk
-      return this.user.id == u.id || this.user.roles.indexOf("admin") > -1
+      // if(this.user.id == u.id || this.user.roles.indexOf("admin") > -1) {
+      //   this.hasPermission = true
+      //   return this.hasPermission
+      // }
+      this.hasPermission = false
+      let query = {permission:'delete', type:'user'}
+      if(this.appId) {
+        query.domain = this.appId
+      }
+      return this.$raptor.Auth().can(query)
+      .then((res) => {
+        this.hasPermission = res.result
+        return Promise.resolve(this.hasPermission)
+      })
+      .catch((e) => {
+        this.hasPermission = false
+        return Promise.resolve(this.hasPermission)
+      })
     },
     formatDate(d) {
       return moment(new Date(d)).format('MMMM Do YYYY')
@@ -152,6 +168,19 @@ export default {
         size: this.perPage,
         sort: this.sortBy,
         sortDir: this.sortDir,
+      }
+      if(this.appId) {
+        if((this.user.roles.indexOf('admin') > -1) || (this.user.roles.indexOf('admin_user') > -1)) {
+          this.searchUsersForAppId()
+        }else {
+          let query = {ownerId: this.user.id, domain: this.appId}
+          this.searchUsersForOwnerId(page, query)
+        }
+        return
+      }
+      if(this.user.roles.indexOf('user') > -1) {
+        this.searchUsersForOwnerId(page, {ownerId: this.user.id})
+        return
       }
       this.$raptor.Admin().User().list(page).then((pager) => {
 
@@ -181,7 +210,6 @@ export default {
       this.fetchData()
     },
     itemsLimitChange(limit) {
-      console.log(limit)
       this.currentPage = 0
       this.perPage = limit
       this.fetchData()
@@ -197,7 +225,11 @@ export default {
         })
         .then(() => {
           this.$log.debug("Deleting %s", userId)
-          this.$raptor.Admin().User().delete(userId)
+          let query = {ownerId: this.user.id}
+          if(this.appId) {
+            query.domain = this.appId
+          }
+          this.$raptor.Admin().User().delete(userId, query)
             .then(() => {
               this.$log.debug("Deleted %s", userId)
               this.fetchData()
@@ -211,7 +243,7 @@ export default {
           }
         })
     },
-    serachDataForAppId() {
+    searchUsersForAppId() {
       var context = this
       this.error = null
       this.loading = true
@@ -231,6 +263,28 @@ export default {
           this.loading = false
         })
     },
+    searchUsersForOwnerId(page, query) {
+      var context = this
+      this.error = null
+      this.loading = true
+      this.$log.debug('Fetching user list')
+      this.$raptor.Admin().User().list(query, page).then((pager) => {
+
+        this.$log.debug('Loaded %s user list', pager.getContent().length)
+
+        this.loading = false
+        this.pager = pager
+        this.list = pager.getContent()
+        this.totalRows = pager.getTotalElements()
+
+      }).catch(function(e) {
+        context.$log.warn(e)
+        if (e.code === 401) {
+          context.$raptor.Auth().logout();
+          context.$router.push("/pages/login");
+        }
+      })
+    }
   }
 
 }

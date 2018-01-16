@@ -148,7 +148,7 @@ const router = new Router({
                   component: UsersList
                 },
                 {
-                  path: ':appId',
+                  path: 'addUsers/:appId',
                   name: 'UsersListAddToApp',
                   meta: {
                     label: 'Add Users To App'

@@ -179,14 +179,17 @@ export default {
         u[p] = this[p]
       }
 
-      //needed ?
       u.roles = this.roles
 
       if (this.userId) {
         u.id = this.userId
+      } else {
+        u.ownerId = this.loggedInUser.id
+        u.domain = this.appId
       }
 
       this.loading = true
+      console.log(u)
       this.$log.debug('Saving user', u)
 
       this.$validate()
@@ -200,9 +203,11 @@ export default {
             .then((u) => {
               this.$log.debug('User %s saved', u.id)
               this.loading = false
-              // if(!this.appId) {
+              if(!this.appId) {
                 this.$router.push("/admin/users")
-              // }
+              } else {
+                this.$router.push("/admin/users/" + this.appId)
+              }
             })
             .catch((e) => {
               this.$log.error("Error saving user: %s", e.message)

@@ -135,14 +135,33 @@ export default {
     this.user = this.$raptor.Auth().getUser()
     this.appId = this.$route.params.appId
     this.usersToAdd = this.appUsers
-    // console.log(this.appId)
-    this.rolesInApplication.forEach((e) => this.roleOptions.push(e.name))
+    if(this.rolesInApplication) {
+      this.rolesInApplication.forEach((e) => this.roleOptions.push(e.name))
+    }
     this.fetchData()
   },
   methods: {
-    isAllowed(u) {
+    hasPermission(perm, type, domain, ownershipOf) {
       //TODO add local permission checks on sdk
-      return this.user.id == u.id || this.user.roles.indexOf("admin") > -1
+      // return this.user.id == u.id || this.user.roles.indexOf("admin") > -1
+        if(this.appId) {
+          let query = {permission:perm, type:type}
+          if(domain) {
+            query.domain = domain
+          }
+          if(ownershipOf) {
+            query.subjectId = ownershipOf
+          }
+          return this.$raptor.Auth().can(query)
+            .then((res) => {
+              // console.log(perm + '    ' + JSON.stringify(res))
+              return Promise.resolve(res.result)
+            })
+            .catch((e) => {
+              // console.log(JSON.stringify(e))
+              return Promise.resolve(false)
+            })
+        }
     },
     formatDate(d) {
       return moment(new Date(d)).format('MMMM Do YYYY')
@@ -159,25 +178,49 @@ export default {
         sort: this.sortBy,
         sortDir: this.sortDir,
       }
-      this.$raptor.Admin().User().list(page).then((pager) => {
-
-        this.$log.debug('Loaded %s user list', pager.getContent().length)
-
-        this.loading = false
-        this.pager = pager
-        this.list = pager.getContent()
-        this.list.forEach((e) => e.selectedRole = null)
-        this.totalRows = pager.getTotalElements()
-        this.totalPages = pager.getTotalPages()
-        console.log(this.totalPages)
-
-      }).catch(function(e) {
-        context.$log.warn(e)
-        if (e.code === 401) {
-          context.$raptor.Auth().logout();
-          context.$router.push("/pages/login");
+      // let usr = this.appUsers.find((e) => e.id == this.user.id)
+      // let adminRights = false
+      // if((usr.roles.indexOf('admin') > -1) || (usr.roles.indexOf('admin_app') > -1) || (usr.roles.indexOf('admin_own_app') > -1)) {
+      //   adminRights = true
+      // }
+      this.hasPermission('admin', 'user')
+      .then((res) => {
+        if(res){
+          console.log('admin user ' + res)
+          this.searchUser(page)
+        }
+        return res
+      }).then((res) => {
+        if(!res) {
+          return this.hasPermission('admin', 'user', this.appId, this.user.id)
+          .then((res) => {
+            console.log('admin user with app and userid ' + res)
+            if(res){
+              this.searchUsersForOwnerId(page)
+            }
+            return res
+          })
+        }
+        return res
+      }).then((res) => {
+        console.log(res)
+        if(!res) {
+          let result = this.hasPermission('admin', 'app', this.appId)
+          let result2 = this.hasPermission('admin','app', this.appId, this.user.id)
+          return Promise.all([result, result2])
+          .then((res) => {
+            if(res[0] || res[1]) {
+              console.log('admin app with appid ' + res)
+              this.searchUserForAppId(page)
+            }
+            return res
+          })
         }
       })
+      // if(this.user.roles.indexOf('user') > -1) {
+      //   this.searchUsersForOwnerId(page)
+      //   return
+      // }
 
     },
     pageChanged(page) {
@@ -190,7 +233,6 @@ export default {
       this.fetchData()
     },
     itemsLimitChange(limit) {
-      console.log(limit)
       this.currentPage = 0
       this.perPage = limit
       this.fetchData()
@@ -221,8 +263,6 @@ export default {
         })
     },
     toggleSelect(user) {
-      console.log(user)
-      console.log(user.selectedRole)
       if(userId) {
         this.usersToAdd.push(user)
       } else {
@@ -254,13 +294,12 @@ export default {
     },
     addUserAs(evt, user) {
       let role = evt.target.value;
-      console.log(user)
-      console.log(role)
       if(user.id) {
         let found = false
         for (var i = 0; i < this.usersToAdd.length; i++) {
           if (this.usersToAdd[i].id === user.id) {
-              this.usersToAdd[i] = {id: user.id, roles: [role]}
+              // this.usersToAdd[i] = {id: user.id, roles: [role]}
+              this.usersToAdd[i].roles.push(role)
               found = true
           }
         }
@@ -271,6 +310,84 @@ export default {
         this.$log.debug('UserId not forund')
       }
     },
+    searchUserForAppId(page) {
+      var context = this
+      this.error = null
+      this.loading = true
+      this.$log.debug('Fetching user list')
+      let query = {ownerId: this.user.id, domain: this.appId}
+      this.$raptor.Admin().User().list(query, page).then((pager) => {
+
+        this.$log.debug('Loaded %s user list', pager.getContent().length)
+
+        this.loading = false
+        this.pager = pager
+        this.list = pager.getContent()
+        this.totalRows = pager.getTotalElements()
+
+      }).catch(function(e) {
+        context.$log.warn(e)
+        if (e.code === 401) {
+          context.$raptor.Auth().logout();
+          context.$router.push("/pages/login");
+        }
+      })
+    },
+    searchUsersForOwnerId(page) {
+      var context = this
+      this.error = null
+      this.loading = true
+      this.$log.debug('Fetching user list')
+      let query = {ownerId: this.user.id, domain: this.appId}
+      this.$raptor.Admin().User().list(query, page).then((pager) => {
+
+        this.$log.debug('Loaded %s user list', pager.getContent().length)
+
+        this.loading = false
+        this.pager = pager
+        this.list = pager.getContent()
+        this.totalRows = pager.getTotalElements()
+
+      }).catch(function(e) {
+        context.$log.warn(e)
+        if (e.code === 401) {
+          context.$raptor.Auth().logout();
+          context.$router.push("/pages/login");
+        }
+      })
+    },
+    searchUser(page) {
+      var context = this
+      this.error = null
+      this.loading = true
+      this.$log.debug('Fetching user list')
+      this.$raptor.Admin().User().list(page).then((pager) => {
+
+        this.$log.debug('Loaded %s user list', pager.getContent().length)
+
+        this.loading = false
+        this.pager = pager
+        this.list = pager.getContent()
+        // this.list.forEach((e) => {
+        //   let u = this.appUser.find((e) => e.id == e.id)
+        //   if(u) {
+        //     e.selectedRole = u.role
+        //   } else {
+        //     e.selectedRole = null
+        //   }
+        // })
+        this.list.forEach((e) => e.selectedRole = null)
+        this.totalRows = pager.getTotalElements()
+        this.totalPages = pager.getTotalPages()
+
+      }).catch(function(e) {
+        context.$log.warn(e)
+        if (e.code === 401) {
+          context.$raptor.Auth().logout();
+          context.$router.push("/pages/login");
+        }
+      })
+    }
   }
 
 }

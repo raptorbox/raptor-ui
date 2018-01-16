@@ -25,7 +25,7 @@
       <b-table no-local-sorting small responsive show-empty :items="list" :fields="fields" @sort-changed="sortingChanged">
         
         <template slot="id" scope="row">
-          <div v-if="isAllowed()">
+          <div v-if="isAllowed('app', row.item)">
             <b-badge size="sm" variant="light" :to="{ name: 'AppUpdate', params: { appId: row.item.id }}">{{row.item.id}}</b-badge>
           </div>
           <div v-else>
@@ -33,7 +33,7 @@
           </div>
         </template>
         <template slot="name" scope="row">
-          <div v-if="isAllowed()">
+          <div v-if="isAllowed('app', row.item)">
             <b-button variant="link" :to="{ name: 'AppUpdate', params: { appId: row.item.id }}">
               {{row.item.name}}
             </b-button>
@@ -55,17 +55,21 @@
             <b-badge :variant="row.item.enabled ? 'success' : 'warning'">{{row.item.enabled ? 'Enabled' : 'Disabled'}}</b-badge>
         </template>
         <template slot="actions" scope="row">
-          <span v-if="isAllowed()">
+          <span v-if="isAllowed('app', row.item)">
             <b-button title="Delete application" variant="danger" @click="remove(row.item)">
               <i class="fa fa-remove fa-lg"></i>
             </b-button>
-            <b-button title="View users" variant="success" :to="{ name: 'UsersListApp', params: { appId: row.item.id }}">
+          </span>
+          <span v-if="isAllowed('user', row.item)">
+            <b-button title="View users" variant="success" :to="{ name: 'UsersListApp', params: { appId: row.item.id, rolesInApplication: (row.item.users.find(o => o.id === user.id)).roles }}">
               <i class="fa fa-users fa-lg"></i>
             </b-button>
           </span>
-          <b-button title="View devices" variant="success" :to="{ name: 'DeviceListApp', params: { appId: row.item.id }}">
-            <i class="fa fa-mobile fa-lg"></i>
-          </b-button>
+          <span v-if="isAllowed('device', row.item)">
+            <b-button title="View devices" variant="success" :to="{ name: 'DeviceListApp', params: { appId: row.item.id }}">
+              <i class="fa fa-mobile fa-lg"></i>
+            </b-button>
+          </span>
         </template>
       </b-table>
       
@@ -122,6 +126,8 @@ export default {
       pageOptions: [25,100,250],
       // user
       user: null,
+      apps: null,
+      userRole: null,
     }
   },
   mounted() {
@@ -154,7 +160,9 @@ export default {
         this.pager = pager
         this.list = pager.getContent()
         this.totalRows = pager.getTotalElements()
-
+        // for (var i = 0; i < this.list.length; i++) {
+        //   console.log((this.list[i].users.find(o => o.id === this.user.id)).roles)
+        // }
       }).catch(function(e) {
         context.$log.warn(e)
         if (e.code === 401) {
@@ -164,8 +172,22 @@ export default {
       })
 
     },
-    isAllowed() {
-      return this.user.roles.indexOf("admin") > -1
+    isAllowed(subject, app) {
+      for (var i = 0; i < app.users.length; i++) {
+        if(app.users[i].enabled && app.users[i].id === this.user.id) {
+          for (var j = 0; j < app.users[i].roles.length; j++) {
+            let role = app.users[i].roles[j]
+            if(role == 'admin' || role == 'admin_app' || role == 'delete_app') {
+              return true
+            }
+            if((role.indexOf('admin_' + subject) > -1) || (role.indexOf('read_' + subject) > -1) || (role.indexOf(subject) > -1)) {
+              return true
+            }
+          }
+        }
+      }
+      return false
+      // return this.user.roles.indexOf("admin") > -1
     },
     pageChanged(page) {
       this.currentPage = page
