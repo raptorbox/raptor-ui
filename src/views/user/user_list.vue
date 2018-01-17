@@ -173,7 +173,7 @@ export default {
         if((this.user.roles.indexOf('admin') > -1) || (this.user.roles.indexOf('admin_user') > -1)) {
           this.searchUsersForAppId()
         }else {
-          let query = {ownerId: this.user.id, domain: this.appId}
+          let query = {ownerId: this.user.id}
           this.searchUsersForOwnerId(page, query)
         }
         return
@@ -226,14 +226,18 @@ export default {
         .then(() => {
           this.$log.debug("Deleting %s", userId)
           let query = {ownerId: this.user.id}
-          if(this.appId) {
-            query.domain = this.appId
+          if(this.app) {
+            // query.domain = this.appId
+            let userToRemove = this.list.forEach((e) => e.id === userId)
+            this.list.splice(this.list.indexOf(userToRemove), 1)
+            this.updateApp()
+          } else {
+            this.$raptor.Admin().User().delete(userId, query)
+              .then(() => {
+                this.$log.debug("Deleted %s", userId)
+                this.fetchData()
+              })
           }
-          this.$raptor.Admin().User().delete(userId, query)
-            .then(() => {
-              this.$log.debug("Deleted %s", userId)
-              this.fetchData()
-            })
         }).catch(function(e) {
           context.$log.error(e)
           context.$log.warn(e)
@@ -261,6 +265,24 @@ export default {
           ('Failed to load app: %s', e.message)
           this.$log.debug(e)
           this.loading = false
+        })
+    },
+    updateApp() {
+      let json = {
+        id: this.appId,
+        name: this.app.name,
+        users: this.list
+      }
+
+      this.$raptor.App().save(json)
+        .then((app) => {
+          this.$log.debug('App %s saved', app.id)
+          this.loading = false
+          this.searchUsersForAppId()
+        })
+        .catch((e) => {
+          this.$log.error("Error saving app: %s", e.message)
+          this.$log.debug(e)
         })
     },
     searchUsersForOwnerId(page, query) {
