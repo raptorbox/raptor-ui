@@ -1,117 +1,86 @@
 <template>
-  <div class="animated fadeIn row row-fluid">
-    <div class="col-lg-12">
-      <!-- <b-card header="<i class='fa fa-align-justify'></i> Users"> -->
-      <b-card>
-      <!-- <table class="table table-striped">
-        <thead>
-          <tr>
-            <th>Username</th>
-            <th>Registered</th>
-            <th>Roles</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
+  <div>
+    <div class="animated fadeIn row row-fluid">
+      <div class="col-lg-12">
+        <b-card>
+          <div slot="header">
+            <div class="row row-fluid">
+              <div class="col-lg-8 list-inline">
+                <div class="col-md-3">
+                  <h3 class="list-inline-item">Tokens</h3>
+                </div>
+                <b-button class="list-inline-item" variant="primary" :to="{ name: 'TokensCreate'}">
+                  <i class="fa fa-plus"></i> New
+                </b-button>
+              </div>
+              <!-- <div style="float: left;">
+                <p style="text-align: center; font-weight:bold; margin:0;">Tokens</p>
+              </div>
+              <div class="col-md-2 col-md-offset-2" style="float: right;">
+                <div class="row" style="margin-left:auto; margin-right:0;">
+                  <div class="col-md-6">
+                    <b-button class="btn btn-primary" :to="{ name: 'TokensCreate'}">Create Token</b-button>
+                  </div> -->
+              <div class="col-md-4 text-right">
+                <b-form-fieldset description="Items per page" label="Show" horizontal>
+                  <!-- <b-form-select :options="pageOptions" v-model="perPage" /> -->
+                  <b-form-select :options="pageOptions" v-model="perPage" @change="itemsLimitChange"/>
+                </b-form-fieldset>
+              </div>
+            </div>
+          </div>  
 
-          <tr v-for="row,idx in list">
-            <td>
-              <b-button class="btn btn-link" :to="{ name: 'UsersUpdate', params: { userId: row.uuid }}">
-                  {{row.username}}
+          <!-- <b-table small responsive show-empty :items="list" :fields="fields" :current-page="currentPage" :per-page="perPage" > -->
+          <b-table no-local-sorting small responsive show-empty :items="list" :fields="fields" @sort-changed="sortingChanged">
+            <template slot="name" scope="row">
+              <b-button class="btn btn-link" :to="{ name: 'TokensUpdate', params: { tokenId: row.item.id }}">
+                {{row.item.name}}
               </b-button>
-            </td>
+            </template>
+            <template slot="expires" scope="row">{{formatDate(row.item.expires)}}</template>
+            <template slot="token" scope="row">
+              <b-button class="btn btn-sm" @click="openModalWin(row.item)">Show Token</b-button>
+            </template>
+            <!-- <template slot="secret" scope="row">{{row.item.secret}}</template> -->
+            <!-- <template slot="device" scope="row">{{row.item.deviceId}}</template> -->
+            <template slot="owner" scope="row">{{row.item.userId}}</template>
+            <template slot="status" scope="row">
+              <span v-bind:class="['badge', { 'badge-success': row.item.enabled,'badge-warning': !row.item.enabled }]"> {{row.item.enabled ? 'Enabled' : 'Disabled'}}</span>
+            </template>
+            <template slot="permission" scope="row">
+              <div @click="loadPermissions(row.item)">
+                <span v-if="listWithPermissions[row.item.id] && listWithPermissions[row.item.id].length > 0"><p><span v-bind:id="row.item.id" v-for="p in listWithPermissions[row.item.id]">{{p}}, </span></p></span>
+                <span v-else>
+                  <b-button class="btn btn-sm">Show Permissions</b-button>
+                </span>
+              </div>
+            </template>
+            <template slot="valid" scope="row">
+              <span v-bind:class="['badge', { 'badge-success': row.item.expires > (new Date()),'badge-warning': !row.item.valid }]"> {{row.item.expires > (new Date()) ? 'Valid' : 'Expired'}}</span>
+            </template>
+            <template slot="actions" scope="row">
+              <b-button class="btn btn-outline-danger btn-sm" @click="remove(row.item)">Delete</b-button>
+            </template>
+          </b-table>
 
-            <td>{{formatDate(row.created)}}</td>
-            <td>{{row.roles.join(", ")}}</td>
-            <td>
-              <span v-bind:class="['badge', {
-                      'badge-success': row.enabled,
-                      'badge-warning': !row.enabled
-                  }]">{{row.enabled ? 'Enabled' : 'Disabled'}}</span>
-            </td>
-          </tr>
-
-        </tbody>
-      </table>
-      <ul class="pagination">
-
-        <li class="page-item"><a class="page-link" href="#">Prev</a></li>
-
-        <li class="page-item active">
-          <a class="page-link" href="#">1</a>
-        </li>
-
-        <li class="page-item"><a class="page-link" href="#">2</a></li>
-
-        <li class="page-item"><a class="page-link" href="#">Next</a></li>
-      </ul> -->
-
-      <!-- 
-      <div style="float: right;">
-        <b-button class="btn btn-primary" :to="{ name: 'UsersCreate'}">Create Token</b-button>
-        <b-form-fieldset horizontal :label-cols="1">
-          <b-form-select :options="pageOptions" v-model="perPage" />
-        </b-form-fieldset>
-      </div> -->
-
-      <div>
-        <div style="float: left;">
-          <p style="text-align: center; font-weight:bold; margin:0;">Tokens</p>
-        </div>
-        <div class="col-md-2 col-md-offset-2" style="float: right;">
-          <div class="row" style="margin-left:auto; margin-right:0;">
-            <div class="col-md-6">
-              <b-button class="btn btn-primary" :to="{ name: 'TokensCreate'}">Create Token</b-button>
-            </div>
-            <div class="col-md-6">
-              <b-form-fieldset horizontal>
-                <b-form-select :options="pageOptions" v-model="perPage" />
-              </b-form-fieldset>
-            </div>
+          <div>
+            <!-- <b-pagination :total-rows="totalRows" :per-page="perPage" v-model="currentPage" prev-text="Prev" next-text="Next" /> -->
+            <b-pagination align="center" :total-rows="totalRows" :per-page="perPage" v-model="currentPage" prev-text="Prev" next-text="Next" @change="pageChanged" />
           </div>
-        </div>
-      </div>  
+        </b-card>
 
-      <b-table small responsive show-empty :items="list" :fields="fields" :current-page="currentPage" :per-page="perPage" >
-        <template slot="name" scope="row">
-          <b-button class="btn btn-link" :to="{ name: 'TokensUpdate', params: { tokenId: row.item.id }}">
-            {{row.item.name}}
-          </b-button>
-        </template>
-        <template slot="registered" scope="row">{{formatDate(row.item.created)}}</template>
-        <!-- <template slot="token" scope="row">{{row.item.token}}</template> -->
-        <!-- <template slot="secret" scope="row">{{row.item.secret}}</template> -->
-        <!-- <template slot="device" scope="row">{{row.item.deviceId}}</template> -->
-        <template slot="owner" scope="row">{{row.item.owner.username}}</template>
-        <template slot="status" scope="row">
-          <span v-bind:class="['badge', { 'badge-success': row.item.enabled,'badge-warning': !row.item.enabled }]"> {{row.item.enabled ? 'Enabled' : 'Disabled'}}</span>
-        </template>
-        <template slot="permission" scope="row">
-          <div @click="loadPermissions(row.item)">
-            <span v-if="listWithPermissions[row.item.id] && listWithPermissions[row.item.id].length > 0"><p><span v-bind:id="row.item.id" v-for="p in listWithPermissions[row.item.id]">{{p}}, </span></p></span>
-            <span v-else>
-              <b-button class="btn btn-sm">Show Permissions</b-button>
-            </span>
-          </div>
-        </template>
-        <template slot="valid" scope="row">
-          <span v-bind:class="['badge', { 'badge-success': row.item.valid,'badge-warning': !row.item.valid }]"> {{row.item.valid ? 'Valid' : 'Not Valid'}}</span>
-        </template>
-        <template slot="actions" scope="row">
-          <b-button class="btn btn-outline-danger btn-sm" @click="remove(row.item.id)">Delete</b-button>
-        </template>
-      </b-table>
-
-      <div>
-        <b-pagination :total-rows="list.length" :per-page="perPage" v-model="currentPage" prev-text="Prev" next-text="Next" />
       </div>
+      <!--/.col-->
+      <!-- show token -->
+    </div>
+    <!--/.row-->
 
-    </b-card>
+    <b-modal title="Selected Token" size="lg" class="modal-info" v-model="showToken">
+      <b-form-fieldset label="Token" :horizontal="false">
+        <b-form-input type="text" placeholder="Token" v-model="modalWin.token" disabled></b-form-input>
+      </b-form-fieldset>
+    </b-modal>
   </div>
-  <!--/.col-->
-
-</div>
-<!--/.row-->
 </template>
 
 <script>
@@ -123,27 +92,34 @@
       return {
         loading: false,
         list: [],
+        pager: null,
         error: null,
         currentPage: 1,
         fields: {
-          name:         { label: 'Name' },
-          registered:   { label: 'Registered' },
-          // token:        { label: 'token' },
+          name:         { label: 'Name', sortable: true },
+          expires:      { label: 'Expire On', sortable: true },
+          token:        { label: 'token' },
           // secret:       { label: 'Secret' },
           // device:       { label: 'Device Id' },
           owner:        { label: 'Owner' },
           permission:   { label: 'Permissions' },
-          status:       { label: 'Status'},
-          valid:        { label: 'Is Valid'},
+          status:       { label: 'Status', sortable: true},
+          valid:        { label: 'Is Valid', sortable: true,},
           actions:      { }
         },
-        perPage: 10,
         totalRows: 0,
-        pageOptions: [{text:10,value:10},{text:25,value:25},{text:50,value:50}],
-        listWithPermissions: {}
+        listWithPermissions: {},
+        perPage: 25,
+        sortBy: "expires",
+        sortDir: "desc",
+        pageOptions: [25,100,250],
+        currentDateTime: null,
+        showToken: false,
+        modalWin: {},
       }
     },
     mounted () {
+      this.currentDateTime = new Date()
       this.fetchData()
     },
     methods: {
@@ -154,31 +130,44 @@
         this.error = null
         this.loading = true
         this.$log.debug('Fetching list')
-        this.$raptor.Admin().Token().list()
-        .then((list) => {
-          this.$log.debug('Loaded %s tokens', list.length)
-          console.log(list)
+        // page config
+        let page = {
+          page: this.currentPage,
+          size: this.perPage,
+          sort: this.sortBy,
+          sortDir: this.sortDir,
+        }
+        this.$raptor.Admin().Token().list(null, page)
+        .then((pager) => {
+          this.$log.debug('Loaded %s tokens', pager.getContent().length)
+          // console.log(pager)
+
           this.loading = false
-          this.list = list
-          this.totalRows = list.length
-          for (var i = 0; i < list.length; i++) {
-            this.listWithPermissions[list[i].id] = []
+          this.pager = pager
+          this.list = pager.getContent()
+          this.totalRows = pager.getTotalElements()
+
+          for (var i = 0; i < this.list.length; i++) {
+            this.listWithPermissions[this.list[i].id] = []
           }
-          console.log(this.listWithPermissions)
+          // console.log(this.listWithPermissions)
         })
         .catch((e) => {
           this.$log.debug('Failed to load list')
           this.$log.error(e)
-          console.log(e)
           this.error = e.message
           this.list = []
           this.loading = false
+          this.$log.warn(e)
+          if (e.code === 401) {
+            this.$raptor.Auth().logout();
+            this.$router.push("/pages/login");
+          }
         })
       },
       loadPermissions (tok) {
         this.$raptor.Admin().Token().Permission().get(tok)
         .then((permission) => {
-          console.log(JSON.stringify(permission))
           if(permission) {
             let backup = this.listWithPermissions
             for (var i = 0; i < this.list.length; i++) {
@@ -194,27 +183,56 @@
         .catch((e) => {
           this.$log.debug('Failed to load permission')
           this.$log.error(e)
-          console.log(e)
           this.loading = false
+          if (e.code === 401) {
+            this.$raptor.Auth().logout();
+            this.$router.push("/pages/login");
+          }
         })
       },
-      remove (tokenId) {
-        this.$dialog.confirm('Are you sure, you want to remove this token?')
-        .then(function () {
-          this.$log.debug("Deleting %s", tokenId)
-          this.$raptor.Admin().Token().delete({ id: tokenId})
+      pageChanged(page) {
+        this.currentPage = page
+        this.fetchData()
+      },
+      sortingChanged(ev) {
+        this.sortBy = ev.sortBy
+        this.sortDir = ev.sortDesc ? 'desc' : 'asc'
+        this.fetchData()
+      },
+      itemsLimitChange(limit) {
+        this.currentPage = 1
+        this.perPage = limit
+        this.fetchData()
+      },
+      remove (token) {
+        return this.$dialog.confirm(`Remove token \`${token.name}\` ?`, {
+          html: false,
+          okText: 'Remove',
+          cancelText: 'Cancel',
+        })
+        .then(() => {
+          this.$log.debug("Deleting %s", token.id)
+          this.$raptor.Admin().Token().delete({ id: token.id})
           .then(() => {
-            this.$log.debug("Deleted %s", tokenId)
+            this.$log.debug("Deleted %s", token.id)
             this.fetchData()
           })
           .catch((e) => {
-            console.log(e)
-            this.$log.error("Error deleting %s", tokenId)
+            this.$log.error(e)
+            this.$log.error("Error deleting %s", token.id)
+            if (e.code === 401) {
+              this.$raptor.Auth().logout();
+              this.$router.push("/pages/login");
+            }
           })
         })
         .catch(function () {
           console.log('Clicked on cancel')
         });
+      },
+      openModalWin(token) {
+        this.modalWin = token
+        this.showToken = true
       },
     }
 

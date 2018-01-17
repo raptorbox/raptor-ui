@@ -133,36 +133,38 @@
           this.$log.debug('Token %s loaded', tokenId)
           this.loading = false
           this.token = token
-          console.log("===========")
-          console.log(JSON.stringify(token))
-          console.log(this.token)
           this.token.owner = token.owner
           let tokenExpiresDate = new Date()
-          this.date = tokenExpiresDate.setMilliseconds(tokenExpiresDate.getMilliseconds() + token.expires)
+          // this.date = tokenExpiresDate.setMilliseconds(tokenExpiresDate.getMilliseconds() + token.expires)
+          this.date = token.expires
           this.loadPermissions(token)
         })
         .catch((e) => {
           this.$log.debug('Failed to load token')
           this.$log.error(e)
           this.loading = false
-          console.log(e)
+          if (e.code === 401) {
+            this.$raptor.Auth().logout();
+            this.$router.push("/pages/login");
+          }
         })
       },
       loadPermissions (tok) {
         this.$raptor.Admin().Token().Permission().get(tok)
         .then((permission) => {
-          console.log('permission %s loaded', permission)
-          console.log(JSON.stringify(permission))
           if(permission) {
             this.selectedPermission = permission
           }
-          console.log(permission)
           this.permissions = ['admin','list','read','update','create','delete','push','pull','execute','tree']
         })
         .catch((e) => {
           this.$log.debug('Failed to load permission')
           this.$log.error(e)
           this.loading = false
+          if (e.code === 401) {
+            this.$raptor.Auth().logout();
+            this.$router.push("/pages/login");
+          }
         })
       },
       cancel() {
@@ -170,10 +172,11 @@
       },
       save() {
         let today = new Date()
-        let selectedDate = (new Date(this.date))
-        console.log("selected date: " + this.date + " sec: " + (new Date(this.date)).getTime() + " today: " + today)
-        this.token.expires = Math.abs((selectedDate.getTime() - today.getTime()));
-        console.log(this.token.expires)
+        let selectedDate = new Date(this.date)
+        // console.log("selected date: " + this.date + " sec: " + (new Date(this.date)).getTime() + " today: " + today)
+        // total time when it will exprie - years days
+        // this.token.expires = Math.abs((selectedDate.getTime() - today.getTime()));
+        this.token.expires = selectedDate.getTime()
         this.$log.debug('Saving token', this.token)
         this.$raptor.Admin().Token().save(this.token)
         .then((tok) => {
@@ -181,8 +184,6 @@
           this.loading = false
           this.loadPermissions(tok)
           this.token = tok
-          console.log("===========")
-          console.log(tok)
           this.token.owner = tok.owner
           this.loadPermissions(tok)
           // this.$router.push("/admin/tokens")
@@ -191,12 +192,13 @@
           this.$log.debug('Failed to save token')
           this.$log.error(e)
           this.loading = false
+          if (e.code === 401) {
+            this.$raptor.Auth().logout();
+            this.$router.push("/pages/login");
+          }
         })
       },
       SavePermissions() {
-        console.log("========================================")
-        console.log(this.token)
-        console.log(this.selectedPermission)
         this.$raptor.Admin().Token().Permission().set(this.token,this.selectedPermission)
         .then((p) => {
           this.$log.debug('Permissions saved')
@@ -206,16 +208,18 @@
           this.$log.debug('Failed to save token')
           this.$log.error(e)
           this.loading = false
+          if (e.code === 401) {
+            this.$raptor.Auth().logout();
+            this.$router.push("/pages/login");
+          }
         })
       },
       onChangeExpiryDate(event) {
-        console.log(event)
         if(this.token.expires) {
           this.date = 0;
         }
       },
       onChangeDate(event) {
-        console.log(event)
         this.token.expires = false;
       },
     }
