@@ -28,7 +28,7 @@
                 </b-form-fieldset>
               </div>
             </div>
-          </div>  
+          </div>
 
           <!-- <b-table small responsive show-empty :items="list" :fields="fields" :current-page="currentPage" :per-page="perPage" > -->
           <b-table no-local-sorting small responsive show-empty :items="list" :fields="fields" @sort-changed="sortingChanged">

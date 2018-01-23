@@ -27,7 +27,7 @@
                   </b-form-fieldset>
                 </div>
               </div>
-              <div class="col-md-4">  
+              <div class="col-md-4">
                 <b-form-fieldset label="Check if stream is dynamic" :horizontal="false">
                   <b-form-checkbox v-model="stream.dynamic">Dynamic</b-form-checkbox>
                 </b-form-fieldset>
@@ -128,7 +128,7 @@
         console.log("in stream component")
         if(this.deviceData != null) {
           this.device = this.deviceData
-          console.log("=========================dev data ===========================")
+          // console.log("=========================dev data ===========================")
           console.log(this.device)
         }
         this.onSaveStreamButton()
@@ -137,7 +137,7 @@
         console.log("in stream component")
         if(this.deviceData != null) {
           this.device = this.deviceData
-          console.log("=========================dev data ===========================")
+          // console.log("=========================dev data ===========================")
           this.streams = this.device.json.streams
           // console.log(device)
           console.log(JSON.stringify(this.device))

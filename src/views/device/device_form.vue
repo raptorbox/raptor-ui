@@ -28,7 +28,7 @@
     <div class="col-md-6">
       <b-form-fieldset label="Device Properties" :horizontal="false">
         <textarea class="col-md-12" rows="8" v-model="propertiesTextArea" placeholder="Enter Device Properties:
-        { 
+        {
           &quot;userId&quot;:&quot;Eh0ihMBFqmWP7YECvT2uyGcff9A2&quot;,
           &quot;tripId&quot;:&quot;-KuciIGkgMOYKI5Tfa1L&quot;
         }"></textarea>
@@ -61,34 +61,14 @@
   import Stream from './../components/editStream'
   import Raptor from 'raptor-sdk'
   const defaultData = () => {
-    // console.log("***************************************")
-    // console.log("Device Model")
     let d1 = new Raptor.models.Device()
-    // console.log(d1)
     let d = d1.defaultFields()
 
-    // console.log("defaultFields: " + d)
-
-    // d.streams = new Raptor.models.Stream().defaultFields()
-    // d.actions = new Raptor.models.Action().defaultFields()
-    // d.settings = new Raptor.models.Settings().defaultFields()
     const u = {}
 
     for(let p in d) {
       u[p] = null
     }
-    /*
-    if(d.streams != null) {
-      for(let p in d.streams) {
-        u.streams[p] = null
-      }
-    }
-    if(d.actions != null) {
-      for(let p in d.actions) {
-        u.actions[p] = null
-      }
-    }*/
-    // console.warn("final object: " + JSON.stringify(u));
     return u
   }
 
@@ -115,15 +95,12 @@
     },
     mounted() {
       this.appId = this.$route.params.appId
-      console.log(this.appId)
       if (this.$route.params.deviceId) {
-        this.$log.debug('Load %s ', this.$route.params.deviceId)
-        this.load(this.$route.params.deviceId)
+          this.$log.debug('Load %s ', this.$route.params.deviceId)
+          this.load(this.$route.params.deviceId)
       }
-      console.log(this.$route)
       if(this.$route.path.indexOf('clone') != -1) {
-        this.clone = true
-        // this.data.id = null
+          this.clone = true
       }
     },
     methods: {
@@ -139,6 +116,7 @@
           this.$data.userId = device.userId
           this.$data.device = device
           this.$data.deviceUserId = device.id
+          this.$data.domain = device.domain
           let prop = JSON.stringify(device.properties)
           if(device.properties && prop != "{}") {
             this.propertiesTextArea = prop
@@ -183,44 +161,16 @@
         u.description = this.$data.description
         u.userId = this.$data.userId
         if (this.$route.params.deviceId && !this.clone) {
-          // this.$raptor.Inventory().update(u)
-          // .then((device) => {
-          //   this.$log.debug('device %s saved', device.id)
-          console.log(this.saveIt++ + " stupid " + context.SaveData)
           context.device = u
           context.SaveData = this.saveIt++;
-          // update happened in stream page
-            // this.loading = false
-            // context.$router.push("/inventory/list")
-          // })
-          // .catch((e) => {
-          //   this.$log.debug('Failed to save device')
-          //   this.$log.error(e)
-          //   this.loading = false
-          // })
-          // context.$router.push("/inventory/list")
         } else {
           if(this.clone) {
             u.id = null
           }
           u.userId = this.$raptor.Auth().getUser().uuid
           this.$log.debug('creating device', u)
-          console.log(u)
           context.device = u
           context.SaveData = this.saveIt++;
-          // this.$raptor.Inventory().create(u)
-          // .then((device) => {
-          //   this.$log.debug('device %s created', device.id)
-          //   this.device = device
-          //   context.SaveData = context.saveIt++
-          //   this.loading = false
-          //   // context.$router.push("/inventory/list")
-          // })
-          // .catch((e) => {
-          //   this.$log.debug('Failed to create device')
-          //   this.$log.error(e)
-          //   this.loading = false
-          // })
         }
       }
     }

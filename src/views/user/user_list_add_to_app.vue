@@ -17,9 +17,16 @@
                 <span>{{app.name}}</span>
               </div> -->
             </div>
-            <b-button class="list-inline-item" variant="primary" :to="{ name: 'UsersCreate'}">
-              <i class="fa fa-plus"></i> New
-            </b-button>
+            <span v-if="appId">
+                <b-button class="list-inline-item" variant="primary" :to="{ name: 'UsersCreateWithAppId', params: {appId:appId}}">
+                    <i class="fa fa-plus"></i> New
+                </b-button>
+            </span>
+            <span v-else>
+                <b-button class="list-inline-item" variant="primary" :to="{ name: 'UsersCreate'}">
+                    <i class="fa fa-plus"></i> New
+                </b-button>
+            </span>
           </div>
           <div class="col-md-4 text-right">
             <b-form-fieldset description="Items per page" label="Show" horizontal>
@@ -70,7 +77,7 @@
           <!-- :to="{ name: 'AppUpdate', params: { usersToAdd: usersToAdd }}" -->
           <b-button class="float-right" variant="primary" @click="addUsersToApplication">Add</b-button>
         </div>
-      </b-card-footer>      
+      </b-card-footer>
 
     </b-card>
   </div>

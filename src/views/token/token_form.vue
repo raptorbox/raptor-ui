@@ -128,7 +128,7 @@
     methods: {
       load(tokenId) {
         this.loading = true
-        this.$raptor.Admin().Token().load(tokenId)
+        this.$raptor.Admin().Token().read(tokenId)
         .then((token) => {
           this.$log.debug('Token %s loaded', tokenId)
           this.loading = false

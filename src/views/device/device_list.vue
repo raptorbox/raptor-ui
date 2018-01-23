@@ -151,7 +151,6 @@ export default {
   },
   mounted() {
     this.appId = this.$route.params.appId
-    console.log(this.appId)
     if(this.appId) {
       this.serachDataForAppId()
     } else {
@@ -175,30 +174,34 @@ export default {
           sortDir: this.sortDir,
         }
       // console.log(queryParam)
-      this.$raptor.Inventory().list(queryParam)
-        .then((pager) => {
+        this.$raptor.Inventory().list(queryParam)
+            .then((pager) => {
 
-          // const list = pager.getContent()
-          this.$log.debug('Loaded %s device list', pager.getContent().length)
-          // console.log(list.length)
+                // const list = pager.getContent()
+                this.$log.debug('Loaded %s device list', pager.getContent().length)
+                // console.log(list.length)
 
-          this.loading = false
-          this.pager = pager
-          this.totalRows = pager.getTotalElements()
-          this.devices = pager.getContent()
-          this.list = this.devices
+                this.loading = false
+                this.pager = pager
+                this.totalRows = pager.getTotalElements()
+                this.devices = pager.getContent()
+                this.list = this.devices
 
-        })
-        .catch((e) => {
+            })
+            .catch((e) => {
 
-          this.$log.warn('Failed to load device list: %s', e.message)
-          this.$log.debug(e)
+                this.$log.warn('Failed to load device list: %s', e.message)
+                this.$log.debug(e)
 
-          this.error = e.message
-          this.list = []
-          this.pager = null
-          this.loading = false
-        })
+                this.error = e.message
+                this.list = []
+                this.pager = null
+                this.loading = false
+                if (e.code === 401) {
+                    context.$raptor.Auth().logout();
+                    context.$router.push("/pages/login");
+                }
+            })
     },
     pageChanged: function(page) {
       this.currentPage = page
@@ -234,7 +237,11 @@ export default {
               context.fetchData()
             })
             .catch((e) => {
-              context.$log.error("Error deleting %s", e)
+                context.$log.error("Error deleting %s", e)
+                if (e.code === 401) {
+                    context.$raptor.Auth().logout();
+                    context.$router.push("/pages/login");
+                }
             })
         })
     },
@@ -270,14 +277,15 @@ export default {
       var context = this
       this.error = null
       this.loading = true
+      console.log('Fetching device list page=%s, size=%s sort=%s.%s', this.currentPage, this.perPage, this.sortBy, this.sortDir)
       this.$log.debug('Fetching device list')
-      let queryParam = {
+      let pageConf = {
         page: this.currentPage-1,
         size: this.perPage,
         sort: this.sortBy,
         sortDir: this.sortDir,
       }
-      this.$raptor.Inventory().search({domain: this.appId}, queryParam)
+      this.$raptor.Inventory().search({domain: this.appId}, pageConf)
       .then((pager) => {
         this.$log.debug('Loaded %s device list', pager.getContent().length)
 
@@ -296,6 +304,10 @@ export default {
         this.list = []
         this.pager = null
         this.loading = false
+        if (e.code === 401) {
+            context.$raptor.Auth().logout();
+            context.$router.push("/pages/login");
+        }
       })
     },
   }

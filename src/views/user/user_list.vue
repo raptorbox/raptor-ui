@@ -152,6 +152,10 @@ export default {
       .catch((e) => {
         this.hasPermission = false
         return Promise.resolve(this.hasPermission)
+        if (e.code === 401) {
+          context.$raptor.Auth().logout();
+          context.$router.push("/pages/login");
+        }
       })
     },
     formatDate(d) {

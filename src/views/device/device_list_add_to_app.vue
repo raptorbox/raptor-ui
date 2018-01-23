@@ -8,9 +8,16 @@
         <div class="row">
           <div class="col-lg-12 list-inline">
             <h3 class="list-inline-item"><i class="fa fa-screen-smartphone"></i> Devices</h3>
-            <b-button variant="primary" :to="{ name: 'DeviceCreate'}">
-              <i class="fa fa-plus"></i> New
-            </b-button>
+            <span v-if="appId">
+              <b-button variant="primary" :to="{ name: 'DeviceCreateForApp', params: { appId: appId}}">
+                <i class="fa fa-plus"></i> New
+              </b-button>
+            </span>
+            <span v-else>
+              <b-button variant="primary" :to="{ name: 'DeviceCreate'}">
+                <i class="fa fa-plus"></i> New
+              </b-button>
+            </span>
           </div>
         </div>
 
@@ -45,7 +52,7 @@
         <template slot="description" scope="row">{{row.item.description}}</template>
         <template slot="created" scope="row">{{formatDate(row.item.createdAt)}}</template>
         <template slot="actions" scope="row">
-          <b-button variant="primary" :@click="addDeviceAs(row.item)">
+          <b-button variant="primary" :disabled="row.item.domain != null" @click="addDevice(row.item)">
             <i class="fa fa-plus"></i>
           </b-button>
         </template>
@@ -60,7 +67,7 @@
         <div>
           <b-button class="float-right" variant="primary" :to="{ name: 'AppUpdate', params: { devicesToAdd: devicesToAdd }}">Add</b-button>
         </div>
-      </b-card-footer>      
+      </b-card-footer>
 
     </b-card>
   </div>
@@ -80,7 +87,6 @@ import ItemTemplate from './../components/ItemTemplate.vue'
 
 export default {
   name: 'user_list',
-  props: ['appDevices'],
   components: {
     'v-autocomplete': Autocomplete
   },
@@ -141,7 +147,6 @@ export default {
   },
   mounted() {
     this.appId = this.$route.params.appId
-    this.devicesToAdd = this.appDevices
 
     this.fetchData()
   },
@@ -154,15 +159,14 @@ export default {
       this.loading = true
       this.$log.debug('Fetching device list page=%s, size=%s sort=%s.%s', this.currentPage, this.perPage, this.sortBy, this.sortDir)
       //TODO add sort
-      this.loading = true
-      let queryParam = {
-          page: this.currentPage-1,
-          size: this.perPage,
-          sort: this.sortBy,
-          sortDir: this.sortDir,
-        }
-      // console.log(queryParam)
-      this.$raptor.Inventory().list(queryParam)
+      let pageConf = {
+        page: this.currentPage-1,
+        size: this.perPage,
+        sort: this.sortBy,
+        sortDir: this.sortDir,
+      }
+      // {domain: this.appId}
+      this.$raptor.Inventory().list(pageConf)
         .then((pager) => {
 
           // const list = pager.getContent()
@@ -185,6 +189,10 @@ export default {
           this.list = []
           this.pager = null
           this.loading = false
+          if (e.code === 401) {
+              context.$raptor.Auth().logout();
+              context.$router.push("/pages/login");
+          }
         })
     },
     pageChanged: function(page) {
@@ -200,30 +208,6 @@ export default {
       this.currentPage = 1
       this.perPage = limit
       this.fetchData()
-    },
-    remove(device) {
-      const deviceId = device && device.id ? device.id : device
-      const deviceName = device && device.name ? device.name : device
-      var context = this
-      this.$dialog.confirm(`Remove device \`${deviceName}\` ?`, {
-          html: false,
-          okText: 'Remove',
-          cancelText: 'Cancel',
-        })
-        .then(function() {
-          // This will be triggered when user clicks on proceed
-          context.$log.debug("Deleting %s", deviceId)
-          context.$raptor.Inventory().delete({
-              id: deviceId
-            })
-            .then(() => {
-              context.$log.debug("Deleted %s", deviceId)
-              context.fetchData()
-            })
-            .catch((e) => {
-              context.$log.error("Error deleting %s", e)
-            })
-        })
     },
     // auto-complete methods
     itemClicked(item) {
@@ -252,21 +236,24 @@ export default {
         }
       }
     },
-    addDeviceAs(dev) {
-      if(dev.id) {
-        let found = false
-        for (var i = 0; i < this.devicesToAdd.length; i++) {
-          if (this.devicesToAdd[i].id === dev.id) {
-              this.devicesToAdd[i] = {id: dev.id, roles: [role]}
-              found = true
+    addDevice(dev) {
+      dev.domain = this.appId
+      return this.$raptor.Inventory().update(dev).then(()=> {
+          this.$log.debug('Device added to app')
+          this.fetchData()
+      }).catch(() => {
+          this.$log.warn('Failed to load device list: %s', e.message)
+          this.$log.debug(e)
+
+          this.error = e.message
+          this.list = []
+          this.pager = null
+          this.loading = false
+          if (e.code === 401) {
+            context.$raptor.Auth().logout();
+            context.$router.push("/pages/login");
           }
-        }
-        if(!found){
-          this.devicesToAdd.push({id: dev.id, roles: [role]})
-        }
-      } else {
-        this.$log.debug('Device not forund')
-      }
+      })
     },
   }
 }

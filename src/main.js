@@ -10,6 +10,9 @@ import store from './store'
 // confirm dialog box
 import VuejsDialog from 'vuejs-dialog'
 
+// toast
+import Toasted from 'vue-toasted'
+
 // Import the styles directly. (Or you could add them via script tags.)
 // import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue/dist/bootstrap-vue.css'
@@ -18,6 +21,7 @@ Vue.use(LoggerVue)
 Vue.use(BootstrapVue)
 Vue.use(RaptorVue)
 Vue.use(VuejsDialog)
+Vue.use(Toasted)
 
 var SimpleVueValidation = require('simple-vue-validator')
 Vue.use(SimpleVueValidation)

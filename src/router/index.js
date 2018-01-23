@@ -12,6 +12,8 @@ import UsersListAddToApp from '@/views/user/user_list_add_to_app'
 // Applications
 import AppList from '@/views/app/app_list'
 import AppForm from '@/views/app/app_form'
+// Send Action
+import SendMessage from '@/views/pushnotification/send'
 
 // Tokens
 import TokensList from '@/views/token/token_list'
@@ -127,6 +129,15 @@ const router = new Router({
                   meta: {
                     label: 'Update'
                   },
+                  props: true
+                },
+                {
+                  path: 'send/:appId',
+                  name: 'SendActionMessage',
+                  meta: {
+                    label: 'Send Message'
+                  },
+                  component: SendMessage,
                   props: true
                 }
               ]
@@ -277,6 +288,15 @@ const router = new Router({
               {
                 path: 'create',
                 name: 'DeviceCreate',
+                meta: {
+                  label: 'Create'
+                },
+                component: DeviceForm,
+                props: true
+              },
+              {
+                path: 'create/:appId',
+                name: 'DeviceCreateForApp',
                 meta: {
                   label: 'Create'
                 },

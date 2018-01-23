@@ -23,7 +23,7 @@
       </div>
 
       <b-table no-local-sorting small responsive show-empty :items="list" :fields="fields" @sort-changed="sortingChanged">
-        
+
         <template slot="id" scope="row">
           <div v-if="isAllowed('app', row.item)">
             <b-badge size="sm" variant="light" :to="{ name: 'AppUpdate', params: { appId: row.item.id }}">{{row.item.id}}</b-badge>
@@ -69,10 +69,13 @@
             <b-button title="View devices" variant="success" :to="{ name: 'DeviceListApp', params: { appId: row.item.id }}">
               <i class="fa fa-mobile fa-lg"></i>
             </b-button>
+            <b-button title="Send message to device" variant="success" :to="{ name: 'SendActionMessage', params: { appId: row.item.id }}">
+              <i class="fa fa-paper-plane-o fa-lg"></i>
+            </b-button>
           </span>
         </template>
       </b-table>
-      
+
       <div>
         <b-pagination align="center" :total-rows="totalRows" :per-page="perPage" v-model="currentPage" prev-text="Prev" next-text="Next" @change="pageChanged" />
       </div>
@@ -204,8 +207,7 @@ export default {
       this.fetchData()
     },
     remove(app) {
-      const appName = app && app.name ? app.name : app
-      const appId = app && app.id ? app.id : app
+      let appName = app && app.name ? app.name : app
       var context = this
       return this.$dialog.confirm(`Remove app \`${appName}\` ?`, {
           html: false,
@@ -213,10 +215,10 @@ export default {
           cancelText: 'Cancel',
         })
         .then(() => {
-          this.$log.debug("Deleting %s", appId)
-          this.$raptor.App().delete(appId)
+          this.$log.debug("Deleting %s", app)
+          this.$raptor.App().delete(app)
             .then(() => {
-              this.$log.debug("Deleted %s", appId)
+              this.$log.debug("Deleted %s", app.id)
               this.fetchData()
             })
         }).catch(function(e) {

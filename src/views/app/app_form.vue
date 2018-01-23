@@ -139,7 +139,7 @@
             <!-- <b-button class="list-inline-item" title="Add device" variant="primary" :to="{ name: 'DeviceListAddToApp', params: { appId: appId, rolesInApplication: availRoles, appDevices: app.devices }}">
               <i class="fa fa-plus"></i>
             </b-button> -->
-            <b-button class="list-inline-item" title="Add device" variant="primary" :to="{ name: 'DeviceCreateInApp', params: { appId: appId }}">
+            <b-button class="list-inline-item" title="Add device" variant="primary" :to="{ name: 'DeviceListAddToApp', params: { appId: appId }}">
               <i class="fa fa-plus"></i>
             </b-button>
           </div>
@@ -147,7 +147,7 @@
       </div>
       <div>
         <b-table no-local-sorting small responsive show-empty :items="devices" :fields="fieldsDevices" @sort-changed="sortingChanged">
-        
+
           <template slot="deviceId" scope="row">
             <b-badge size="sm" variant="light">{{row.item.id}}</b-badge>
           </template>

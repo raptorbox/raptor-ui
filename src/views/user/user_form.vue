@@ -124,7 +124,7 @@ export default {
     this.loggedInUser = this.$raptor.Auth().getUser()
 
     this.appId = this.$route.params.appId
-    console.log(this.appId)
+    // console.log(this.appId)
 
     //load roles async
     this.loadRoles().catch((e) => {
@@ -189,7 +189,7 @@ export default {
       }
 
       this.loading = true
-      console.log(u)
+      // console.log(u)
       this.$log.debug('Saving user', u)
 
       this.$validate()
