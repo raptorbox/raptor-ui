@@ -1,81 +1,81 @@
 <template>
-<div class="animated fadeIn row row-fluid">
-  <div class="col-lg-12">
+    <div class="animated fadeIn row row-fluid">
+        <div class="col-lg-12">
 
-    <b-card>
+            <b-card>
 
-      <div slot="header">
+                <div slot="header">
 
-        <div class="row row-fluid">
-          <div class="col-lg-8 list-inline">
-            <div>
-              <div class="col-md-3">
-                <h3 class="list-inline-item"><i class="fa fa-users"></i> Users</h3>
-              </div>
-              <!-- <div class="row-fluid" v-if="appId && app">
-                <strong>Application: </strong>
-                <span>{{app.name}}</span>
-              </div> -->
-            </div>
-            <span v-if="appId">
-              <b-button class="list-inline-item" variant="primary" :to="{ name: 'UsersCreateWithAppId', params: {appId: appId}}">
-                <i class="fa fa-plus"></i> New
-              </b-button>
-            </span>
-            <span v-else>
-              <b-button class="list-inline-item" variant="primary" :to="{ name: 'UsersCreate'}">
-                <i class="fa fa-plus"></i> New
-              </b-button>
-            </span>
-          </div>
-          <div class="col-md-4 text-right">
-            <b-form-fieldset description="Items per page" label="Show" horizontal>
-              <b-form-select :options="pageOptions" v-model="perPage" @change="itemsLimitChange"/>
-            </b-form-fieldset>
-          </div>
+                    <div class="row row-fluid">
+                        <div class="col-lg-8 list-inline">
+                            <div>
+                                <div class="col-md-3">
+                                    <h3 class="list-inline-item"><i class="fa fa-users"></i> Users</h3>
+                                </div>
+                              <!-- <div class="row-fluid" v-if="appId && app">
+                                <strong>Application: </strong>
+                                <span>{{app.name}}</span>
+                              </div> -->
+                            </div>
+                            <span v-if="appId">
+                                <b-button class="list-inline-item" variant="primary" :to="{ name: 'UsersCreateWithAppId', params: {appId: appId}}">
+                                    <i class="fa fa-plus"></i> New
+                                </b-button>
+                            </span>
+                            <span v-else>
+                                <b-button class="list-inline-item" variant="primary" :to="{ name: 'UsersCreate'}">
+                                    <i class="fa fa-plus"></i> New
+                                </b-button>
+                            </span>
+                        </div>
+                        <div class="col-md-4 text-right">
+                            <b-form-fieldset description="Items per page" label="Show" horizontal>
+                                <b-form-select :options="pageOptions" v-model="perPage" @change="itemsLimitChange"/>
+                            </b-form-fieldset>
+                        </div>
+                    </div>
+
+                </div>
+
+                <b-table no-local-sorting small responsive show-empty :items="list" :fields="fields" @sort-changed="sortingChanged">
+
+                    <template slot="id" scope="row">
+                        <b-badge size="sm" variant="light" :to="{ name: 'UsersUpdate', params: { userId: row.item.id }}">{{row.item.id}}</b-badge>
+                    </template>
+                    <template slot="username" scope="row" v-if="row.item.username">
+                        <span v-if="row.item.username">
+                            <b-button variant="link" :to="{ name: 'UsersUpdate', params: { userId: row.item.id }}">
+                                {{row.item.username}}
+                            </b-button>
+                        </span>
+                    </template>
+                    <template slot="roles" scope="row">
+                        <b-badge v-for="role in row.item.roles" :key="role.name" :variant="role.name === 'admin' ? 'info' : 'light'">
+                            {{ role.name }}
+                        </b-badge>
+                    </template>
+                    <template slot="status" scope="row">
+                        <b-badge :variant="row.item.enabled ? 'success' : 'warning'">{{row.item.enabled ? 'Enabled' : 'Disabled'}}</b-badge>
+                    </template>
+                    <template slot="created" scope="row">
+                        <span v-if="row.item.created">{{formatDate(row.item.created)}}</span>
+                    </template>
+                    <template slot="actions" scope="row">
+                        <b-button title="Delete user" variant="danger" :disabled="!isAllowed()" @click="remove(row.item)">
+                            <i class="fa fa-remove fa-lg"></i>
+                        </b-button>
+                    </template>
+                </b-table>
+
+                <div>
+                    <b-pagination align="center" :total-rows="totalRows" :per-page="perPage" v-model="currentPage" prev-text="Prev" next-text="Next" @change="pageChanged" />
+                </div>
+
+            </b-card>
         </div>
+      <!--/.col-->
 
-      </div>
-
-      <b-table no-local-sorting small responsive show-empty :items="list" :fields="fields" @sort-changed="sortingChanged">
-
-        <template slot="id" scope="row">
-          <b-badge size="sm" variant="light" :to="{ name: 'UsersUpdate', params: { userId: row.item.id }}">{{row.item.id}}</b-badge>
-        </template>
-        <template slot="username" scope="row" v-if="row.item.username">
-          <span v-if="row.item.username">
-            <b-button variant="link" :to="{ name: 'UsersUpdate', params: { userId: row.item.id }}">
-            {{row.item.username}}
-            </b-button>
-          </span>
-        </template>
-        <template slot="roles" scope="row">
-            <b-badge v-for="role in row.item.roles" :key="role.name" :variant="role.name === 'admin' ? 'info' : 'light'">
-                {{ role.name }}
-            </b-badge>
-        </template>
-        <template slot="status" scope="row">
-            <b-badge :variant="row.item.enabled ? 'success' : 'warning'">{{row.item.enabled ? 'Enabled' : 'Disabled'}}</b-badge>
-        </template>
-        <template slot="created" scope="row">
-          <span v-if="row.item.created">{{formatDate(row.item.created)}}</span>
-        </template>
-        <template slot="actions" scope="row">
-            <b-button title="Delete user" variant="danger" :disabled="!isAllowed()" @click="remove(row.item)">
-              <i class="fa fa-remove fa-lg"></i>
-            </b-button>
-        </template>
-      </b-table>
-
-      <div>
-        <b-pagination align="center" :total-rows="totalRows" :per-page="perPage" v-model="currentPage" prev-text="Prev" next-text="Next" @change="pageChanged" />
-      </div>
-
-    </b-card>
-  </div>
-  <!--/.col-->
-
-</div>
+    </div>
 <!--/.row-->
 </template>
 

@@ -13,14 +13,6 @@
                   <i class="fa fa-plus"></i> New
                 </b-button>
               </div>
-              <!-- <div style="float: left;">
-                <p style="text-align: center; font-weight:bold; margin:0;">Tokens</p>
-              </div>
-              <div class="col-md-2 col-md-offset-2" style="float: right;">
-                <div class="row" style="margin-left:auto; margin-right:0;">
-                  <div class="col-md-6">
-                    <b-button class="btn btn-primary" :to="{ name: 'TokensCreate'}">Create Token</b-button>
-                  </div> -->
               <div class="col-md-4 text-right">
                 <b-form-fieldset description="Items per page" label="Show" horizontal>
                   <!-- <b-form-select :options="pageOptions" v-model="perPage" /> -->
@@ -48,12 +40,17 @@
               <span v-bind:class="['badge', { 'badge-success': row.item.enabled,'badge-warning': !row.item.enabled }]"> {{row.item.enabled ? 'Enabled' : 'Disabled'}}</span>
             </template>
             <template slot="permission" scope="row">
-              <div @click="loadPermissions(row.item)">
-                <span v-if="listWithPermissions[row.item.id] && listWithPermissions[row.item.id].length > 0"><p><span v-bind:id="row.item.id" v-for="p in listWithPermissions[row.item.id]">{{p}}, </span></p></span>
-                <span v-else>
-                  <b-button class="btn btn-sm">Show Permissions</b-button>
-                </span>
-              </div>
+                <div @click="loadPermissions(row.item)">
+                    <span v-if="listWithPermissions[row.item.id] && listWithPermissions[row.item.id].length > 0">
+                        <span v-for="role in listWithPermissions[row.item.id]" :key="role">
+                            <b-badge variant="light">{{ role }}</b-badge>
+                            &nbsp
+                        </span>
+                    </span>
+                    <span v-else>
+                        <b-button class="btn btn-sm">Show Permissions</b-button>
+                    </span>
+                </div>
             </template>
             <template slot="valid" scope="row">
               <span v-bind:class="['badge', { 'badge-success': row.item.expires > (new Date()),'badge-warning': !row.item.valid }]"> {{row.item.expires > (new Date()) ? 'Valid' : 'Expired'}}</span>
@@ -70,11 +67,9 @@
         </b-card>
 
       </div>
-      <!--/.col-->
-      <!-- show token -->
     </div>
-    <!--/.row-->
 
+    <!-- show token -->
     <b-modal title="Selected Token" size="lg" class="modal-info" v-model="showToken">
       <b-form-fieldset label="Token" :horizontal="false">
         <b-form-input type="text" placeholder="Token" v-model="modalWin.token" disabled></b-form-input>
