@@ -29,7 +29,7 @@
                 {{row.item.name}}
               </b-button>
             </template>
-            <template slot="expires" scope="row">{{formatDate(row.item.expires)}}</template>
+            <template slot="expires" scope="row">{{formatDate(row.item.expires * 1000)}}</template>
             <template slot="token" scope="row">
               <b-button class="btn btn-sm" @click="openModalWin(row.item)">Show Token</b-button>
             </template>

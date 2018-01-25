@@ -181,6 +181,14 @@
       </div>
     </b-modal>
 
+    <!-- <b-modal title="Select Application" class="modal-info" v-model="selectAppModal" >
+      <div>
+        <b-form-fieldset description="Select an application" label="Applications" :horizontal="false">
+            <b-form-select variant="outline-secondary" class="mr-3" v-model="selectedApp" :options="appOptions" />
+        </b-form-fieldset>
+      </div>
+    </b-modal> -->
+
   </div>
 </template>
 

@@ -45,7 +45,7 @@
       <b-form-fieldset label="Roles" :horizontal="false">
         <ul class="list-inline row-fluid">
           <li class="list-inline-item col-md-3" v-for="role in availRoles" :key="role.name">
-            <b-form-checkbox v-model="roles" :plain="true" :value="role.name">
+            <b-form-checkbox v-model="roles" :plain="true" :value="role.name" v-b-tooltip.hover :title="role.permissions">
               <span :title="role.name">{{ role.name.length > 12 ? role.name.substr(0, 10) + '..' : role.name  }}</span>
             </b-form-checkbox>
           </li>
@@ -104,6 +104,7 @@ export default {
       password1: null,
       // application specific
       appId: null,
+      app: null,
       ...defaultData()
     }
   },
@@ -126,11 +127,15 @@ export default {
     this.appId = this.$route.params.appId
     // console.log(this.appId)
 
-    //load roles async
-    this.loadRoles().catch((e) => {
-        this.$log.error("Failed to load roles: %s", e.message)
-        this.$log.debug(e)
-    })
+    if(!this.appId) {
+      //load roles async
+      this.loadRoles().catch((e) => {
+          this.$log.error("Failed to load roles: %s", e.message)
+          this.$log.debug(e)
+      })
+    } else {
+      this.loadApp()
+    }
 
     this.userId = this.$route.params.userId
 
@@ -161,11 +166,24 @@ export default {
           Object.assign(this.$data, user)
         })
         .catch((e) => {
-          this.$log.console.warn();
+          this.$log.warn();
           ('Failed to load user: %s', e.message)
           this.$log.debug(e)
           this.loading = false
         })
+    },
+    loadApp() {
+      this.$raptor.App().read(this.appId).then((app) => {
+        this.app = app
+        this.roles = []
+        this.availRoles = app.roles
+      }).catch(function(e) {
+        this.$log.warn(e)
+        if (e.code === 401) {
+          this.$raptor.Auth().logout();
+          this.$router.push("/pages/login");
+        }
+      })
     },
     cancel() {
       this.$router.push("/admin/users")
@@ -179,8 +197,9 @@ export default {
         u[p] = this[p]
       }
 
-      u.roles = this.roles
-
+      if(!this.appId) {
+        u.roles = this.roles
+      }
       if (this.userId) {
         u.id = this.userId
       } else {
@@ -206,15 +225,28 @@ export default {
               if(!this.appId) {
                 this.$router.push("/admin/users")
               } else {
-                this.$router.push("/admin/users/" + this.appId)
+                this.addToApp(u.id)
               }
             })
             .catch((e) => {
               this.$log.error("Error saving user: %s", e.message)
               this.$log.debug(e)
+              this.loading = false
             })
         })
-    }
+    },
+    addToApp(id) {
+      this.app.users.push({id: id, roles: this.roles})
+      this.$raptor.App().save(this.app)
+        .then((app) => {
+          this.$log.debug('App %s saved', app.id)
+          this.$router.push("/admin/users/" + this.appId)
+        })
+        .catch((e) => {
+          this.$log.error("Error saving app: %s", e.message)
+          this.$log.debug(e)
+        })
+    },
   }
 }
 </script>

@@ -36,13 +36,16 @@
                     <span v-if="tokenId">
                         <b-form-fieldset label="Roles" :horizontal="false">
                             <ul class="list-inline row-fluid">
-                                <li class="list-inline-item col-md-3" v-for="role in selectedPermission" :key="role.name">
+                                <li class="list-inline-item col-md-3" v-for="role in selectedPermission" :key="role">
                                     <b-form-checkbox v-model="selectedRoles" :plain="true" :value="role">
-                                        <span :title="role.name">{{ role.name.length > 12 ? role.name.substr(0, 10) + '..' : role.name }}</span>
+                                        <span :title="role">{{ role.length > 12 ? role.substr(0, 10) + '..' : role }}</span>
                                     </b-form-checkbox>
                                 </li>
                             </ul>
                         </b-form-fieldset>
+                    </span>
+                    <span v-if="token.id">
+                        <b-btn v-b-modal.addNewRole variant="primary">Add New Role</b-btn>
                     </span>
                 </div>
             </div>
@@ -66,7 +69,7 @@
         </b-card>
 
         <!-- roles -->
-        <span v-if="addRoles">
+        <!-- <span v-if="addRoles">
             <b-card>
                 <div slot="header" class="row">
                     <div class="col-md-6 float-left">
@@ -103,7 +106,38 @@
                     </div>
                 </div>
             </b-card>
-        </span>
+        </span> -->
+
+        <!-- role -->
+        <b-modal title="Add new role" size="lg" class="modal-info" id="addNewRole" @ok="addRoleToToken">
+            <!-- <div class="row">
+                <div class="col-md-12">
+                    <b-form-fieldset label="Role Name" :horizontal="false">
+                        <b-form-input variant="outline-secondary" v-model="rolename" type="text" placeholder="Enter role name"> </b-form-input>
+                    </b-form-fieldset>
+                </div>
+            </div> -->
+            <div>
+                <div>
+                    <div class="col-md-12float-right">
+                        <div class="text-right">
+                            <b-button class="btn btn-primary" @click="onCreateRoleButton">Add New Role</b-button>
+                        </div>
+                    </div>
+                </div>
+                <b-table no-local-sorting small responsive show-empty :items="listOfPermissions" :fields="rolesFields">
+                    <template slot="permission" scope="row">
+                        <b-form-select variant="outline-secondary" class="mr-3" v-model="row.item.permission" :options="permissions"> </b-form-select>
+                    </template>
+                    <template slot="ownership" scope="row">
+                        <b-form-select variant="outline-secondary" class="mr-3" v-model="row.item.ownership" :options="ownership"> </b-form-select>
+                    </template>
+                    <template slot="subject" scope="row">
+                        <b-form-select variant="outline-secondary" class="mr-3" v-model="row.item.subject" :options="subjectTypes"> </b-form-select>
+                    </template>
+                </b-table>
+            </div>
+        </b-modal>
     </div>
 </template>
 
@@ -164,6 +198,8 @@ export default {
                            {value: 'stream', text: 'Stream (Data)'},
                            {value: 'token', text: 'Token (used to query API)'},
                            {value: 'client', text: 'OAuth2 Client'}],
+            rolename: null,
+            listOfPermissions: [],
         }
     },
     components: {
@@ -190,9 +226,14 @@ export default {
                 this.loading = false
                 this.token = token
                 this.token.owner = token.owner
-                let tokenExpiresDate = new Date()
+                // let tokenExpiresDate = new Date()
                 // this.date = tokenExpiresDate.setMilliseconds(tokenExpiresDate.getMilliseconds() + token.expires)
-                this.date = token.expires
+                if(!token.expires || token.expires == 0) {
+                    this.token.expires = true
+                    this.date = 0
+                } else {
+                    this.date = token.expires
+                }
                 this.loadPermissions(token)
             })
             .catch((e) => {
@@ -228,22 +269,33 @@ export default {
             this.$router.push("/admin/tokens")
         },
         save() {
-            let today = new Date()
-            let selectedDate = new Date(this.date)
-            // console.log("selected date: " + this.date + " sec: " + (new Date(this.date)).getTime() + " today: " + today)
-            // total time when it will exprie - years days
-            // this.token.expires = Math.abs((selectedDate.getTime() - today.getTime()));
-            this.token.expires = selectedDate.getTime()
+            if(!this.token.expires) {
+                let selectedDate = new Date(this.date)
+                if(this.tokenId) {
+                    this.token.expires = selectedDate.getTime()
+                } else {
+                    this.token.expires = selectedDate.getTime()/1000|0
+                }
+            } else {
+                this.token.expires = 0
+            }
             this.$log.debug('Saving token', this.token)
             this.$raptor.Admin().Token().save(this.token)
             .then((tok) => {
                 this.$log.debug('Token %s saved', tok.id)
                 this.loading = false
-                this.loadPermissions(tok)
                 this.token = tok
                 this.token.owner = tok.owner
-                this.loadPermissions(tok)
-                // this.$router.push("/admin/tokens")
+                if(!tok.expires || tok.expires == 0) {
+                    this.token.expires = true
+                } else {
+                    this.date = tok.expires
+                }
+                if(this.selectedRoles.length == 0) {
+                    this.loadPermissions(tok)
+                } else {
+                    this.$router.push("/admin/tokens")
+                }
             })
             .catch((e) => {
                 this.$log.debug('Failed to save token')
@@ -255,19 +307,65 @@ export default {
                 }
             })
         },
-        SavePermissions() {
-            let finalRoles = []
-            for (var i = 0; i < this.roles.length; i++) {
-                let role
-                if(this.roles[i].ownership) {
-                    role = this.roles[i].permission + '_' + this.roles[i].ownership + '_' + this.roles[i].subject
-                } else {
-                    role = this.roles[i].permission + '_' + this.roles[i].subject
-                }
-                finalRoles.push(role)
+        // SavePermissions() {
+        //     let finalRoles = []
+        //     for (var i = 0; i < this.roles.length; i++) {
+        //         let role
+        //         if(this.roles[i].ownership) {
+        //             role = this.roles[i].permission + '_' + this.roles[i].ownership + '_' + this.roles[i].subject
+        //         } else {
+        //             role = this.roles[i].permission + '_' + this.roles[i].subject
+        //         }
+        //         finalRoles.push(role)
+        //     }
+        //     finalRoles = finalRoles.concat(this.selectedRoles)
+            // this.$raptor.Admin().Token().Permission().set(this.token,finalRoles)
+            // .then((p) => {
+            //     this.$log.debug('Permissions saved')
+            //     this.$router.push("/admin/tokens")
+            // })
+            // .catch((e) => {
+            //     this.$log.debug('Failed to save token')
+            //     this.$log.error(e)
+            //     this.loading = false
+            //     if (e.code === 401) {
+            //         this.$raptor.Auth().logout();
+            //         this.$router.push("/pages/login");
+            //     }
+            // })
+        // },
+        onChangeExpiryDate(event) {
+            if(this.token.expires) {
+                this.date = 0;
             }
-            finalRoles = finalRoles.concat(this.selectedRoles)
-            this.$raptor.Admin().Token().Permission().set(this.token,finalRoles)
+        },
+        onChangeDate(event) {
+            this.token.expires = false;
+        },
+        // roles creation
+        onCreateRoleButton() {
+            this.roles.push({permission: null, onwership: null, subject: null})
+        },
+        // permissions creation
+        onCreateRoleButton() {
+            this.listOfPermissions.push({permission: null, onwership: null, subject: null})
+        },
+        addRoleToToken() {
+            let newPermission = []
+            for (var i = 0; i < this.listOfPermissions.length; i++) {
+                let perm = this.listOfPermissions[i].permission
+                if(this.listOfPermissions[i].ownership) {
+                    perm = perm + '_' + this.listOfPermissions[i].ownership
+                }
+                if(this.listOfPermissions[i].subject) {
+                    perm = perm + '_' + this.listOfPermissions[i].subject
+                }
+                if(newPermission.indexOf(perm) === -1 && this.selectedRoles.indexOf(perm) === -1) {
+                    newPermission.push(perm)
+                }
+            }
+            // console.log(JSON.stringify(newPermission))
+            this.$raptor.Admin().Token().Permission().set(this.token,newPermission)
             .then((p) => {
                 this.$log.debug('Permissions saved')
                 this.$router.push("/admin/tokens")
@@ -282,18 +380,6 @@ export default {
                 }
             })
         },
-        onChangeExpiryDate(event) {
-            if(this.token.expires) {
-                this.date = 0;
-            }
-        },
-        onChangeDate(event) {
-            this.token.expires = false;
-        },
-        // roles creation
-        onCreateRoleButton() {
-            this.roles.push({permission: null, onwership: null, subject: null})
-        },
-    }
+    },
 }
 </script>

@@ -163,9 +163,10 @@ export default {
         this.pager = pager
         this.list = pager.getContent()
         this.totalRows = pager.getTotalElements()
-        // for (var i = 0; i < this.list.length; i++) {
-        //   console.log((this.list[i].users.find(o => o.id === this.user.id)).roles)
-        // }
+        for (var i = 0; i < this.list.length; i++) {
+          this.user.roles = (this.list[i].users.find(o => o.id === this.user.id)).roles
+          console.log((this.list[i].users.find(o => o.id === this.user.id)).roles)
+        }
       }).catch(function(e) {
         context.$log.warn(e)
         if (e.code === 401) {

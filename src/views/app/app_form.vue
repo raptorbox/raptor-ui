@@ -23,13 +23,13 @@
           <b-form-fieldset label="Roles" :horizontal="false">
             <ul class="list-inline row-fluid">
               <li class="list-inline-item col-md-3" v-for="role in availRoles" :key="role.name">
-                <b-form-checkbox v-model="selectedRoles" :plain="true" :value="role">
+                <b-form-checkbox v-model="selectedRoles" v-b-tooltip.hover :title="role.permissions" :plain="true" :value="role">
                   <span :title="role.name">{{ role.name.length > 12 ? role.name.substr(0, 10) + '..' : role.name }}</span>
                 </b-form-checkbox>
               </li>
             </ul>
           </b-form-fieldset>
-          <b-btn v-b-toggle.addNewRole variant="primary">Add New Role</b-btn>
+          <b-btn @click="addNewRole = !addNewRole" variant="primary">Add New Role</b-btn>
 
           <b-form-fieldset label="Status" :horizontal="false">
             <b-form-checkbox v-model="app.enabled">Enabled</b-form-checkbox>
@@ -54,20 +54,30 @@
     </b-card>
 
     <!-- role -->
-    <b-collapse id="addNewRole" class="mt-2">
-      <b-card>
-        <div slot="header" class="row">
-          <div class="col-md-6 float-left">
-            <h5>Roles</h5>
-          </div>
-          <div class="col-md-6 float-right">
-            <div class="text-right">
-              <b-button class="btn btn-primary" @click="onCreateRoleButton">Add New Role</b-button>
+      <b-modal title="Add new role" size="lg" class="modal-info" v-model="addNewRole" @ok="addRoleToApp" @shown="clearFields" ref="modal">
+        <form @submit.stop.prevent="hideModalWin">
+          <div class="row">
+            <div class="col-md-12">
+              <div class="form-group" :class="{error: validation.hasError('rolename')}">
+                  <div class="content">
+                    <b-form-fieldset label="Role Name" :horizontal="false">
+                        <b-form-input variant="outline-secondary" v-model="rolename" type="text" placeholder="Enter role name"> </b-form-input>
+                    </b-form-fieldset>
+                  </div>
+                <div class="message text-danger">{{ validation.firstError('rolename') }}</div>
+              </div>
             </div>
           </div>
-        </div>
+        </form>
         <div>
-          <b-table no-local-sorting small responsive show-empty :items="roles" :fields="rolesFields">
+          <div>
+            <div class="col-md-12float-right">
+              <div class="text-right">
+                <b-button class="btn btn-primary" @click="onCreateRoleButton">Add New Role</b-button>
+              </div>
+            </div>
+          </div>
+          <b-table no-local-sorting small responsive show-empty :items="listOfPermissions" :fields="rolesFields">
             <template slot="permission" scope="row">
                 <b-form-select variant="outline-secondary" class="mr-3" v-model="row.item.permission" :options="permissions"> </b-form-select>
             </template>
@@ -79,8 +89,7 @@
             </template>
           </b-table>
         </div>
-      </b-card>
-    </b-collapse>
+      </b-modal>
 
     <!-- users -->
     <b-card>
@@ -109,9 +118,14 @@
             </span>
           </template> -->
           <template slot="roles" scope="row">
-              <b-badge v-for="role in row.item.roles" :key="role" :variant="role === 'admin' ? 'info' : 'light'" @click="openModalWin(row.item)">
-                  {{ role }}
-              </b-badge>
+              <span v-if="row.item.roles.length > 0">
+                  <b-badge v-for="role in row.item.roles" :key="role" :variant="role === 'admin' ? 'info' : 'light'" @click="openModalWin(row.item)">
+                      {{ role }}
+                  </b-badge>
+              </span>
+              <span v-else>
+                <b-button class="list-inline-item" title="Assign Role" variant="primary" @click="openModalWin(row.item)">Assign Role</b-button>
+              </span>
           </template>
           <template slot="status" scope="row">
               <b-badge :variant="row.item.enabled ? 'success' : 'warning'">{{row.item.enabled ? 'Enabled' : 'Disabled'}}</b-badge>
@@ -181,9 +195,9 @@
       </b-form-fieldset>
       <b-form-fieldset label="Roles of User in application" :horizontal="false">
         <ul class="list-inline row-fluid">
-          <li class="list-inline-item col-md-3" v-for="role in modalWin.roles" :key="role">
-            <b-form-checkbox v-model="modalWin.selectedRoles" :plain="true" :value="role">
-              <span :title="role">{{ role }}</span>
+          <li class="list-inline-item col-md-3" v-for="role in modalWin.availRoles" :key="role.name">
+            <b-form-checkbox v-model="modalWin.selectedRoles" :plain="true" :value="role.name">
+              <span :title="role.name">{{ role.name }}</span>
             </b-form-checkbox>
           </li>
         </ul>
@@ -194,6 +208,9 @@
 </template>
 
 <script>
+var SimpleVueValidation = require('simple-vue-validator');
+var Validator = SimpleVueValidation.Validator;
+
 export default {
   name: 'user_form',
   // props: ['usersToAdd'],
@@ -282,6 +299,14 @@ export default {
                      {value: 'client', text: 'OAuth2 Client'}],
       updateRoles: false,
       modalWin: {},
+      rolename: null,
+      listOfPermissions: [],
+      addNewRole: false,
+    }
+  },
+  validators: {
+    rolename: function(value) {
+      return Validator.value(value).required('Role name is required');
     }
   },
   mounted() {
@@ -325,7 +350,7 @@ export default {
           this.selectedRoles = this.availRoles
         })
         .catch((e) => {
-          this.$log.console.warn();
+          this.$log.warn();
           ('Failed to load app: %s', e.message)
           this.$log.debug(e)
           this.loading = false
@@ -370,20 +395,9 @@ export default {
         this.app.users = []
       }
 
-      let finalRoles = []
-      for (var i = 0; i < this.roles.length; i++) {
-        let role
-        if(this.roles[i].ownership) {
-          role = this.roles[i].permission + '_' + this.roles[i].ownership + '_' + this.roles[i].subject
-        } else {
-          role = this.roles[i].permission + '_' + this.roles[i].subject
-        }
-        finalRoles.push({name: role, permissions: [role]})
-      }
-
       let json = {
         name: this.app.name,
-        roles: finalRoles.concat(this.selectedRoles),
+        roles: this.selectedRoles,
         users: this.app.users
       }
       if(this.app.id) {
@@ -445,9 +459,9 @@ export default {
       this.sortDir = ev.sortDesc ? 'desc' : 'asc'
       this.loadDevices(this.appId)
     },
-    // roles creation
+    // permissions creation
     onCreateRoleButton() {
-      this.roles.push({permission: null, onwership: null, subject: null})
+      this.listOfPermissions.push({permission: null, onwership: null, subject: null})
     },
     // update user's roles
     onUpdateRolesForUser() {
@@ -462,8 +476,47 @@ export default {
     openModalWin(user) {
       this.modalWin = user
       this.modalWin.selectedRoles = user.roles
+      this.modalWin.availRoles = this.availRoles
       this.updateRoles = true
     },
+    addRoleToApp(evt) {
+      evt.preventDefault()
+      if(!this.rolename) {
+        this.$validate()
+          .then((success) => {
+
+            if (!success) {
+              return Promise.reject(new Error("Validation failed"))
+            }
+        })
+      } else {
+        this.hideModalWin()
+      }
+    },
+    clearFields() {
+      this.listOfPermissions = []
+      this.rolename = null
+    },
+    hideModalWin() {
+      let listOfPermission = []
+      for (var i = 0; i < this.listOfPermissions.length; i++) {
+        let perm = this.listOfPermissions[i].permission
+        if(this.listOfPermissions[i].ownership) {
+          perm = perm + '_' + this.listOfPermissions[i].ownership
+        }
+        if(this.listOfPermissions[i].subject) {
+          perm = perm + '_' + this.listOfPermissions[i].subject
+        }
+        listOfPermission.push(perm)
+      }
+      let role = {name: this.rolename, permissions: listOfPermission}
+      if(!this.selectedRoles.find(e => e.name === role.name)) {
+        this.selectedRoles.push(role)
+      }
+      console.log(JSON.stringify(this.selectedRoles))
+      this.clearFields()
+      this.$refs.modal.hide()
+    }
   }
 }
 </script>

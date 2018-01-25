@@ -26,19 +26,19 @@
               </div>
             </div>
           </div>
-          <!-- <div class="card text-white bg-primary py-5 d-md-down-none" style="width:44%">
-              <div class="card-body text-center">
-                <div>
-                  <h2>Sign up</h2>
-                  <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
-                  <button type="button" class="btn btn-primary active mt-3">Register Now!</button>
-                </div>
-              </div>
-            </div> -->
         </div>
       </div>
     </div>
   </div>
+  <b-modal title="Select Application" class="modal-info" v-model="selectAppModal" @ok="loadSelectedApplication">
+      <div>
+        <b-form-group label="Applications">
+          <b-form-radio-group stacked v-model="selectedApp" :options="appOptions" name="applications">
+          </b-form-radio-group>
+        </b-form-group>
+
+      </div>
+    </b-modal>
 </div>
 </template>
 
@@ -48,7 +48,10 @@ export default {
   data () {
     return {
       username: '',
-      password: ''
+      password: '',
+      selectedApp: null,
+      appOptions: [],
+      selectAppModal: false
     }
   },
   created () {
@@ -58,30 +61,79 @@ export default {
   },
   methods: {
     login: function (ev) {
-      this.$raptor.Auth().login({
+      let cfg = {
         username: this.username,
         password: this.password
-      })
+      }
+      if(this.selectedApp) {
+        cfg.domain = this.selectedApp
+      }
+      this.$raptor.Auth().login(cfg)
         .then((user) => {
           this.$log.info('Welcome %s', this.$raptor.Auth().getUser().username)
 
-          localStorage.raptor = JSON.stringify({
-            token: this.$raptor.Auth().getToken()
-          })
-
-          let path = '/'
-          let parts = document.location.hash.split('?')
-          if (parts.length === 2) {
-            path = decodeURIComponent(parts[1].replace(/^redirect=/, ''))
-          }
-
-          this.$log.debug('Redirecting to %s', path)
-          this.$router.push(path)
+          // if(this.selectedApp) {
+          //   console.log(require("util").inspect(this.$raptor))
+            this.load()
+          // } else {
+          //   this.loadApplications(user.id)
+          // }
         })
         .catch((e) => {
           this.$log.error('Login failed: %s', e.message)
           alert(`Error: ${e.message}`)
         })
+    },
+    loadApplications(userId) {
+      this.$log.debug('Fetching app list')
+      // page config
+      let page = {
+        page: 0,
+        size: 50
+      }
+      // this.$log.debug(page)
+      this.$raptor.App().list(page).then((pager) => {
+
+        this.selectAppModal = true
+
+        this.$log.debug('Loaded %s app list', pager.getContent().length)
+
+        this.loading = false
+        this.pager = pager
+        let list = pager.getContent()
+        list.forEach((a) => {
+          let app = { value: a.id , text: a.name}
+          this.appOptions.push(app)
+        })
+        if(list.length == 0) {
+          this.load()
+        }
+      }).catch(function(e) {
+        context.$log.warn(e)
+        if (e.code === 401) {
+          context.$raptor.Auth().logout();
+          context.$router.push("/pages/login");
+          return
+        }
+        this.load()
+      })
+    },
+    loadSelectedApplication() {
+      this.login()
+    },
+    load() {
+      localStorage.raptor = JSON.stringify({
+        token: this.$raptor.Auth().getToken()
+      })
+
+      let path = '/'
+      let parts = document.location.hash.split('?')
+      if (parts.length === 2) {
+        path = decodeURIComponent(parts[1].replace(/^redirect=/, ''))
+      }
+
+      this.$log.debug('Redirecting to %s', path)
+      this.$router.push(path)
     }
   }
 }

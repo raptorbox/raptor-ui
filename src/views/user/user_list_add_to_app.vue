@@ -39,11 +39,11 @@
 
       <b-table no-local-sorting small responsive show-empty :items="list" :fields="fields" @sort-changed="sortingChanged">
         <template slot="id" scope="row">
-          <b-badge size="sm" variant="light" :to="{ name: 'UsersUpdate', params: { userId: row.item.id }}">{{row.item.id}}</b-badge>
+          <b-badge size="sm" variant="light" :to="{ name: 'UsersUpdate', params: { userId: row.item.id, appId: appId }}">{{row.item.id}}</b-badge>
         </template>
         <template slot="username" scope="row" v-if="row.item.username">
           <span v-if="row.item.username">
-            <b-button variant="link" :to="{ name: 'UsersUpdate', params: { userId: row.item.id }}">
+            <b-button variant="link" :to="{ name: 'UsersUpdate', params: { userId: row.item.id, appId: appId }}">
             {{row.item.username}}
             </b-button>
           </span>
