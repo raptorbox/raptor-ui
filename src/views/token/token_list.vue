@@ -29,7 +29,7 @@
                 {{row.item.name}}
               </b-button>
             </template>
-            <template slot="expires" scope="row">{{formatDate(row.item.expires * 1000)}}</template>
+            <template slot="expires" scope="row">{{!row.item.expires ? 'Non Expiry Token' : formatDate(row.item.expires * 1000)}}</template>
             <template slot="token" scope="row">
               <b-button class="btn btn-sm" @click="openModalWin(row.item)">Show Token</b-button>
             </template>
@@ -53,7 +53,7 @@
                 </div>
             </template>
             <template slot="valid" scope="row">
-              <span v-bind:class="['badge', { 'badge-success': row.item.expires > (new Date()),'badge-warning': !row.item.valid }]"> {{row.item.expires > (new Date()) ? 'Valid' : 'Expired'}}</span>
+              <span v-bind:class="['badge', { 'badge-success': (!row.item.expires || row.item.expires > (new Date())),'badge-warning': !row.item.valid }]"> {{(!row.item.expires || row.item.expires > (new Date())) ? 'Valid' : 'Expired'}}</span>
             </template>
             <template slot="actions" scope="row">
               <b-button class="btn btn-outline-danger btn-sm" @click="remove(row.item)">Delete</b-button>
@@ -71,15 +71,24 @@
 
     <!-- show token -->
     <b-modal title="Selected Token" size="lg" class="modal-info" v-model="showToken">
-      <b-form-fieldset label="Token" :horizontal="false">
-        <b-form-input type="text" placeholder="Token" v-model="modalWin.token" disabled></b-form-input>
-      </b-form-fieldset>
+      <b-input-group>  
+        <b-form-input type="text" v-model="modalWin.token"></b-form-input>
+        <b-input-group-append>
+          <b-btn variant="info" type="button" v-clipboard="modalWin.token" @success="onCopy" @error="onError">Copy</b-btn>
+        </b-input-group-append>
+      </b-input-group>
     </b-modal>
   </div>
 </template>
 
 <script>
   import moment from 'moment'
+
+  // copy to clipboard
+  import Vue from 'vue'
+  import VueClipboards from 'vue-clipboards';
+
+  Vue.use(VueClipboards)
 
   export default {
     name: 'token_list',
@@ -229,6 +238,13 @@
         this.modalWin = token
         this.showToken = true
       },
+      // copy to clipboard
+      onCopy (e) {
+        console.log('You just copied: ' + e.text)
+      },
+      onError (e) {
+        console.log('Failed to copy texts')
+      }
     }
 
   }

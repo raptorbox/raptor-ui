@@ -50,7 +50,15 @@ export default {
   methods: {
     checkUser() {
       this.user = this.$raptor.Auth().getUser()
-      if(this.user.roles.indexOf('admin') < 0) {
+      this.$log.debug(this.user.roles)
+      let roles = ['admin', 'admin_own_user', 'admin_own', 'admin_user']
+      let found = this.user.roles.forEach((e) => {
+        if(roles.indexOf(e) === -1) {
+          return true
+        }
+      })
+      console.log(found)
+      if(found) {
         let nav = []
         for (var i = 0; i < this.nav.length; i++) {
           if(this.nav[i].name == 'Admin' && this.nav[i].title) {
@@ -75,7 +83,7 @@ export default {
         }
         this.nav = nav
       }
-    }
+    },
   }
 }
 </script>

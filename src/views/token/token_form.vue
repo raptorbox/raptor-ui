@@ -45,7 +45,8 @@
                         </b-form-fieldset>
                     </span>
                     <span v-if="token.id">
-                        <b-btn v-b-modal.addNewRole variant="primary">Add New Role</b-btn>
+                        <b-btn v-b-modal.addNewRole variant="primary">Add Permission
+                        </b-btn>
                     </span>
                 </div>
             </div>
@@ -68,60 +69,13 @@
             <!--/.row-->
         </b-card>
 
-        <!-- roles -->
-        <!-- <span v-if="addRoles">
-            <b-card>
-                <div slot="header" class="row">
-                    <div class="col-md-6 float-left">
-                        <h5>Roles</h5>
-                    </div>
-                    <div class="col-md-6 float-right">
-                        <div class="text-right">
-                            <b-button class="btn btn-primary" @click="onCreateRoleButton">Add Role</b-button>
-                        </div>
-                    </div>
-                </div>
-                <div>
-                    <b-table no-local-sorting small responsive show-empty :items="roles" :fields="rolesFields">
-                        <template slot="permission" scope="row">
-                            <b-form-select variant="outline-secondary" class="mr-3" v-model="row.item.permission" :options="permissions"> </b-form-select>
-                        </template>
-                        <template slot="ownership" scope="row">
-                            <b-form-select variant="outline-secondary" class="mr-3" v-model="row.item.ownership" :options="ownership"> </b-form-select>
-                        </template>
-                        <template slot="subject" scope="row">
-                            <b-form-select variant="outline-secondary" class="mr-3" v-model="row.item.subject" :options="subjectTypes"> </b-form-select>
-                        </template>
-                    </b-table>
-                </div>
-                <div class="row" slot="footer">
-                    <div class="float-right">
-                        <b-button type="submit" size="sm" variant="primary" class="float-right" @click="SavePermissions">
-                            <i class="fa fa-dot-circle-o"></i> Save
-                        </b-button>
-                        &nbsp;
-                        <b-button type="reset" size="sm" variant="danger" class="float-right" @click="cancel">
-                            <i class="fa fa-ban"></i> Cancel
-                        </b-button>
-                    </div>
-                </div>
-            </b-card>
-        </span> -->
-
         <!-- role -->
         <b-modal title="Add new role" size="lg" class="modal-info" id="addNewRole" @ok="addRoleToToken">
-            <!-- <div class="row">
-                <div class="col-md-12">
-                    <b-form-fieldset label="Role Name" :horizontal="false">
-                        <b-form-input variant="outline-secondary" v-model="rolename" type="text" placeholder="Enter role name"> </b-form-input>
-                    </b-form-fieldset>
-                </div>
-            </div> -->
             <div>
                 <div>
                     <div class="col-md-12float-right">
                         <div class="text-right">
-                            <b-button class="btn btn-primary" @click="onCreateRoleButton">Add New Role</b-button>
+                            <b-button class="btn btn-primary" @click="onCreateRoleButton">Add Permission</b-button>
                         </div>
                     </div>
                 </div>
@@ -228,9 +182,9 @@ export default {
                 this.token.owner = token.owner
                 // let tokenExpiresDate = new Date()
                 // this.date = tokenExpiresDate.setMilliseconds(tokenExpiresDate.getMilliseconds() + token.expires)
-                if(!token.expires || token.expires == 0) {
+                if(token.expires === null || token.expires === 0) {
                     this.token.expires = true
-                    this.date = 0
+                    this.date = null
                 } else {
                     this.date = token.expires
                 }
@@ -269,7 +223,7 @@ export default {
             this.$router.push("/admin/tokens")
         },
         save() {
-            if(!this.token.expires) {
+            if(this.token.expires === null || this.token.expires === 0) {
                 let selectedDate = new Date(this.date)
                 if(this.tokenId) {
                     this.token.expires = selectedDate.getTime()
@@ -278,6 +232,10 @@ export default {
                 }
             } else {
                 this.token.expires = 0
+            }
+            if(this.token.id && this.selectedRoles.length == 0) {
+                this.$toasted.show('Please add permissions to token.').goAway(3000)
+                return
             }
             this.$log.debug('Saving token', this.token)
             this.$raptor.Admin().Token().save(this.token)
@@ -307,33 +265,6 @@ export default {
                 }
             })
         },
-        // SavePermissions() {
-        //     let finalRoles = []
-        //     for (var i = 0; i < this.roles.length; i++) {
-        //         let role
-        //         if(this.roles[i].ownership) {
-        //             role = this.roles[i].permission + '_' + this.roles[i].ownership + '_' + this.roles[i].subject
-        //         } else {
-        //             role = this.roles[i].permission + '_' + this.roles[i].subject
-        //         }
-        //         finalRoles.push(role)
-        //     }
-        //     finalRoles = finalRoles.concat(this.selectedRoles)
-            // this.$raptor.Admin().Token().Permission().set(this.token,finalRoles)
-            // .then((p) => {
-            //     this.$log.debug('Permissions saved')
-            //     this.$router.push("/admin/tokens")
-            // })
-            // .catch((e) => {
-            //     this.$log.debug('Failed to save token')
-            //     this.$log.error(e)
-            //     this.loading = false
-            //     if (e.code === 401) {
-            //         this.$raptor.Auth().logout();
-            //         this.$router.push("/pages/login");
-            //     }
-            // })
-        // },
         onChangeExpiryDate(event) {
             if(this.token.expires) {
                 this.date = 0;
@@ -354,31 +285,37 @@ export default {
             let newPermission = []
             for (var i = 0; i < this.listOfPermissions.length; i++) {
                 let perm = this.listOfPermissions[i].permission
-                if(this.listOfPermissions[i].ownership) {
-                    perm = perm + '_' + this.listOfPermissions[i].ownership
-                }
-                if(this.listOfPermissions[i].subject) {
-                    perm = perm + '_' + this.listOfPermissions[i].subject
-                }
-                if(newPermission.indexOf(perm) === -1 && this.selectedRoles.indexOf(perm) === -1) {
-                    newPermission.push(perm)
+                if(perm) {
+                    if(this.listOfPermissions[i].ownership) {
+                        perm = perm + '_' + this.listOfPermissions[i].ownership
+                    }
+                    if(this.listOfPermissions[i].subject) {
+                        perm = perm + '_' + this.listOfPermissions[i].subject
+                    }
+                    if(newPermission.indexOf(perm) === -1 && this.selectedRoles.indexOf(perm) === -1) {
+                        newPermission.push(perm)
+                    }
+                } else {
+                    this.$toasted.show('Please add permissions first.').goAway(3000)
                 }
             }
-            // console.log(JSON.stringify(newPermission))
-            this.$raptor.Admin().Token().Permission().set(this.token,newPermission)
-            .then((p) => {
-                this.$log.debug('Permissions saved')
-                this.$router.push("/admin/tokens")
-            })
-            .catch((e) => {
-                this.$log.debug('Failed to save token')
-                this.$log.error(e)
-                this.loading = false
-                if (e.code === 401) {
-                    this.$raptor.Auth().logout();
-                    this.$router.push("/pages/login");
-                }
-            })
+            if(newPermission.length > 0) {
+                // console.log(JSON.stringify(newPermission))
+                this.$raptor.Admin().Token().Permission().set(this.token,newPermission)
+                .then((p) => {
+                    this.$log.debug('Permissions saved')
+                    this.$router.push("/admin/tokens")
+                })
+                .catch((e) => {
+                    this.$log.debug('Failed to save token')
+                    this.$log.error(e)
+                    this.loading = false
+                    if (e.code === 401) {
+                        this.$raptor.Auth().logout();
+                        this.$router.push("/pages/login");
+                    }
+                })
+            }
         },
     },
 }

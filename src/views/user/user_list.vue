@@ -131,32 +131,68 @@ export default {
   },
   methods: {
     isAllowed() {
-      if(this.hasPermission != null) {
-        return this.hasPermission
-      }
+      let allowed = false
+      this.user.roles.forEach((e) => {
+        if(e.indexOf('admin') > -1) {
+          allowed = true
+        }
+      })
+      return allowed
+      // if(this.hasPermission != null) {
+      //   return this.hasPermission
+      // }
       //TODO add local permission checks on sdk
       // if(this.user.id == u.id || this.user.roles.indexOf("admin") > -1) {
       //   this.hasPermission = true
       //   return this.hasPermission
       // }
-      this.hasPermission = false
-      let query = {permission:'delete', type:'user'}
-      if(this.appId) {
-        query.domain = this.appId
-      }
-      return this.$raptor.Auth().can(query)
-      .then((res) => {
-        this.hasPermission = res.result
-        return Promise.resolve(this.hasPermission)
-      })
-      .catch((e) => {
-        this.hasPermission = false
-        return Promise.resolve(this.hasPermission)
-        if (e.code === 401) {
-          context.$raptor.Auth().logout();
-          context.$router.push("/pages/login");
-        }
-      })
+      // this.hasPermission = false
+      // let query = {permission:'delete', type:'user'}
+      // if(this.appId) {
+      //   query.domain = this.appId
+      // }
+      // const admin = this.$raptor.Auth().can(query)
+      // .then((res) => {
+      //   this.hasPermission = res.result
+      //   return Promise.resolve(this.hasPermission)
+      // })
+      // .catch((e) => {
+      //   this.hasPermission = false
+      //   return Promise.resolve(this.hasPermission)
+      // })
+
+      // query = {permission:'delete', type:'user', subjectId:'own'}
+      // if(this.appId) {
+      //   query.domain = this.appId
+      // }
+      // const admin_own_user = this.$raptor.Auth().can(query)
+      // .then((res) => {
+      //   this.hasPermission = res.result
+      //   return Promise.resolve(this.hasPermission)
+      // })
+      // .catch((e) => {
+      //   this.hasPermission = false
+      //   return Promise.resolve(this.hasPermission)
+      // })
+
+      // query = {permission:'delete', subjectId:'own'}
+      // if(this.appId) {
+      //   query.domain = this.appId
+      // }
+      // const admin_own = this.$raptor.Auth().can(query)
+      // .then((res) => {
+      //   this.hasPermission = res.result
+      //   return Promise.resolve(this.hasPermission)
+      // })
+      // .catch((e) => {
+      //   this.hasPermission = false
+      //   return Promise.resolve(this.hasPermission)
+      // })
+      // return Promise.all([admin, admin_own, admin_own_user]).then((res) => {
+      //   if(res[0] || res[1] || res[2]) {
+      //     return true
+      //   }
+      // })
     },
     formatDate(d) {
       return moment(new Date(d)).format('MMMM Do YYYY')
@@ -173,16 +209,20 @@ export default {
         sort: this.sortBy,
         sortDir: this.sortDir,
       }
-      if(this.appId) {
-        if((this.user.roles.indexOf('admin') > -1) || (this.user.roles.indexOf('admin_user') > -1)) {
-          this.searchUsersForAppId()
-        }else {
-          let query = {ownerId: this.user.id}
-          this.searchUsersForOwnerId(page, query)
-        }
+      // if(this.appId) {
+      //   if((this.user.roles.indexOf('admin') > -1) || (this.user.roles.indexOf('admin_user') > -1) || (this.user.roles.indexOf('admin_app') > -1)) {
+      //     this.searchUsersForAppId()
+      //   }else {
+      //     let query = {ownerId: this.user.id}
+      //     this.searchUsersForOwnerId(page, query)
+      //   }
+      //   return
+      // }
+      if(this.appId && ((this.user.roles.indexOf('admin') > -1) || (this.user.roles.indexOf('admin_user') > -1) || (this.user.roles.indexOf('admin_app') > -1))) {
+        this.searchUsersForAppId()
         return
       }
-      if(this.user.roles.indexOf('user') > -1) {
+      if(this.user.roles.indexOf('admin_own') > -1 || this.user.roles.indexOf('admin_own_user') > -1) {
         this.searchUsersForOwnerId(page, {ownerId: this.user.id})
         return
       }
@@ -194,7 +234,6 @@ export default {
         this.pager = pager
         this.list = pager.getContent()
         this.totalRows = pager.getTotalElements()
-
       }).catch(function(e) {
         context.$log.warn(e)
         if (e.code === 401) {

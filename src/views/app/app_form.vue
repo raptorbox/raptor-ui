@@ -501,19 +501,25 @@ export default {
       let listOfPermission = []
       for (var i = 0; i < this.listOfPermissions.length; i++) {
         let perm = this.listOfPermissions[i].permission
-        if(this.listOfPermissions[i].ownership) {
-          perm = perm + '_' + this.listOfPermissions[i].ownership
+        if(perm){
+          if(this.listOfPermissions[i].ownership) {
+            perm = perm + '_' + this.listOfPermissions[i].ownership
+          }
+          if(this.listOfPermissions[i].subject) {
+            perm = perm + '_' + this.listOfPermissions[i].subject
+          }
+          listOfPermission.push(perm)
+        } else {
+            this.$toasted.show('Please add permissions first.').goAway(3000)
         }
-        if(this.listOfPermissions[i].subject) {
-          perm = perm + '_' + this.listOfPermissions[i].subject
+      }
+      if(listOfPermission.length > 0) {
+        let role = {name: this.rolename, permissions: listOfPermission}
+        if(!this.selectedRoles.find(e => e.name === role.name)) {
+          this.selectedRoles.push(role)
         }
-        listOfPermission.push(perm)
+        console.log(JSON.stringify(this.selectedRoles))
       }
-      let role = {name: this.rolename, permissions: listOfPermission}
-      if(!this.selectedRoles.find(e => e.name === role.name)) {
-        this.selectedRoles.push(role)
-      }
-      console.log(JSON.stringify(this.selectedRoles))
       this.clearFields()
       this.$refs.modal.hide()
     }
