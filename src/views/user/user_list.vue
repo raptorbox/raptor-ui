@@ -222,7 +222,7 @@ export default {
         this.searchUsersForAppId()
         return
       }
-      if(this.user.roles.indexOf('admin_own') > -1 || this.user.roles.indexOf('admin_own_user') > -1) {
+      if(this.user.roles.indexOf('user') > -1) {
         this.searchUsersForOwnerId(page, {ownerId: this.user.id})
         return
       }

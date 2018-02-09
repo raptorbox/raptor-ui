@@ -186,7 +186,6 @@ export default {
                 this.totalRows = pager.getTotalElements()
                 this.devices = pager.getContent()
                 this.list = this.devices
-
             })
             .catch((e) => {
 

@@ -47,7 +47,7 @@
           <b-badge size="sm" variant="light">{{row.item.userId}}</b-badge>
         </template>
         <template slot="roles" scope="row">
-            <b-badge v-for="role in user.roles" :key="role" :variant="role === 'admin' ? 'info' : 'light'">
+            <b-badge v-for="role in (user.roles.indexOf('admin')) > -1 ? user.roles : (row.item.users.find(o => o.id === user.id)).roles" :key="role" :variant="role === 'admin' ? 'info' : 'light'">
                 {{ role }}
             </b-badge>
         </template>
@@ -61,7 +61,7 @@
             </b-button>
           </span>
           <span v-if="isAllowed('user', row.item)">
-            <b-button title="View users" variant="success" :to="{ name: 'UsersListApp', params: { appId: row.item.id, rolesInApplication: (row.item.users.find(o => o.id === user.id)).roles }}">
+            <b-button title="View users" variant="success" :to="{ name: 'UsersListApp', params: { appId: row.item.id, rolesInApplication: (user.roles.indexOf('admin')) > -1 ? 'admin' : (row.item.users.find(o => o.id === user.id)).roles }}">
               <i class="fa fa-users fa-lg"></i>
             </b-button>
           </span>
@@ -163,10 +163,19 @@ export default {
         this.pager = pager
         this.list = pager.getContent()
         this.totalRows = pager.getTotalElements()
-        for (var i = 0; i < this.list.length; i++) {
-          this.user.roles = (this.list[i].users.find(o => o.id === this.user.id)).roles
-          console.log((this.list[i].users.find(o => o.id === this.user.id)).roles)
-        }
+        // this.list.forEach((a) => {
+        //     if(a.name.indexOf('test') > -1) {
+        //         this.$raptor.App().delete(a)
+        //     }
+        // })
+        // if(this.user.roles.indexOf('admin') > -1) {
+        //   // Do something
+        // } else {
+        //   for (var i = 0; i < this.list.length; i++) {
+        //     this.user.roles = (this.list[i].users.find(o => o.id === this.user.id)).roles
+        //     console.log((this.list[i].users.find(o => o.id === this.user.id)).roles)
+        //   }
+        // }
       }).catch(function(e) {
         context.$log.warn(e)
         if (e.code === 401) {
@@ -177,6 +186,9 @@ export default {
 
     },
     isAllowed(subject, app) {
+      if(this.user.roles.indexOf('admin') > -1) {
+        return true
+      }
       for (var i = 0; i < app.users.length; i++) {
         if(app.users[i].enabled && app.users[i].id === this.user.id) {
           for (var j = 0; j < app.users[i].roles.length; j++) {

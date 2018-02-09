@@ -42,20 +42,20 @@
         </div>
 
         <div class="col-md-6">
-
-          <b-form-fieldset label="Roles" :horizontal="false">
-            <ul class="list-inline row-fluid">
-              <li class="list-inline-item col-md-3" v-for="role in availRoles" :key="role.name">
-                <b-form-checkbox v-model="roles" :plain="true" :value="role.name" v-b-tooltip.hover :title="role.permissions">
-                  <span :title="role.name">{{ role.name.length > 12 ? role.name.substr(0, 10) + '..' : role.name  }}</span>
-                </b-form-checkbox>
-              </li>
-            </ul>
-          </b-form-fieldset>
-          <span v-if="isAllowed()">
-            <b-btn @click="addNewRole = !addNewRole" variant="primary">Add New Role</b-btn>
+          <span v-if="availRoles && availRoles.length > 0">
+            <b-form-fieldset label="Roles" :horizontal="false">
+              <ul class="list-inline row-fluid">
+                <li class="list-inline-item col-md-3" v-for="role in availRoles" :key="role.name">
+                  <b-form-checkbox v-model="roles" :plain="true" :value="role.name" v-b-tooltip.hover :title="role.permissions">
+                    <span :title="role.name">{{ role.name.length > 12 ? role.name.substr(0, 10) + '..' : role.name  }}</span>
+                  </b-form-checkbox>
+                </li>
+              </ul>
+            </b-form-fieldset>
+            <span v-if="isAllowed()">
+              <b-btn @click="addNewRole = !addNewRole" variant="primary">Add New Role</b-btn>
+            </span>
           </span>
-
           <b-form-fieldset label="Status" :horizontal="false">
             <b-form-checkbox v-model="enabled">enabled</b-form-checkbox>
           </b-form-fieldset>
@@ -190,6 +190,7 @@ export default {
   mounted() {
     this.loggedInUser = this.$raptor.Auth().getUser()
     // console.log(this.loggedInUser)
+    this.userId = this.$route.params.userId
 
     this.appId = this.$route.params.appId
     // console.log(this.appId)
@@ -200,18 +201,16 @@ export default {
       this.systemPermissions.push({value:e, text:e})
     })
 
-    if(!this.appId) {
+    if(this.appId) {
+      this.loadApp()
+    }
+    if(this.isAllowed()) {
       //load roles async
       this.loadRoles().catch((e) => {
           this.$log.error("Failed to load roles: %s", e.message)
           this.$log.debug(e)
       })
-    } else {
-      this.loadApp()
     }
-
-    this.userId = this.$route.params.userId
-
     if (!this.userId) {
       this.enabled = true
       this.roles = []
@@ -244,7 +243,9 @@ export default {
           this.$log.debug('User %s loaded', userId)
           this.loading = false
           Object.assign(this.$data, user)
-          this.availRoles = user.roles.concat(this.availRoles)
+          if(this.availRoles.length === 0) {
+            user.roles.forEach((e) => this.availRoles.push({name: e, permissions: e}))
+          }
         })
         .catch((e) => {
           this.$log.warn();

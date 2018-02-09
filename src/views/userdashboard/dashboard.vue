@@ -70,63 +70,6 @@
       </div>
     </div>
 
-   <!--  <grid-layout :layout="widgets" :col-num="12" :row-height="30" :is-draggable="true" :is-resizable="true" :vertical-compact="true" :margin="[10, 10]" :use-css-transforms="true" >
-
-        <grid-item v-for="wid in widgets"
-                   :x="wid.x"
-                   :y="wid.y"
-                   :w="wid.w"
-                   :h="wid.h"
-                   :i="wid.i" :key="wid.i" @resize="resizeEvent" @move="moveEvent" @resized="resizedEvent" @moved="movedEvent" 
-                   drag-allow-from=".vue-draggable-handle"
-                   drag-ignore-from=".no-drag" class="bg-white">
-            <div class="vue-draggable-handle col-md-12">
-              <div class="row">
-                <div class="col-md-12 bg-light" style="padding:2px; padding-top:4px">
-                <div class="float-right">
-                  <button type="button" i="wid.i" class="btn btn-link btn-sm" @click="(ev) => { onRemoveWidgetButtonClick(ev, wid) }">
-                    <i class="icon-close icons font-2xl d-block" />
-                  </button>
-                </div>
-                <div class="float-left" v-on:click.capture="(ev) => { showDetails(ev, wid.data) }">
-                  <h5>{{wid.title}}</h5>
-                </div>
-                </div>
-              </div>
-            </div>
-            <div class="no-drag">
-              <div class="float-right">
-                <button type="button" i="wid.i" class="btn btn-link" @click="(ev) => { onFullChartButtonClick(ev, wid) }" >
-                  <i class="icon-size-fullscreen icons font-2xl d-block" />
-                </button>
-              </div>
-              <b-card no-header border-variant="light" class="border-0">
-                <div :id="'widget'+wid.i" v-if="wid.chart == 'bar'">
-                  <bar-chart :chartData="wid.data"/>
-                </div>
-                <div :id="'widget'+wid.i" v-else-if="wid.chart == 'polar'">
-                  <polar-area-chart :chartData="wid.data"/>
-                </div>
-                <div :id="'widget'+wid.i" v-else-if="wid.chart == 'line' && wid.data">
-                  <line-chart :chartData="wid.data"/>
-                </div>
-                <div :id="'widget'+wid.i" v-else-if="wid.chart == 'pie'">
-                  <pie-chart :chartData="wid.data"/>
-                </div>
-                <div class="chart-wrapper" :id="'widget'+wid.i" v-else-if="wid.chart == 'radar'">
-                  <radar-chart :chartData="wid.data"/>
-                </div>
-                <div :id="'widget'+wid.i" v-else-if="wid.chart == 'doughnut'">
-                  <doughnut-chart :chartData="wid.data"/>
-                </div>
-                <div :id="'widget'+wid.i" v-if="wid.data == null">
-                  <line-chart-report />
-                </div>
-              </b-card>
-            </div>
-        </grid-item>
-    </grid-layout> -->
-
     <!-- multi data source widget -->
     <b-modal title="Add Widget" size="lg" class="modal-info" v-model="multipleDataModal" @ok="onAddMixChart" @cancel="clearFields">
       <b-form-fieldset description="Please enter a widget title" label="Title" :horizontal="false">
@@ -135,23 +78,13 @@
       <b-button class="btn btn-primary" block @click="onCreateChannelButton">Add Source</b-button>
       <div v-for="source in tableDataSource" id="stream">
         <div class="row row-fluid">
-          <!-- <div class="col-md-3" style="padding: 10px">
-            <b-form-fieldset description="Please select device type" label="Device Type" :horizontal="false">
-              <div class="float-right">
-                <b-form-select variant="outline-secondary" class="mr-3" @change.native="(ev) => {onChangeDeviceType(ev, source)}" v-model="source.deviceType" :options="listOfDevicesTypeForSelectOptions" />
-              </div>
-            </b-form-fieldset>
-          </div> -->
-
+ 
           <div class="col-md-6" style="padding: 10px">
             <b-form-fieldset description="Enter Device id to filter or select from list" label="Device" :horizontal="false">
               <v-autocomplete :items="source.listOfDevicesForSelectOptions" v-model="source.device" :get-label="getLabel" :component-item='itemAutoTemplate' :input-attrs="{id: 'v-my-autocomplete', placeholder:'Please search/select a device'}" @update-items="(item) => {updateItems(item, source)}" @item-clicked="(item) => {itemClicked(item, source)}" @change="(item) => {inputChangeEvent(item, source)}" :auto-select-one-item="false">
               </v-autocomplete>
             </b-form-fieldset>
-            
-            <!-- <b-form-fieldset description="Please select a device" label="Device" :horizontal="false">
-              <b-form-select variant="outline-secondary" class="mr-3" @change.native="(ev) => {onChangeDevice(ev, source)}" v-model="source.device" :options="source.listOfDevicesForSelectOptions" />
-            </b-form-fieldset> -->
+
           </div>
 
           <div class="col-md-3" style="padding: 10px">
@@ -180,14 +113,6 @@
         <span v-html="widgetDetails"></span>
       </div>
     </b-modal>
-
-    <!-- <b-modal title="Select Application" class="modal-info" v-model="selectAppModal" >
-      <div>
-        <b-form-fieldset description="Select an application" label="Applications" :horizontal="false">
-            <b-form-select variant="outline-secondary" class="mr-3" v-model="selectedApp" :options="appOptions" />
-        </b-form-fieldset>
-      </div>
-    </b-modal> -->
 
   </div>
 </template>
@@ -395,7 +320,7 @@ export default {
       .then((list) => {
         // this.$log.debug('Loaded %s device list', list.length);
           // console.log(list);
-          this.$data.devices = list;
+          this.$data.devices = list.getContent();
           // list.forEach((e) => {
           //   this.listOfDevicesForSelectOptions.push(e)
             // {value: e.id, text: e.name+' - '+e.id}
@@ -403,7 +328,7 @@ export default {
             //   this.listOfDevicesTypeForSelectOptions.push(e.name)
             // }
           // });
-          this.listOfDevicesForSelectOptions = list
+          this.listOfDevicesForSelectOptions = list.getContent()
           this.tableDataSource[0].listOfDevicesForSelectOptions = this.listOfDevicesForSelectOptions
           // console.log(this.listOfDevicesTypeForSelectOptions)
         })

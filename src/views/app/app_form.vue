@@ -108,7 +108,7 @@
       <div>
         <b-table no-local-sorting small responsive show-empty :items="app.users" :fields="fieldsUsers" :current-page="currentPageUser" :per-page="5" >
           <template slot="userid" scope="row">
-            <b-badge size="sm" variant="light" :to="{ name: 'UsersUpdate', params: { userId: row.item.id }}">{{row.item.id}}</b-badge>
+            <b-badge size="sm" variant="light" :to="{ name: 'UsersUpdate', params: { userId: row.item.id, appId: appId }}">{{row.item.id}}</b-badge>
           </template>
           <!-- <template slot="name" scope="row" v-if="row.item.name">
             <span v-if="row.item.name">

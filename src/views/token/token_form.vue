@@ -114,7 +114,7 @@ export default {
                 deviceId: null,
                 secret: null,
                 enabled: false,
-                expires: null,
+                expires: false,
                 owner: null
             },
             dateTimePicker: {
@@ -182,12 +182,13 @@ export default {
                 this.token.owner = token.owner
                 // let tokenExpiresDate = new Date()
                 // this.date = tokenExpiresDate.setMilliseconds(tokenExpiresDate.getMilliseconds() + token.expires)
-                if(token.expires === null || token.expires === 0) {
+                if(token.expires === 0) {
                     this.token.expires = true
                     this.date = null
                 } else {
-                    this.date = token.expires
+                    this.date = new Date(token.expires*1000)
                 }
+                console.log(this.date)
                 this.loadPermissions(token)
             })
             .catch((e) => {
@@ -223,14 +224,21 @@ export default {
             this.$router.push("/admin/tokens")
         },
         save() {
-            if(this.token.expires === null || this.token.expires === 0) {
-                let selectedDate = new Date(this.date)
-                if(this.tokenId) {
-                    this.token.expires = selectedDate.getTime()
+            // if(this.token.expires === null || this.token.expires === 0) {
+            console.log(this.token.expires)
+            if(this.token.expires === false) {
+                if(!this.date) {
+                    this.token.expires = null
                 } else {
-                    this.token.expires = selectedDate.getTime()/1000|0
+                    let selectedDate = new Date(this.date)
+                    if(this.tokenId) {
+                        this.token.expires = selectedDate.getTime()
+                    } else if(!this.tokenId && this.date) {
+                        console.log(selectedDate, this.date)
+                        this.token.expires = selectedDate.getTime()/1000|0
+                    }
                 }
-            } else {
+            } else if(this.token.expires === true) {
                 this.token.expires = 0
             }
             if(this.token.id && this.selectedRoles.length == 0) {
