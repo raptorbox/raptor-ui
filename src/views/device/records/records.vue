@@ -3,56 +3,36 @@
     <div class="col-lg-12">
       <!-- <b-card header="<i class='fa fa-align-justify'></i> Users"> -->
       <b-card>
-        <div class="clearfix" style="background-color: #f0f3f5; border-bottom: 1px solid #c2cfd6; padding:5px;">
-          <!-- <div style="float: left;">
-            <p style="text-align: center; font-weight:bold; margin:0;">Users</p>
-          </div>
-          <div style="float: right;">
-            <b-button class="btn btn-primary" :to="{ name: 'UsersCreate'}">Create User</b-button>
-            <b-form-fieldset horizontal :label-cols="1">
-              <b-form-select :options="pageOptions" v-model="perPage" />
-            </b-form-fieldset>
-          </div> -->
-          <div>
-            <div style="float: left;">
-              <p style="text-align: center; font-weight:bold; margin:0;">Streams</p>
-            </div>
-            <div class="col-md-2 col-md-offset-2" style="float: right;">
-              <div class="row" style="margin-left:auto; margin-right:0;">
-                <div class="col-md-6" right>
-                  <div class="float-right">
-                    <b-form-select variant="outline-secondary" class="mr-3" @change.native="onChangeOptionStream" v-model="selectedStream" :options="optionsStreams" />
+          <div slot="header">
+              <div class="row row-fluid">
+                  <div class="col-lg-6 list-inline">
+                      <div>
+                          <div class="col-md-3">
+                              <h3 class="list-inline-item">Streams</h3>
+                          </div>
+                      </div>
                   </div>
-                  <!-- <b-button class="btn btn-primary" :to="{ name: 'UsersCreate'}">Create User</b-button> -->
-                </div>
-                <div class="col-md-6" right>
-                  <b-form-fieldset horizontal>
-                    <b-form-select :options="pageOptions" v-model="perPage" />
-                  </b-form-fieldset>
-                </div>
+                  <div class="col-md-6 text-right">
+                      <div class="col-md-6" right>
+                          <b-form-fieldset description="Select Stream" label="Stream" horizontal>
+                              <b-form-select variant="outline-secondary" @change.native="onChangeOptionStream" v-model="selectedStream" :options="optionsStreams" />
+                          </b-form-fieldset>
+                      </div>
+                      <div class="col-md-6" right>
+                          <b-form-fieldset description="Items per page" label="Show" horizontal>
+                              <b-form-select :options="pageOptions" v-model="perPage" @change="itemsLimitChange"/>
+                          </b-form-fieldset>
+                      </div>
+                  </div>
               </div>
-            </div>
-          </div>
-        </div>
-        <b-table small responsive show-empty :items="deviceStreams" :fields="fields" :current-page="currentPage" :per-page="perPage" >
-          <!-- <span v-html="streamDetail"></span> -->
-          <!-- <template slot="time" scope="row">
-            {{formatDate(row.item.timestamp*1000)}}
-          </template>
 
-          <template slot="stream" scope="row">{{row.item.streamId}}</template>
-          <template slot="sensor" scope="row">{{row.item.channels.current}}</template>
-          <template slot="engine" scope="row">{{row.item.channels.enginerpm}}</template>
-          <template slot="speed" scope="row">{{row.item.channels.speed}}</template> -->
-          <!-- <template slot="actions" scope="row">
-            <click-confirm>
-              <b-button class="btn btn-outline-danger btn-sm" @click="remove(row.item)">Delete</b-button>
-            </click-confirm>
-          </template> -->
-        </b-table>
-        <div>
-          <b-pagination :total-rows="deviceStreams.length" :per-page="perPage" v-model="currentPage" prev-text="Prev" next-text="Next" />
-        </div>
+          </div>
+
+          <b-table no-local-sorting small responsive show-empty :items="deviceStreams" :fields="fields" @sort-changed="sortingChanged">
+          </b-table>
+          <div>
+            <b-pagination align="center" :total-rows="totalRows" :per-page="perPage" v-model="currentPage" prev-text="Prev" next-text="Next" @change="pageChanged" />
+          </div>
       </b-card>
     </div>
     <!--/.col-->
@@ -87,7 +67,14 @@
         device: null,
         selectedStream: null,
         optionsStreams: [],
-        streamDetail: null
+        streamDetail: null,
+
+        // page settings
+        sortBy: 'timestamp',
+        sortDir: "desc",
+        perPage: 25,
+        currentPage: 1,
+        pager: null,
       }
     },
     mounted () {
@@ -121,12 +108,22 @@
       getStream(streamName) {
         // var ts = Math.round((new Date()).getTime() / 1000);
         let stream = this.device.getStream(streamName);
-        console.log(stream)
+        // console.log(stream)
         if(stream){
           this.loading = true
-          this.$raptor.Stream().list(stream, 0, 100, 'timestamp,desc')
-          .then((streams) => {
-            console.log(streams)
+          let paging = {
+            page: this.currentPage-1,
+            size: this.perPage,
+            sort: this.sortBy,
+            sortDir: this.sortDir,
+          }
+          this.$raptor.Stream().list(stream, paging)
+          .then((pager) => {
+            // console.log(streams)
+            let streams = pager.getContent()
+            this.pager = pager
+            this.totalRows = pager.getTotalElements()
+
             this.deviceStreams = [];
             let fields = {}
             for (var i = 0; i < streams.length; i++) {
@@ -173,6 +170,7 @@
         if(this.device) {
           // if(!this.loading) {
             this.getStream(val);
+            this.selectedStream = val
           // }
         }
       },
@@ -187,6 +185,22 @@
         .catch((e) => {
           this.$log.error("Error deleting %s", e)
         })
+      },
+
+      // paging functions
+      pageChanged(page) {
+        this.currentPage = page
+        this.getStream(this.selectedStream)
+      },
+      sortingChanged(ev) {
+        this.sortBy = ev.sortBy
+        this.sortDir = ev.sortDesc ? 'desc' : 'asc'
+        this.getStream(this.selectedStream)
+      },
+      itemsLimitChange(limit) {
+        this.currentPage = 1
+        this.perPage = limit
+        this.getStream(this.selectedStream)
       },
     }
 

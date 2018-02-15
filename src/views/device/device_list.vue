@@ -97,8 +97,8 @@ export default {
   },
   data() {
     return {
-      sortBy: "created",
-      sortDir: "asc",
+      sortBy: "createdAt",
+      sortDir: "desc",
       loading: false,
       pager: null,
       list: [],
@@ -154,19 +154,18 @@ export default {
     if(this.appId) {
       this.serachDataForAppId()
     } else {
-      this.fetchData()
+      this.fetchData(null)
     }
   },
   methods: {
     formatDate(d) {
       return moment(new Date(d)).format('MMMM Do YYYY')
     },
-    fetchData() {
+    fetchData(query=null) {
       this.error = null
       this.loading = true
       this.$log.debug('Fetching device list page=%s, size=%s sort=%s.%s', this.currentPage, this.perPage, this.sortBy, this.sortDir)
       //TODO add sort
-      this.loading = true
       let queryParam = {
           page: this.currentPage-1,
           size: this.perPage,
@@ -174,7 +173,7 @@ export default {
           sortDir: this.sortDir,
         }
       // console.log(queryParam)
-        this.$raptor.Inventory().list(queryParam)
+        this.$raptor.Inventory().list(query, queryParam)
             .then((pager) => {
 
                 // const list = pager.getContent()
@@ -256,7 +255,7 @@ export default {
     },
     inputChangeEvent(text) {
       if (text == '') {
-        this.list = this.devices
+        this.fetchData()
       }
     },
     getLabel(item) {
@@ -264,12 +263,52 @@ export default {
     },
     updateItems(text) {
       console.log(text)
-      this.list = []
-      for (var i = 0; i < this.devices.length; i++) {
-        if (this.devices[i].id.indexOf(text) !== -1 || this.devices[i].name.indexOf(text) !== -1) {
-          this.list.push(this.devices[i])
-        }
+      if(text.length >= 3) {
+        this.fetchData({name: text, id: text})
+        // this.list = []
+        // for (var i = 0; i < this.devices.length; i++) {
+        //   if (this.devices[i].id.indexOf(text.toLowerCase()) !== -1 || this.devices[i].name.toLowerCase().indexOf(text.toLowerCase()) !== -1) {
+        //     this.list.push(this.devices[i])
+        //   }
+        // }
       }
+    },
+    searchData(query=null) {
+      this.error = null
+      this.loading = true
+      let queryParam = {
+          page: this.currentPage-1,
+          size: this.perPage,
+          sort: this.sortBy,
+          sortDir: this.sortDir,
+        }
+      this.$raptor.Inventory().search(query, queryParam)
+          .then((pager) => {
+
+              // const list = pager.getContent()
+              this.$log.debug('Loaded %s device list', pager.getContent().length)
+              // console.log(list.length)
+
+              this.loading = false
+              this.pager = pager
+              this.totalRows = pager.getTotalElements()
+              this.devices = pager.getContent()
+              this.list = this.devices
+          })
+          .catch((e) => {
+
+              this.$log.warn('Failed to load device list: %s', e.message)
+              this.$log.debug(e)
+
+              this.error = e.message
+              this.list = []
+              this.pager = null
+              this.loading = false
+              if (e.code === 401) {
+                  context.$raptor.Auth().logout();
+                  context.$router.push("/pages/login");
+              }
+          })
     },
     // for application management
     serachDataForAppId() {

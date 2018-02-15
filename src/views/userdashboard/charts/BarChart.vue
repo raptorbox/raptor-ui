@@ -133,7 +133,7 @@ export default Bar.extend({
       load() {
         this.$raptor.Inventory().read(this.device)
         .then((device) => {
-          // console.log(device)
+          console.log(device)
           this.stream = device.getStream(this.stream)
           this.subscribeStream(this.stream);
           this.$emit('devicedata', device);

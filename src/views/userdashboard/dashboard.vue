@@ -231,6 +231,12 @@ export default {
       unsub: false,
       // tooltip
       showMouseOverDetail: null,
+
+      // page settings
+      sortBy: "createdAt",
+      sortDir: "desc",
+      perPage: 50,
+      currentPage: 1,
     }
   },
   ready: function() {
@@ -315,8 +321,14 @@ export default {
       }
       this.tableDataSource.push(obj)
     },
-    fetchDevicesData () {
-      this.$raptor.Inventory().list()
+    fetchDevicesData (query=null) {
+      let paging = {
+          page: this.currentPage-1,
+          size: this.perPage,
+          sort: this.sortBy,
+          sortDir: this.sortDir,
+        }
+      this.$raptor.Inventory().list(query, paging)
       .then((list) => {
         // this.$log.debug('Loaded %s device list', list.length);
           // console.log(list);
@@ -783,6 +795,7 @@ export default {
     },
     inputChangeEvent(text, source) {
       if(text == '') {
+        this.fetchDevicesData();
         if(source) {
           for (var j = 0; j < this.tableDataSource.length; j++) {
             if(source.number == this.tableDataSource[j].number) {
@@ -806,53 +819,47 @@ export default {
       return item.name + " - " + item.id
     },
     updateItems (text, source) {
-      let listOfDevicesForSelectOptions = []
-      for (var i = 0; i < this.devices.length; i++) {
-        if(this.devices[i].id.indexOf(text) !== -1 || this.devices[i].name.indexOf(text) !== -1) {
-          listOfDevicesForSelectOptions.push(this.devices[i])
-        }
-      }
-      if(source) {
-        for (var j = 0; j < this.tableDataSource.length; j++) {
-          if(source.number == this.tableDataSource[j].number) {
-            this.tableDataSource[j].listOfDevicesForSelectOptions = listOfDevicesForSelectOptions
-            if(listOfDevicesForSelectOptions.length == 1) {
-              this.tableDataSource[j].device = listOfDevicesForSelectOptions[0]
-              this.itemClicked(listOfDevicesForSelectOptions[0], source)
+      if(text.length >= 3) {
+        this.fetchDevicesData({name: text, id: text});
+          let listOfDevicesForSelectOptions = []
+          for (var i = 0; i < this.devices.length; i++) {
+            if(this.devices[i].id.indexOf(text) !== -1 || this.devices[i].name.indexOf(text) !== -1) {
+              listOfDevicesForSelectOptions.push(this.devices[i])
             }
           }
-        }
-        let data = this.tableDataSource
-        this.tableDataSource = []
-        this.tableDataSource = data
-      } else {
-        this.listOfDevicesForSelectOptions = listOfDevicesForSelectOptions
-        if(listOfDevicesForSelectOptions.length == 1) {
-          this.selectedDevice = listOfDevicesForSelectOptions[0]
-          this.itemClicked(this.selectedDevice, source)
-        }
+          if(source) {
+            for (var j = 0; j < this.tableDataSource.length; j++) {
+              if(source.number == this.tableDataSource[j].number) {
+                this.tableDataSource[j].listOfDevicesForSelectOptions = listOfDevicesForSelectOptions
+                if(listOfDevicesForSelectOptions.length == 1) {
+                  this.tableDataSource[j].device = listOfDevicesForSelectOptions[0]
+                  this.itemClicked(listOfDevicesForSelectOptions[0], source)
+                }
+              }
+            }
+            let data = this.tableDataSource
+            this.tableDataSource = []
+            this.tableDataSource = data
+          } else {
+            this.listOfDevicesForSelectOptions = listOfDevicesForSelectOptions
+            if(listOfDevicesForSelectOptions.length == 1) {
+              this.selectedDevice = listOfDevicesForSelectOptions[0]
+              this.itemClicked(this.selectedDevice, source)
+            }
+          }
       }
     },
     // to show the full screen chart with detailed data on new page
     onFullChartButtonClick(ev, wid) {
       if(wid.data) {
-        this.$raptor.Stream().unsubscribe({name: wid.data.stream, deviceId: wid.data.device}, function(msg) {
-          console.log(msg)
-        }).then(() => {
           this.$router.push({
               name: 'ChartDetail',
               params: {
                   widgetData: wid
               }
           });
-        })
-        .catch(function(e) {
-          // console.log(e)
-          // console.log(JSON.stringify(e))
-          if(e.toString().indexOf("Unauthorized") !== -1) {
-            this.$raptor.Auth().logout();
-            this.$router.push("/pages/login");
-          }
+        this.$raptor.Stream().unsubscribe({name: wid.data.stream, deviceId: wid.data.device}, function(msg) {
+          console.log(msg)
         })
       }
     },

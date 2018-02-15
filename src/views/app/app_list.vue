@@ -215,7 +215,7 @@ export default {
       this.fetchData()
     },
     itemsLimitChange(limit) {
-      this.currentPage = 0
+      this.currentPage = 1
       this.perPage = limit
       this.fetchData()
     },
