@@ -888,13 +888,14 @@ export default {
     // fetch channels for dynamic streams
     fetchStreamDataForChannels (stream, source) {
       this.$raptor.Stream().list(stream, 0, 1, 'timestamp,desc')
-      .then((streams) => {
-        // console.log(streams)
+      .then((pager) => {
+        // console.log(pager)
+        let streams = pager.getContent()
         if(streams.length > 0) {
           let chs = streams[0].channels
           let keys = Object.keys(chs);
           let optionsChannel = [];
-          console.log(keys)
+          // console.log(keys)
           for (var i = 0; i < keys.length; i++) {
             if(!isNaN(chs[keys[i]] * 1)) {
               if(optionsChannel.length == 0) {
