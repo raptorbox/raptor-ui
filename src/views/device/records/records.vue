@@ -5,7 +5,7 @@
       <b-card>
           <div slot="header">
               <div class="row row-fluid">
-                  <div class="col-lg-6 list-inline">
+                  <div class="col-md-6 list-inline">
                       <div>
                           <div class="col-md-3">
                               <h3 class="list-inline-item">Streams</h3>
@@ -13,15 +13,17 @@
                       </div>
                   </div>
                   <div class="col-md-6 text-right">
-                      <div class="col-md-6" right>
-                          <b-form-fieldset description="Select Stream" label="Stream" horizontal>
-                              <b-form-select variant="outline-secondary" @change.native="onChangeOptionStream" v-model="selectedStream" :options="optionsStreams" />
-                          </b-form-fieldset>
-                      </div>
-                      <div class="col-md-6" right>
-                          <b-form-fieldset description="Items per page" label="Show" horizontal>
-                              <b-form-select :options="pageOptions" v-model="perPage" @change="itemsLimitChange"/>
-                          </b-form-fieldset>
+                      <div class="row">
+                          <div class="col-md-6" left>
+                              <b-form-fieldset description="Select Stream" label="Stream" horizontal>
+                                  <b-form-select variant="outline-secondary" @change.native="onChangeOptionStream" v-model="selectedStream" :options="optionsStreams" />
+                              </b-form-fieldset>
+                          </div>
+                          <div class="col-md-6" right>
+                              <b-form-fieldset description="Items per page" label="Show" horizontal>
+                                  <b-form-select :options="pageOptions" v-model="perPage" @change="itemsLimitChange"/>
+                              </b-form-fieldset>
+                          </div>
                       </div>
                   </div>
               </div>
@@ -85,7 +87,7 @@
     },
     methods: {
       formatDate (d) {
-        return moment(new Date(d)).format('MMMM Do YYYY')
+        return moment(new Date(d)).format('MMMM Do YYYY HH:mm:ss')
       },
       load(deviceId) {
         this.loading = true

@@ -13,7 +13,20 @@
       </div>
     </div><!--/.row-->
 
-    <b-card>
+    <b-card style="position: relative;">
+      <div v-if="spinnerLoading" class="overlay row">
+        <div class="loadingView text-dark">
+           <!-- bg-white -->
+          <div class="loadingViewInner">
+            <div class="text-center">
+              <pulse-loader :loading="spinnerLoading" :color="color" :size="size"></pulse-loader>
+            </div>
+            <div class="text-center">
+              <p>{{loadingMessage}}</p>
+            </div>
+          </div>
+        </div>
+      </div>
       <!-- && device.constructor === Array && device.length > 0 -->
       <div class="row" v-if="device">
         <div class="col-sm-12 hidden-sm-down">
@@ -59,35 +72,35 @@
       <div>
         <div v-if="widgetData.chart == 'bar'">
           <div class="chart-wrapper">
-            <bar-chart :chartData="widgetData.data" @devicedata="setDeviceData" :dataPassed="dataToPass" :searchData="searchDataObj"/>
+            <bar-chart :chartData="widgetData.data" @devicedata="setDeviceData" :dataPassed="dataToPass" :searchData="searchDataObj" @isLoadingDone="spinnerLoading = $event"/>
           </div>
         </div>
         <div v-else-if="widgetData.chart == 'polar'">
           <div class="chart-wrapper">
-            <polar-area-chart :chartData="widgetData.data" @devicedata="setDeviceData" :dataPassed="dataToPass" :searchData="searchDataObj"/>
+            <polar-area-chart :chartData="widgetData.data" @devicedata="setDeviceData" :dataPassed="dataToPass" :searchData="searchDataObj" @isLoadingDone="spinnerLoading = $event"/>
           </div>
         </div>
         <div v-else-if="widgetData.chart == 'line' && widgetData.data">
           <div class="chart-wrapper">
-            <line-chart :chartData="widgetData.data" @devicedata="setDeviceData" :dataPassed="dataToPass" :searchData="searchDataObj"/>
+            <line-chart :chartData="widgetData.data" @devicedata="setDeviceData" :dataPassed="dataToPass" :searchData="searchDataObj" @isLoadingDone="spinnerLoading = $event"/>
           </div>
         </div>
         <div v-else-if="widgetData.chart == 'pie'">
           <div class="chart-wrapper">
-            <pie-chart :chartData="widgetData.data" @devicedata="setDeviceData" :dataPassed="dataToPass" :searchData="searchDataObj"/>
+            <pie-chart :chartData="widgetData.data" @devicedata="setDeviceData" :dataPassed="dataToPass" :searchData="searchDataObj" @isLoadingDone="spinnerLoading = $event"/>
           </div>
         </div>
         <div v-else-if="widgetData.chart == 'radar'">
           <div class="chart-wrapper">
-            <radar-chart :chartData="widgetData.data" @devicedata="setDeviceData" :dataPassed="dataToPass" :searchData="searchDataObj"/>
+            <radar-chart :chartData="widgetData.data" @devicedata="setDeviceData" :dataPassed="dataToPass" :searchData="searchDataObj" @isLoadingDone="spinnerLoading = $event"/>
           </div>
         </div>
         <div v-else-if="widgetData.chart == 'doughnut'">
           <div class="chart-wrapper">
-            <doughnut-chart :chartData="widgetData.data" @devicedata="setDeviceData" :dataPassed="dataToPass" :searchData="searchDataObj"/>
+            <doughnut-chart :chartData="widgetData.data" @devicedata="setDeviceData" :dataPassed="dataToPass" :searchData="searchDataObj" @isLoadingDone="spinnerLoading = $event"/>
           </div>
         </div>
-        <div v-if="widgetData.data == null" @devicedata="setDeviceData" :dataPassed="dataToPass" :searchData="searchDataObj">
+        <div v-if="widgetData.data == null" @devicedata="setDeviceData" :dataPassed="dataToPass" :searchData="searchDataObj" @isLoadingDone="spinnerLoading = $event">
           <div class="chart-wrapper">
             <line-chart-report />
           </div>
@@ -114,11 +127,12 @@
   import PolarAreaChart from './../userdashboard/charts/PolarAreaChart'
   import LineChartReport from './../userdashboard/charts/LineChartReport'
 
-  //data and time picker
+  // data and time picker
   import datePicker from 'vue-flatpickr-component';
   import 'flatpickr/dist/flatpickr.css';
   import ConfirmDatePlugin from 'flatpickr/dist/plugins/confirmDate/confirmDate';
   import 'flatpickr/dist/plugins/confirmDate/confirmDate.css';
+  import PulseLoader from 'vue-spinner/src/PulseLoader.vue'
 
 var currentDate = moment();
 
@@ -138,6 +152,8 @@ export default {
     PieChart,
     PolarAreaChart,
     LineChartReport,
+    // pulse loader
+    PulseLoader
   },
   data () {
     return {
@@ -239,6 +255,11 @@ export default {
         weekNumbers: true,
         plugins: [new ConfirmDatePlugin({confirmText: 'Done', showAlways:true})]
       },
+      // spinner
+      color: '#3AB982',
+      size: '20px',
+      spinnerLoading: true,
+      loadingMessage: 'Loading... Please wait.'
     }
   },
   mounted () {
@@ -353,17 +374,18 @@ export default {
       }
       let from = new Date(this.fromDate)
       let to = new Date(this.toDate)
-      console.log(from)
-      console.log(to)
-      if(to.getTime() == this.currentTime.getTime()) {
+      // console.log(from)
+      // console.log(to)
+      if(to.getTime() == from.getTime()) {
         this.realtimeUpdate = true
       } else {
         this.realtimeUpdate = false
       }
-      console.log(this.realtimeUpdate)
+      // console.log(this.realtimeUpdate)
       if(this.chartLoaded) {
         this.dataToPass = {display: this.selectedDisplayParam, fromDate: from.getTime(), toDate: to.getTime(), realtime: this.realtimeUpdate}
         this.searchDataObj = this.dataToPass
+        this.spinnerLoading = true;
         // console.log('slider Drag end called')
       }
     },
@@ -377,15 +399,9 @@ export default {
       } else {
         this.device = data
         this.selectedDeviceDetails = this.showDeviceDetails(this.device)
-        let dateArray = this.getDateList(this.device.json.createdAt*1000,moment().unix()*1000, 'hour')
+        let dateArray = this.getDateList(this.device.json.createdAt,moment().unix(), 'hour')
         dateArray.reverse()
         this.slider.data = dateArray
-        // let slider = this.$refs['slider']
-        // console.log("===slider====")
-        // console.log(slider)
-        // if(slider) {
-        //   slider.setIndex([0,1])
-        // }
         this.chartLoaded = true
       }
     },
@@ -394,7 +410,7 @@ export default {
       let selectedDeviceDetails = '<ul>';
       selectedDeviceDetails += '<li><strong>Name:</strong>     ' + device.name + '</li>';
       selectedDeviceDetails += '<li><strong>id:</strong>       ' + device.id + '</li>';
-      selectedDeviceDetails += '<li><strong>Created:</strong>  ' + this.formatDate(device.json.createdAt*1000) + '</li>';
+      selectedDeviceDetails += '<li><strong>Created:</strong>  ' + this.formatDate(device.json.createdAt) + '</li>';
       selectedDeviceDetails += '</ul>';
       return selectedDeviceDetails
     },
@@ -413,7 +429,7 @@ export default {
     // show and hide search view on button click
     showHideSearchView () {
       this.collapsed = !this.collapsed
-    } ,
+    },
   }
 }
 </script>
@@ -430,5 +446,30 @@ export default {
   pointer-events: none;
   -webkit-transform: translate(-50%, 0);
   transform: translate(-50%, 0);
+}
+.overlay {
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    z-index: 999;
+    /*opacity: 0.3;*/
+}
+.loadingView {
+  height: 30%;
+  width: 40%;
+  border-width: 2px;
+  background-color: #ccc;
+  border-radius: 3px;
+  border-color: #000;
+  float: none;
+  margin: auto auto;
+}
+.loadingViewInner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+    /* height: 50%; */
+    width: 50%;
 }
 </style>

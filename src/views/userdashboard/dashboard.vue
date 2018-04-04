@@ -185,10 +185,10 @@ export default {
       { value: null,        text: 'Please select a chart'                     },
       { value: 'line',      text: 'Line Chart'              , disabled: false },
       { value: 'bar',       text: 'Bar Chart'               , disabled: false },
-      { value: 'pie',       text: 'Pie Chart'               , disabled: false },
-      { value: 'polar',     text: 'Polar Chart'             , disabled: false },
-      { value: 'radar',     text: 'Radar Chart'             , disabled: false },
-      { value: 'doughnut',  text: 'Doughnut Chart'          , disabled: false },
+      // { value: 'pie',       text: 'Pie Chart'               , disabled: false },
+      // { value: 'polar',     text: 'Polar Chart'             , disabled: false },
+      // { value: 'radar',     text: 'Radar Chart'             , disabled: false },
+      // { value: 'doughnut',  text: 'Doughnut Chart'          , disabled: false },
       // { value: 'bubble',    text: 'Bubble Chart' },
       // { value: 'scatter',   text: 'Scatter Chart' },
       ],
@@ -887,7 +887,8 @@ export default {
     },
     // fetch channels for dynamic streams
     fetchStreamDataForChannels (stream, source) {
-      this.$raptor.Stream().list(stream, 0, 1, 'timestamp,desc')
+      let query = {page:0, size:1,sort:'timestamp',sortDir: 'desc'}
+      this.$raptor.Stream().list(stream, query)
       .then((pager) => {
         // console.log(pager)
         let streams = pager.getContent()
