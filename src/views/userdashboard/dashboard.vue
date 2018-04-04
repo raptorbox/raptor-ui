@@ -917,12 +917,13 @@ export default {
           }
         }
       })
-      .catch(function(e) {
+      .catch((e) => {
+        this.$toasted.show(e.message).goAway(3000)
         // console.log(e)
         // console.log(JSON.stringify(e))
         if(e.toString().indexOf("Unauthorized") !== -1) {
-          context.$raptor.Auth().logout();
-          context.$router.push("/pages/login");
+          this.$raptor.Auth().logout();
+          this.$router.push("/pages/login");
         }
       });
     },

@@ -102,6 +102,7 @@
           // this.getStream("obd");
         })
         .catch((e) => {
+          this.$toasted.show(e.message).goAway(3000)
           this.$log.debug('Failed to load device')
           this.$log.error(e)
           this.loading = false
@@ -149,6 +150,9 @@
             }
           })
           .catch((e) => {
+            if(e.message == 'Access is denied') {
+              this.$toasted.show(e.message).goAway(3000)
+            }
             this.$log.debug('Failed to load streams')
             this.$log.error(e)
             this.loading = false
