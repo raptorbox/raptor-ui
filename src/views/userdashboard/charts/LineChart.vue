@@ -370,7 +370,13 @@ export default Line.extend({
       },
       processMultipleData (chartsData, streams, concat) {
         for (var j = 0; j < chartsData.datasets.length; j++) {
-          if(chartsData.datasets[j].device.id == streams[0].json.deviceId) {
+          let deviceId = null;
+          if(streams && streams[0].stream && streams[0].stream.json.deviceId) {
+            deviceId = streams[0].stream.json.deviceId
+          } else {
+            deviceId = streams[0].json.deviceId
+          }
+          if(chartsData.datasets[j].device.id == deviceId) {
             let dataset = chartsData.datasets[j]
             if(concat) {
               dataset.selectedStreamData.concat(streams)
@@ -415,7 +421,7 @@ export default Line.extend({
 
               for (var j = 0; j < chartsData.datasets.length; j++) {
                 let dset = chartsData.datasets[j];
-                if(dset.device.id == msg.device.id) {
+                if(dset.device.id == msg.device.id && dset.selectedStreamData) {
                   let last = dset.selectedStreamData[dset.selectedStreamData.length-1]
                   // check timestamp of last record on this device data
                   if(last.timestamp != msg.record.timestamp) {
@@ -515,7 +521,11 @@ export default Line.extend({
                 if( chartsData.datasets.length > 0) {
                   for (var i = 0; i < chartsData.datasets.length; i++) {
                     // console.log(chartsData.datasets[i].selectedStreamData.length + ' chartsData.datasets[i].selectedStreamData.length')
+                    if(chartsData.datasets[i].selectedStreamData && chartsData.datasets[i].selectedStreamData.length > 0) {
                       context.processMultipleData(chartsData, chartsData.datasets[i].selectedStreamData, true)
+                    } else {
+                      context.$emit('isLoadingDone', false);
+                    }
                   }
                 } else {
                   context.processSingleData(chartsData)
@@ -533,7 +543,13 @@ export default Line.extend({
             let query = {timestamp: {between:[startDate, endDate]}, page:pageNumber, size:500,sort:"createdAt,ASC"}
             if( chartsData.datasets.length > 0) {
               for (var i = 0; i < chartsData.datasets.length; i++) {
-                if(chartsData.datasets[i].device.id == streams[0].json.deviceId) {
+                let deviceId = null;
+                if(streams && streams[0].stream && streams[0].stream.json.deviceId) {
+                  deviceId = streams[0].stream.json.deviceId
+                } else {
+                  deviceId = streams[0].json.deviceId
+                }
+                if(chartsData.datasets[i].device.id == deviceId) {
                   chartsData.datasets[i].selectedStreamData = chartsData.datasets[i].selectedStreamData.concat(streams)
                   context.loopOverStreamPagination(chartsData, chartsData.datasets[i].stream, query, pageNumber, startDate, endDate)
                 }
@@ -545,7 +561,13 @@ export default Line.extend({
           } else {
               if( chartsData.datasets.length > 0) {
                 for (var i = 0; i < chartsData.datasets.length; i++) {
-                  if(chartsData.datasets[i].device.id == streams[0].json.deviceId) {
+                  let deviceId = null;
+                  if(streams && streams[0].stream && streams[0].stream.json.deviceId) {
+                    deviceId = streams[0].stream.json.deviceId
+                  } else {
+                    deviceId = streams[0].json.deviceId
+                  }
+                  if(chartsData.datasets[i].device.id == deviceId) {
                     chartsData.datasets[i].selectedStreamData = chartsData.datasets[i].selectedStreamData.concat(streams)
                   }
                 }

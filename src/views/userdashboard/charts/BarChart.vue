@@ -373,7 +373,13 @@ export default Bar.extend({
       },
       processMultipleData (chartsData, streams, concat) {
         for (var j = 0; j < chartsData.datasets.length; j++) {
-          if(chartsData.datasets[j].device.id == streams[0].json.deviceId) {
+          let deviceId = null;
+          if(streams && streams[0].stream && streams[0].stream.json.deviceId) {
+            deviceId = streams[0].stream.json.deviceId
+          } else {
+            deviceId = streams[0].json.deviceId
+          }
+          if(chartsData.datasets[j].device.id == deviceId) {
             let dataset = chartsData.datasets[j]
             if(concat) {
               dataset.selectedStreamData.concat(streams)
@@ -417,19 +423,15 @@ export default Bar.extend({
           // console.log(msg)
             if((context._chart || context._chart != undefined || context._chart != null) && context._chart.ctx != null) {
 
-              console.log(chartsData.datasets.length)
               for (var j = 0; j < chartsData.datasets.length; j++) {
                 let dset = chartsData.datasets[j];
-                if(dset.device.id == msg.device.id) {
-                  console.log('=============================')
-                  console.log(dset.channel + ' ' + dset.stream.json.name)
+                if(dset.device.id == msg.device.id && dset.selectedStreamData) {
                   let last = dset.selectedStreamData[dset.selectedStreamData.length-1]
                   // check timestamp of last record on this device data
                   if(last.timestamp != msg.record.timestamp) {
                     // get data and label from received msg
                     let recordData = msg.record.channels[dset.channel]
                     let date = new Date(msg.record.timestamp * 1000)
-                    console.log(date.toString())
 
                     // check whether labels of this devices have the new label
                     if(dset.streamChartLabels[dset.streamChartLabels.length-1] == date.toString()) {
@@ -522,7 +524,11 @@ export default Bar.extend({
                 if( chartsData.datasets.length > 0) {
                   for (var i = 0; i < chartsData.datasets.length; i++) {
                     // console.log(chartsData.datasets[i].selectedStreamData.length + ' chartsData.datasets[i].selectedStreamData.length')
+                    if(chartsData.datasets[i].selectedStreamData && chartsData.datasets[i].selectedStreamData.length > 0) {
                       context.processMultipleData(chartsData, chartsData.datasets[i].selectedStreamData, true)
+                    } else {
+                      context.$emit('isLoadingDone', false);
+                    }
                   }
                 } else {
                   context.processSingleData(chartsData)
@@ -540,7 +546,13 @@ export default Bar.extend({
             let query = {timestamp: {between:[startDate, endDate]}, page:pageNumber, size:500,sort:"createdAt,ASC"}
             if( chartsData.datasets.length > 0) {
               for (var i = 0; i < chartsData.datasets.length; i++) {
-                if(chartsData.datasets[i].device.id == streams[0].json.deviceId) {
+                let deviceId = null;
+                if(streams && streams[0].stream && streams[0].stream.json.deviceId) {
+                  deviceId = streams[0].stream.json.deviceId
+                } else {
+                  deviceId = streams[0].json.deviceId
+                }
+                if(chartsData.datasets[i].device.id == deviceId) {
                   chartsData.datasets[i].selectedStreamData = chartsData.datasets[i].selectedStreamData.concat(streams)
                   context.loopOverStreamPagination(chartsData, chartsData.datasets[i].stream, query, pageNumber, startDate, endDate)
                 }
@@ -552,7 +564,13 @@ export default Bar.extend({
           } else {
               if( chartsData.datasets.length > 0) {
                 for (var i = 0; i < chartsData.datasets.length; i++) {
-                  if(chartsData.datasets[i].device.id == streams[0].json.deviceId) {
+                  let deviceId = null;
+                  if(streams && streams[0].stream && streams[0].stream.json.deviceId) {
+                    deviceId = streams[0].stream.json.deviceId
+                  } else {
+                    deviceId = streams[0].json.deviceId
+                  }
+                  if(chartsData.datasets[i].device.id == deviceId) {
                     chartsData.datasets[i].selectedStreamData = chartsData.datasets[i].selectedStreamData.concat(streams)
                   }
                 }

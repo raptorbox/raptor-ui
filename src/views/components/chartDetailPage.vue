@@ -51,7 +51,7 @@
               <b-col lg="5">
                 <b-input-group>
                   <b-input-group-addon>From</b-input-group-addon>
-                  <date-picker class="form-control" placeholder="Select start date and time"  :config="dateTimePicker" v-model="fromDate" >
+                  <date-picker class="form-control" placeholder="Select start date and time" :config="dateTimePicker" v-model="fromDate" >
                   </date-picker>
                 </b-input-group>
               </b-col>
@@ -374,6 +374,14 @@ export default {
       }
       let from = new Date(this.fromDate)
       let to = new Date(this.toDate)
+      if (to.getTime() > this.currentTime) {
+        this.$toasted.show('To data/time is not correct.').goAway(3000)
+        return
+      }
+      if (from.getTime() > this.currentTime) {
+        this.$toasted.show('From data/time is not correct.').goAway(3000)
+        return
+      }
       // console.log(from)
       // console.log(to)
       if(to.getTime() == from.getTime()) {
