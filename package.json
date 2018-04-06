@@ -24,7 +24,7 @@
     "jquery-ui": "^1.12.1",
     "lodash": "^4.17.2",
     "loglevel": "^1.4.1",
-    "moment": "^2.18.1",
+    "moment": "^2.22.0",
     "mqtt": "^2.15.0",
     "raptor-sdk": "^5.0.29",
     "request": "^2.83.0",
