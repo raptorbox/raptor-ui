@@ -64,20 +64,27 @@ export default Line.extend({
     },
     watch: {
       searchData: function(data) {
-        // console.log(data)
-        this.chartsData.streamChartLabels = []
-        this.chartsData.realtimeUpdate = this.dataPassed.realtime
-        this.chartsData.fromDate = this.dataPassed.fromDate
-        this.chartsData.toDate = this.dataPassed.toDate
-        // console.log(this.fromDate + "    " + this.toDate)
-        // console.log("this.realtimeUpdate " + this.realtimeUpdate)
-        if(!this.chartsData.realtimeUpdate) {
-          this.searchDataForDates(this.chartsData, this.chartsData.fromDate, this.chartsData.toDate)
-        } else {
-          this.chartsData.selectedStreamData = []
-          this.chartsData.dataForChart = []
-          this.chartsData.datasets = []
+        if(data === 'updateChart') {
+          console.log(this.chartData)
+          this.chartsData.chartData = this.chartData
           this.loadDatasets(this.chartsData)
+          this.renderLineChart();
+        } else {
+          // console.log(data)
+          this.chartsData.streamChartLabels = []
+          this.chartsData.realtimeUpdate = this.dataPassed.realtime
+          this.chartsData.fromDate = this.dataPassed.fromDate
+          this.chartsData.toDate = this.dataPassed.toDate
+          // console.log(this.fromDate + "    " + this.toDate)
+          // console.log("this.realtimeUpdate " + this.realtimeUpdate)
+          if(!this.chartsData.realtimeUpdate) {
+            this.searchDataForDates(this.chartsData, this.chartsData.fromDate, this.chartsData.toDate)
+          } else {
+            this.chartsData.selectedStreamData = []
+            this.chartsData.dataForChart = []
+            this.chartsData.datasets = []
+            this.loadDatasets(this.chartsData)
+          }
         }
       }
     },
@@ -286,7 +293,7 @@ export default Line.extend({
           .then((device) => {
             // console.log(device)
             for (var j = 0; j < chartsData.chartData.length; j++) {
-              if(chartsData.chartData[j].device.id == device.id) {
+              if(chartsData.chartData[j].device.id == device.id || chartsData.chartData[j].device == device.id) {
                 let str = device.getStream(chartsData.chartData[j].stream)
                 let dev = {
                   device: device,
@@ -615,10 +622,14 @@ export default Line.extend({
         return datasets
       },
       gotError (e) {
-        this.$log.debug('Failed to load streams')
-        if (e.toString().indexOf('Unauthorized') !== -1) {
-          this.$raptor.Auth().logout()
-          this.$router.push('/pages/login')
+        if(this.$log) {
+          this.$log.debug('Failed to load streams')
+          if (e.toString().indexOf('Unauthorized') !== -1) {
+            this.$raptor.Auth().logout()
+            if(this.$router) {
+              this.$router.push('/pages/login')
+            }
+          }
         }
       }
     },

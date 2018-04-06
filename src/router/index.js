@@ -40,6 +40,9 @@ import AdminDashboard from '@/views/admin/dashboard'
 // User Dashboard
 import UserDashboard from '@/views/userdashboard/dashboard'
 
+// RaptorWidget
+import RaptorWidget from '@/views/widgets/RaptorboxChart'
+
 // Views - Icons
 import FontAwesome from '@/views/icons/FontAwesome'
 import SimpleLineIcons from '@/views/icons/SimpleLineIcons'
@@ -411,6 +414,21 @@ const router = new Router({
           path: 'register',
           name: 'Register',
           component: Register
+        }
+      ]
+    },
+
+    {
+      path: '/getWidget',
+      name: 'widget',
+      component: {
+        render (c) { return c('router-view') }
+      },
+      children: [
+        {
+          path: 'chart',
+          name: 'widget',
+          component: RaptorWidget
         }
       ]
     }
