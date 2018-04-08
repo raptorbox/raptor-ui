@@ -167,7 +167,8 @@ export default Line.extend({
         this.$raptor.Stream().list(stream, 0, 100, 'timestamp,desc')
         .then((streams) => {
           // console.log(streams)
-          streams = this.sortDates(streams);
+          // streams = this.sortDates(streams);
+          streams.reverse();
           chartsData.selectedStreamData = streams
           this.processSingleData(chartsData)
         })
@@ -261,10 +262,15 @@ export default Line.extend({
           }
           if(!valueAdded) {
             let sDate = date.toString(); //.toLocaleString();
-            if((typeof s.channels[channel]) === 'number' || (typeof s.channels[channel]) === 'boolean' || (!isNaN(s.channels[channel] * 1))) {
+            // if((typeof s.channels[channel]) === 'number' || (typeof s.channels[channel]) === 'boolean' || (!isNaN(s.channels[channel] * 1))) {
               streamChartLabels.push(sDate)
-              dataForChart.push(s.channels[channel])
-            }
+              let data = s.channels[channel]
+              if(isNaN(data * 1)) {
+                // console.log(Number(data) + ' ' + (data*1) + ' isNaN(data * 1) ' + isNaN(data * 1))
+                data = 0
+              }
+              dataForChart.push(Number(data))
+            // }
           }
         }
 
@@ -365,6 +371,7 @@ export default Line.extend({
         .then((streams) => {
           // console.log(streams)
           if(streams.length > 0) {
+            streams.reverse();
             this.processMultipleData(chartsData, streams, false)
             if(chartsData.realtimeUpdate) {
               this.subscribeDatasetStreams(chartsData, stream)
@@ -385,23 +392,33 @@ export default Line.extend({
           }
           if(chartsData.datasets[j].device.id == deviceId) {
             let dataset = chartsData.datasets[j]
-            if(concat) {
-              dataset.selectedStreamData.concat(streams)
-              if(dataset.selectedStreamData == null) {
-                streams = this.sortDates(streams);
-              }
-            } else {
-              if(dataset.selectedStreamData == null) {
-                streams = this.sortDates(streams);
-              }
-              if(streams.length > 200) {
-                for (var i = 0; i < streams.length; i++) {
-                  chartsData.datasets[j].selectedStreamData = streams[i];
-                }
-              } else {
-                chartsData.datasets[j].selectedStreamData = streams
-              }
+            // if(concat) {
+            //   dataset.selectedStreamData.concat(streams)
+            //   // if(dataset.selectedStreamData == null) {
+            //   //   streams = this.sortDates(streams);
+            //   // }
+            // } else {
+            //   // if(dataset.selectedStreamData == null) {
+            //   //   streams = this.sortDates(streams);
+            //   // }
+            //   if(streams.length > 200) {
+            //     for (var i = 0; i < streams.length; i++) {
+            //       chartsData.datasets[j].selectedStreamData = streams[i];
+            //     }
+            //   } else {
+            //     chartsData.datasets[j].selectedStreamData = streams
+            //   }
+            // }
+            if(!concat) {
+              chartsData.datasets[j].selectedStreamData = []
             }
+            streams.forEach((str) => {
+              let s = str
+              if(str.json) {
+                s = str.json
+              }
+              dataset.selectedStreamData.push(s)
+            })
             let obj = this.extractChartDataDeviceStream(streams,dataset.channel);
             chartsData.datasets[j].dataForChart = obj.data
             chartsData.datasets[j].streamChartLabels = obj.labels
@@ -428,46 +445,61 @@ export default Line.extend({
 
               for (var j = 0; j < chartsData.datasets.length; j++) {
                 let dset = chartsData.datasets[j];
-                if(dset.device.id == msg.device.id && dset.selectedStreamData) {
+                // console.log(dset.selectedStreamData)
+                // console.log('dset.selectedStreamData.length: ' + dset.selectedStreamData.length)
+                let isItTrue = dset.device.id == msg.device.id && dset.stream.name == msg.streamId && msg.record.channels[dset.channel]
+                if(isItTrue && dset.selectedStreamData) {
+                  // console.log((dset.device.id == msg.device.id) + ' ' + (dset.stream.name == msg.streamId) + ' ' + msg.record.channels[dset.channel])
                   let last = dset.selectedStreamData[dset.selectedStreamData.length-1]
+                  // console.log(last)
                   // check timestamp of last record on this device data
-                  if(last.timestamp != msg.record.timestamp) {
+                  // console.log(msg.record)
+                  // console.log(last.timestamp < msg.record.timestamp)
+                  if(last.timestamp < msg.record.timestamp) {
                     // get data and label from received msg
                     let recordData = msg.record.channels[dset.channel]
                     let date = new Date(msg.record.timestamp * 1000)
                     // console.log(date.toString())
 
+                    let chartLabelLast = dset.streamChartLabels[dset.streamChartLabels.length-1]
+                    // let chartData = chartsData.datasets[j].dataForChart[chartsData.datasets[i].dataForChart-1]
                     // check whether labels of this devices have the new label
-                    if(dset.streamChartLabels[dset.streamChartLabels.length-1] == date.toString()) {
+                    if(!chartLabelLast && chartLabelLast == date.toString()) {
                       // if yes then change the last record
+                      if(isNaN(recordData * 1)) {
+                        recordData = 0
+                      }
                       dset.dataForChart[dset.dataForChart.length-1] = recordData
                       context._chart.data.datasets[j].data[context._chart.data.datasets[j].data.length-1] = recordData
                     } else {
                       // if no then
-                      // push label and check it should not exceed 200 threshold
-                      context.limitArrayAndPush(dset.streamChartLabels, 200, date.toString())
+                      // push label and check it should not exceed 100 threshold
+                      context.limitArrayAndPush(dset.streamChartLabels, 100, date.toString())
 
-                      // push data and check it should not exceed 200 threshold
-                      context.limitArrayAndPush(dset.dataForChart, 200, recordData)
+                      // push data and check it should not exceed 100 threshold
+                      context.limitArrayAndPush(dset.dataForChart, 100, recordData)
 
                       // push null in data and new label in other devices
-                      for (var i = 0; i < chartsData.datasets.length; i++) {
-                        if(i!=j) {
-                          chartsData.datasets[i].dataForChart.push(null)
-                          chartsData.datasets[i].streamChartLabels.push(date.toString())
+                      if(!isItTrue) {
+                        for (var i = 0; i < chartsData.datasets.length; i++) {
+                          if(i!=j) {
+                            chartsData.datasets[i].dataForChart.push(null)
+                            chartsData.datasets[i].streamChartLabels.push('')
+                          }
                         }
                       }
 
                       context._chart.data.datasets[j].data = dset.dataForChart
                     }
                     // push data in the streams of this device
-                    context.limitArrayAndPush(dset.selectedStreamData, 200, msg.record)
+                    context.limitArrayAndPush(dset.selectedStreamData, 100, msg.record)
                     let val1 = chartsData.streamChartLabels[chartsData.streamChartLabels.length-1]
                     if(val1 != date.toString()) {
                       // push label in general labels
-                      context.limitArrayAndPush(chartsData.streamChartLabels, 200, date.toString())
+                      context.limitArrayAndPush(chartsData.streamChartLabels, 100, date.toString())
                       context._chart.data.labels = chartsData.streamChartLabels
                     }
+                    console.log('chart updated is ' + j)
                     context._chart.update({easing: 'easeOutBounce'})
                   }
                 }
