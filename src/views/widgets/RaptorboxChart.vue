@@ -27,8 +27,16 @@ export default {
       searchData: ''
     }
   },
+  created () {
+    const cfg = this.$raptor.getConfig()
+    this.username = cfg.username
+    this.password = cfg.password
+  },
   mounted () {
     this.login()
+    // console.log(this.height + ' ' + this.chartdata + ' ' + this.width + ' ' + this.token)
+    // console.log('******************************************')
+    // console.log(JSON.parse(this.chartdata))
   },
   methods: {
     login () {
@@ -38,15 +46,18 @@ export default {
       this.$raptor.Auth().login(cfg)
         .then((user) => {
           console.log('Welcome %s', this.$raptor.Auth().getUser().username)
-          localStorage.raptor = JSON.stringify({
-            token: this.$raptor.Auth().getToken()
-          })
+          this.load()
           this.chart = JSON.parse(this.chartdata)
           this.searchData = "updateChart"
         })
         .catch((e) => {
           console.log(`Error: ${e.message}`)
         })
+    },
+    load() {
+      localStorage.raptor = JSON.stringify({
+        token: this.$raptor.Auth().getToken()
+      })
     }
   }
 }

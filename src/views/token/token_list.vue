@@ -29,7 +29,7 @@
                 {{row.item.name}}
               </b-button>
             </template>
-            <template slot="expires" scope="row">{{!row.item.expires ? 'Non Expiry Token' : formatDate(row.item.expires * 1000)}}</template>
+            <template slot="expires" scope="row">{{!row.item.willExpire ? 'Non Expiry Token' : formatDate(row.item.expires * 1000)}}</template>
             <template slot="token" scope="row">
               <b-button class="btn btn-sm" @click="openModalWin(row.item)">Show Token</b-button>
             </template>
@@ -53,7 +53,7 @@
                 </div>
             </template>
             <template slot="valid" scope="row">
-              <span v-bind:class="['badge', { 'badge-success': (!row.item.expires || row.item.expires > (new Date())),'badge-warning': !row.item.valid }]"> {{(!row.item.expires || row.item.expires > (new Date())) ? 'Valid' : 'Expired'}}</span>
+              <span v-bind:class="['badge', { 'badge-success': (!row.item.willExpire || (row.item.willExpire && (row.item.expires * 1000) > (new Date()))),'badge-warning': (row.item.willExpire && (row.item.expires * 1000) < (new Date())) }]"> {{(!row.item.willExpire || (row.item.willExpire && (row.item.expires * 1000) > (new Date()))) ? 'Valid' : 'Expired'}}</span>
             </template>
             <template slot="actions" scope="row">
               <b-button class="btn btn-outline-danger btn-sm" @click="remove(row.item)">Delete</b-button>

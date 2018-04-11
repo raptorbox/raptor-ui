@@ -225,18 +225,21 @@ export default {
         },
         save() {
             // if(this.token.expires === null || this.token.expires === 0) {
-            console.log(this.token.expires)
+            // console.log(this.token.expires)
+            // console.log(this.date)
             if(this.token.expires === false) {
                 if(!this.date) {
                     this.token.expires = null
                 } else {
                     let selectedDate = new Date(this.date)
+                    // console.log('selectedDate: ' + selectedDate)
                     if(this.tokenId) {
-                        this.token.expires = selectedDate.getTime()
+                        this.token.expires = selectedDate.getTime()/1000|0
                     } else if(!this.tokenId && this.date) {
                         console.log(selectedDate, this.date)
                         this.token.expires = selectedDate.getTime()/1000|0
                     }
+                    this.token.willExpire = true;
                 }
             } else if(this.token.expires === true) {
                 this.token.expires = 0
