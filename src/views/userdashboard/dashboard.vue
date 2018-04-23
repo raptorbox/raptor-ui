@@ -344,13 +344,10 @@ export default {
           this.tableDataSource[0].listOfDevicesForSelectOptions = this.listOfDevicesForSelectOptions
           // console.log(this.listOfDevicesTypeForSelectOptions)
         })
-      .catch(function(e) {
+      .catch(e => {
         // console.log(e)
         // console.log(JSON.stringify(e))
-        if(e.toString().indexOf("Unauthorized") !== -1) {
-          this.$raptor.Auth().logout();
-          this.$router.push("/pages/login");
-        }
+        this.gotError(e)
       });
     },
     loadDefaultCharts(dasboardWidgets) {
@@ -414,10 +411,7 @@ export default {
         .catch((e) => {
           this.$log.debug('Failed to load device')
           // this.$log.error(e)
-          if(e.toString().indexOf("Unauthorized") !== -1) {
-            this.$raptor.Auth().logout();
-            this.$router.push("/pages/login");
-          }
+          this.gotError(e)
         })
       }
     },
@@ -709,13 +703,10 @@ export default {
           this.loadDefaultCharts(this.defaultDashboard)
         }
       })
-      .catch(function(e) {
+      .catch(e => {
         // console.log(e)
         // console.log(JSON.stringify(e))
-        if(e.toString().indexOf("Unauthorized") !== -1) {
-          this.$raptor.Auth().logout();
-          this.$router.push("/pages/login");
-        }
+        this.gotError(e)
       });
     },
     setUserDashboardPreferences(key, value, userId) {
@@ -726,13 +717,10 @@ export default {
           console.log("Dashboard updated")
           console.log(dashboard);
         })
-        .catch(function(e) {
+        .catch((e) => {
           // console.log(e)
           // console.log(JSON.stringify(e))
-          if(e.toString().indexOf("Unauthorized") !== -1) {
-            this.$raptor.Auth().logout();
-            this.$router.push("/pages/login");
-          }
+          this.gotError(e)
         });
       }
     },
@@ -921,12 +909,20 @@ export default {
         this.$toasted.show(e.message).goAway(3000)
         // console.log(e)
         // console.log(JSON.stringify(e))
-        if(e.toString().indexOf("Unauthorized") !== -1) {
-          this.$raptor.Auth().logout();
-          this.$router.push("/pages/login");
-        }
+        this.gotError(e)
       });
     },
+    gotError (e) {
+      if(this.$log) {
+        this.$log.debug('Failed to load streams')
+        if (e.toString().indexOf('Unauthorized') !== -1) {
+          this.$raptor.Auth().logout()
+          if(this.$router) {
+            this.$router.push('/pages/login')
+          }
+        }
+      }
+    }
   }
 }
 </script>

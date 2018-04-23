@@ -148,6 +148,7 @@ export default {
             this.loading = true
             this.$validate().then((success) => {
                 if (!success) {
+                    console.log('validation error')
                   return Promise.reject(new Error("Validation failed"))
                 }
                 context.$raptor.Action().invoke({name: this.action, deviceId: this.device.id}, this.message)

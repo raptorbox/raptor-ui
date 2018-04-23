@@ -4,6 +4,9 @@
     <div class="chart-wrapper">
       <line-chart :chartData="chart" :height="height" :searchData="searchData"/>
     </div>
+    <div class="text-right">
+      <b-button href="https://v5.raptorbox.eu" variant="outline-success" target="_blank">RaptorBox</b-button>
+    </div>
   </div>
 
 </template>

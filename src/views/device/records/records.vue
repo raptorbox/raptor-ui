@@ -69,7 +69,6 @@
         device: null,
         selectedStream: null,
         optionsStreams: [],
-        streamDetail: null,
 
         // page settings
         sortBy: 'timestamp',
@@ -77,13 +76,21 @@
         perPage: 25,
         currentPage: 1,
         pager: null,
+
+        // selected stream info
+        streamDetail: null,
+        deviceId: null,
       }
     },
     mounted () {
       if (this.$route.params.deviceId) {
         this.$log.debug('Load %s ', this.$route.params.deviceId)
+        this.deviceId = this.$route.params.deviceId
         this.load(this.$route.params.deviceId)
       }
+    },
+    created() {
+      document.addEventListener('beforeunload', this.handler())
     },
     methods: {
       formatDate (d) {
@@ -111,6 +118,7 @@
       getStream(streamName) {
         // var ts = Math.round((new Date()).getTime() / 1000);
         let stream = this.device.getStream(streamName);
+        this.streamDetail = stream
         // console.log(stream)
         if(stream){
           this.loading = true
@@ -130,24 +138,11 @@
             this.deviceStreams = [];
             let fields = {}
             for (var i = 0; i < streams.length; i++) {
-              let obj = {}
-              let stream = streams[i].json
-              obj['timestamp'] = this.formatDate(stream['timestamp']*1000)
-              obj['streamId'] = stream['streamId']
-              if(i==0){
-                fields['timestamp'] = { label: 'Time' }
-                fields['streamId'] = { label: 'Stream' }
-                Object.keys(stream.channels).forEach(function(ch) {
-                  fields[ch] = { label: ch }
-                })
-                this.fields = fields
-              }
-              for(var ch in stream.channels) {
-                obj[ch] = stream.channels[ch]
-              }
+              let obj = this.extractDataToShow(streams[i].json, i)
               this.deviceStreams.push(obj);
               this.loading = false
             }
+            this.subscribeStream(stream)
           })
           .catch((e) => {
             if(e.message == 'Access is denied') {
@@ -158,6 +153,23 @@
             this.loading = false
           })
         }
+      },
+      extractDataToShow(stream, i) {
+        let obj = {}
+        obj['timestamp'] = this.formatDate(stream['timestamp']*1000)
+        obj['streamId'] = stream['streamId']
+        if(i && i == 0){
+          fields['timestamp'] = { label: 'Time' }
+          fields['streamId'] = { label: 'Stream' }
+          Object.keys(stream.channels).forEach(function(ch) {
+            fields[ch] = { label: ch }
+          })
+          this.fields = fields
+        }
+        for(var ch in stream.channels) {
+          obj[ch] = stream.channels[ch]
+        }
+        return obj
       },
       getStreamOptions () {
         if(this.device) {
@@ -173,6 +185,7 @@
       },
       onChangeOptionStream (evt) {
         let val = evt.target.value;
+        this.unsubscribeStream(this.streamDetail)
         if(this.device) {
           // if(!this.loading) {
             this.getStream(val);
@@ -196,11 +209,13 @@
       // paging functions
       pageChanged(page) {
         this.currentPage = page
+        this.unsubscribeStream(this.streamDetail)
         this.getStream(this.selectedStream)
       },
       sortingChanged(ev) {
         this.sortBy = ev.sortBy
         this.sortDir = ev.sortDesc ? 'desc' : 'asc'
+        this.unsubscribeStream(this.streamDetail)
         this.getStream(this.selectedStream)
       },
       itemsLimitChange(limit) {
@@ -208,6 +223,52 @@
         this.perPage = limit
         this.getStream(this.selectedStream)
       },
+
+      //**************************************************** */
+      /* new features                                        */
+      /* 1. Stream subscription in list                      */
+      /* *************************************************** */
+
+      handler () {
+        if(this.selectedStream)
+          this.unsubscribeStream ({name: this.selectedStream, deviceId: this.deviceId});
+      },
+      // subscription / unsunscription of the data for the selected charts
+      subscribeStream (stream) {
+        let context = this
+        this.$raptor.Stream().subscribe(stream, function(msg) {
+          // console.log(msg.record)
+          let first = context.deviceStreams[0]
+          if(first.timestamp != msg.record.timestamp && context.selectedStream == msg.record.streamId) {
+            context.limitArrayAndPush(context.deviceStreams, context.perPage, context.extractDataToShow(msg.record))
+          }
+        });
+      },
+      unsubscribeStream (stream) {
+        if (stream) {
+          this.$raptor.Stream().unsubscribe(stream, function(msg) {
+            console.log(msg)
+          });
+        }
+      },
+      // limit the array and push data
+      limitArrayAndPush(array, limit, data) {
+        array.unshift(data)
+        if(array.length > limit) {
+          array.pop()
+        }
+      },
+      gotError (e) {
+        if(this.$log) {
+          this.$log.debug('Failed to load streams')
+          if (e.toString().indexOf('Unauthorized') !== -1) {
+            this.$raptor.Auth().logout()
+            if(this.$router) {
+              this.$router.push('/pages/login')
+            }
+          }
+        }
+      }
     }
 
   }
