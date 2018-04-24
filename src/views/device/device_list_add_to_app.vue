@@ -55,6 +55,9 @@
           <b-button variant="primary" :disabled="row.item.domain != null" @click="addDevice(row.item)">
             <i class="fa fa-plus"></i>
           </b-button>
+          <b-button title="Send message to device" variant="outline-primary" :to="{ name: 'SendDeviceActionMessage', params: { deviceId: row.item.id }}">
+                <i class="fa fa-paper-plane fa-lg"></i>
+              </b-button>
         </template>
       </b-table>
 

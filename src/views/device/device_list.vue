@@ -67,6 +67,9 @@
               <b-button title="Clone this device definition" variant="outline-primary" :to="{ name: 'Clone', params: { deviceId: row.item.id }}">
                   <i class="fa fa-clone fa-lg"></i>
               </b-button>
+              <b-button title="Send message to device" variant="outline-primary" :to="{ name: 'SendDeviceActionMessage', params: { deviceId: row.item.id }}">
+                <i class="fa fa-paper-plane fa-lg"></i>
+              </b-button>
           </template>
       </b-table>
 

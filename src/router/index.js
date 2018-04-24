@@ -360,6 +360,15 @@ const router = new Router({
                 },
                 component: DeviceForm,
                 props: true
+              },
+              {
+                path: 'send/:deviceId',
+                name: 'SendDeviceActionMessage',
+                meta: {
+                  label: 'Send Message'
+                },
+                component: SendMessage,
+                props: true
               }]
             }
           ]

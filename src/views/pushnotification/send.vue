@@ -10,13 +10,15 @@
         <div class="row">
             <div class="col-md-9">
                 <div class="col-lg-12 text-left">
-                    <div class="form-group" :class="{error: validation.hasError('device')}">
-                        <b-form-fieldset description="Enter Device id to filter" label="Select Device">
-                             <!-- @update-items="updateItems" -->
-                            <v-autocomplete :items="list" v-model="itemAutoComplete" :get-label="getLabel" :component-item='itemAutoTemplate' :input-attrs="{id: 'v-my-autocomplete'}" @item-clicked="itemClicked" @change="inputChangeEvent" :auto-select-one-item="false"></v-autocomplete>
-                        </b-form-fieldset>
+                    <div v-if="appId">
+                        <div class="form-group" :class="{error: validation.hasError('device')}">
+                            <b-form-fieldset description="Enter Device id to filter" label="Select Device">
+                                 <!-- @update-items="updateItems" -->
+                                <v-autocomplete :items="list" v-model="itemAutoComplete" :get-label="getLabel" :component-item='itemAutoTemplate' :input-attrs="{id: 'v-my-autocomplete'}" @item-clicked="itemClicked" @change="inputChangeEvent" :auto-select-one-item="false"></v-autocomplete>
+                            </b-form-fieldset>
+                        </div>
+                        <div class="message text-danger">{{ validation.firstError('device') }}</div>
                     </div>
-                    <div class="message text-danger">{{ validation.firstError('device') }}</div>
                 </div>
                 <div class="col-lg-12 text-left">
                     <div class="form-group" :class="{error: validation.hasError('action')}">
@@ -42,7 +44,7 @@
         <div slot="footer">
             <div class="row">
                 <div class="col-md-12 text-right">
-                  <b-button type="submit" variant="primary" @click="send">
+                  <b-button variant="primary" @click="send">
                       <i class="fa fa-paper-plane-o"></i> Send
                   </b-button>
                 </div>
@@ -77,6 +79,7 @@ export default {
             loading: false,
             error: false,
             appId: null,
+            deviceId: null,
             device: null,
             devices: [],
             list: [],
@@ -100,9 +103,14 @@ export default {
         }
     },
     mounted() {
-      this.user = this.$raptor.Auth().getUser()
-      this.appId = this.$route.params.appId
-      this.fetchData()
+        this.user = this.$raptor.Auth().getUser()
+        if(this.$route.params.appId) {
+            this.appId = this.$route.params.appId
+        }
+        if(this.$route.params.deviceId) {
+            this.deviceId = this.$route.params.deviceId
+        }
+        this.fetchData()
     },
     methods: {
         fetchData() {
@@ -114,34 +122,56 @@ export default {
                 size: 1000
             }
             // console.log(queryParam)
-            this.$raptor.Inventory().search({domain: this.appId}, queryParam)
-                .then((pager) => {
+            if(this.appId) {
+                this.$raptor.Inventory().search({domain: this.appId}, queryParam)
+                    .then((pager) => {
 
-                    // const list = pager.getContent()
-                    this.$log.debug('Loaded %s device list', pager.getContent().length)
-                    // console.log(list.length)
+                        // const list = pager.getContent()
+                        this.$log.debug('Loaded %s device list', pager.getContent().length)
+                        // console.log(list.length)
 
-                    this.loading = false
-                    this.pager = pager
-                    this.totalRows = pager.getTotalElements()
-                    this.devices = pager.getContent()
-                    this.list = this.devices
+                        this.loading = false
+                        this.pager = pager
+                        this.totalRows = pager.getTotalElements()
+                        this.devices = pager.getContent()
+                        this.list = this.devices
 
-                })
-                .catch((e) => {
+                    })
+                    .catch((e) => {
 
-                    this.$log.warn('Failed to load device list: %s', e.message)
-                    this.$log.debug(e)
+                        this.$log.warn('Failed to load device list: %s', e.message)
+                        this.$log.debug(e)
 
-                    this.error = e.message
-                    this.list = []
-                    this.pager = null
-                    this.loading = false
-                    if (e.code === 401) {
-                        this.$raptor.Auth().logout();
-                        this.$router.push("/pages/login");
-                    }
-                })
+                        this.error = e.message
+                        this.list = []
+                        this.pager = null
+                        this.loading = false
+                        if (e.code === 401) {
+                            this.$raptor.Auth().logout();
+                            this.$router.push("/pages/login");
+                        }
+                    })
+            }
+            if (this.deviceId) {
+                this.$raptor.Inventory().read(this.deviceId)
+                    .then((device) => {
+                        this.loading = false
+                        this.device = device
+                        this.itemClicked(device)
+                    })
+                    .catch((e) => {
+                        this.$log.warn('Failed to load device list: %s', e.message)
+                        this.$log.debug(e)
+                        this.error = e.message
+                        this.list = []
+                        this.pager = null
+                        this.loading = false
+                        if (e.code === 401) {
+                            this.$raptor.Auth().logout();
+                            this.$router.push("/pages/login");
+                        }
+                    })
+            }
         },
         send() {
             var context = this
@@ -149,14 +179,21 @@ export default {
             this.$validate().then((success) => {
                 if (!success) {
                     console.log('validation error')
-                  return Promise.reject(new Error("Validation failed"))
+                    return Promise.reject(new Error("Validation failed"))
                 }
-                context.$raptor.Action().invoke({name: this.action, deviceId: this.device.id}, this.message)
-                    .then(() => {
+                let dev = {name: this.action, deviceId: this.device.id}
+                console.log(dev)
+                console.log(this.message)
+                console.log(this.$raptor)
+                console.log(this.$raptor.Action())
+                this.$raptor.Action().invoke(dev, this.message)
+                    .then((success) => {
+                        console.log('sent')
                         this.$log.debug('Message sent')
                         this.loading = false
                     })
                     .catch((e) => {
+                        console.log('error')
                         this.loading = false
                         this.$log.error("Error saving user: %s", e.message)
                         this.$log.debug(e)
