@@ -141,6 +141,7 @@
           sort: this.sortBy,
           sortDir: this.sortDir,
         }
+        console.log(page)
         this.$raptor.Admin().Token().list(null, page)
         .then((pager) => {
           this.$log.debug('Loaded %s tokens', pager.getContent().length)

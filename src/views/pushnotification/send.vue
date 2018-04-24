@@ -182,13 +182,8 @@ export default {
                     return Promise.reject(new Error("Validation failed"))
                 }
                 let dev = {name: this.action, deviceId: this.device.id}
-                console.log(dev)
-                console.log(this.message)
-                console.log(this.$raptor)
-                console.log(this.$raptor.Action())
                 this.$raptor.Action().invoke(dev, this.message)
                     .then((success) => {
-                        console.log('sent')
                         this.$log.debug('Message sent')
                         this.loading = false
                     })

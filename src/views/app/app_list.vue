@@ -155,7 +155,6 @@ export default {
         sortDir: this.sortDir,
       }
       this.$log.debug(page)
-      console.log(this.$raptor.App())
       this.$raptor.App().list(page).then((pager) => {
 
         this.$log.debug('Loaded %s app list', pager.getContent().length)

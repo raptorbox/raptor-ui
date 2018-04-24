@@ -175,7 +175,7 @@ export default {
           sort: this.sortBy,
           sortDir: this.sortDir,
         }
-      // console.log(queryParam)
+      console.log(queryParam)
         this.$raptor.Inventory().list(query, queryParam)
             .then((pager) => {
 
