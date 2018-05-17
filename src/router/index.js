@@ -22,7 +22,7 @@ import TokensForm from '@/views/token/token_form'
 // Devices / Inventory
 import DeviceList from '@/views/device/device_list'
 import DeviceForm from '@/views/device/device_form'
-import DeviceSearch from '@/views/device/search'
+// import DeviceSearch from '@/views/device/search'
 import DeviceDataChart from '@/views/components/realtimechart/realtimechart'
 import DeviceListAddToApp from '@/views/device/device_list_add_to_app'
 
@@ -75,12 +75,12 @@ const router = new Router({
         },
         {
           path: 'dashboard',
-          name: 'UserDashboard',
+          name: 'Dashboard',
           component: UserDashboard
         },
         {
           path: 'admindashboard',
-          name: 'AdminDashboard',
+          name: 'Dashboard',
           component: AdminDashboard
         },
         {
@@ -94,7 +94,7 @@ const router = new Router({
         },
         {
           path: 'admin',
-          redirect: '/admin/users',
+          redirect: '/dashboard',
           name: 'Admin',
           component: {
             render (c) { return c('router-view') }
@@ -253,26 +253,26 @@ const router = new Router({
             render (c) { return c('router-view') }
           },
           children: [
-            {
-              path: '',
-              name: 'Devices',
-              redirect: '/inventory/search',
-              component: {
-                render (c) { return c('router-view') }
-              },
-              children: [
-                {
-                  path: 'search',
-                  component: DeviceSearch,
-                  name: 'Search'
-                },
-                {
-                  path: ':deviceId/chart',
-                  name: 'RealTimeChart',
-                  component: DeviceDataChart
-                }
-              ]
-            },
+            // {
+            //   path: '',
+            //   name: 'Devices',
+            //   redirect: '/inventory/list',
+            //   component: {
+            //     render (c) { return c('router-view') }
+            //   },
+            //   children: [
+            //     // {
+            //     //   path: 'search',
+            //     //   component: DeviceSearch,
+            //     //   name: 'Search'
+            //     // },
+            //     {
+            //       path: ':deviceId/chart',
+            //       name: 'RealTimeChart',
+            //       component: DeviceDataChart
+            //     }
+            //   ]
+            // },
             {
               path: '',
               name: 'Device',

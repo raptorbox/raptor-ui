@@ -48,11 +48,11 @@ export default {
           name: 'List',
           url: '/inventory/list',
           icon: 'icon-list'
-        },
-        {
-          name: 'Search',
-          url: '/inventory/search',
-          icon: 'icon-magnifier'
+        // },
+        // {
+        //   name: 'Search',
+        //   url: '/inventory/search',
+        //   icon: 'icon-magnifier'
         }
       ]
     }
